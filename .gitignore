@@ -5,3 +5,4 @@ data/private/
 data/private/**/*
 tmp/*
 tmp/**/*
+node_modules/

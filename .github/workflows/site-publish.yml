@@ -27,11 +27,17 @@ jobs:
         with:
           ruby-version: '3.2'
           bundler-cache: true
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: npm
       - name: Testes
         run: |
           bundle exec ruby -Itest test/al_ilegal_test.rb
           bundle exec ruby -Itest test/spatial_clusters_test.rb
           bundle exec ruby -Itest test/versioned_analysis_test.rb
+      - name: Instalar ferramentas CSS
+        run: npm ci
       - name: Construir site público
         run: bundle exec ruby scripts/build_site.rb
       - name: Gate do artefacto de publicação
