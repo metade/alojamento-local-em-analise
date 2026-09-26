@@ -1,9 +1,27 @@
 require "minitest/autorun"
+require "open3"
 require "tmpdir"
 require_relative "../lib/al_ilegal"
 
 class VersionedAnalysisTest < Minitest::Test
   HEADERS = %w[neighbourhood_group_cleansed license listing_url neighbourhood_cleansed name latitude longitude room_type property_type bedrooms host_id last_scraped]
+
+  def test_publication_audit_scans_binary_assets_without_encoding_errors
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "NOTICE"), "Attribution")
+      image = File.join(dir, "favicon.png")
+      File.binwrite(image, "\x89PNG\r\n\x1A\n\xFF".b)
+      command = [RbConfig.ruby, File.expand_path("../scripts/audit_publication.rb", __dir__), "--artifact", dir]
+
+      output, status = Open3.capture2e(*command)
+      assert status.success?, output
+
+      File.binwrite(image, File.binread(image) + "https://example.com/rooms/123")
+      output, status = Open3.capture2e(*command)
+      refute status.success?
+      assert_includes output, "URL de anúncio em favicon.png"
+    end
+  end
 
   def test_existing_public_run_is_detected_without_mutating_it
     Dir.mktmpdir do |dir|

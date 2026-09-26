@@ -43,7 +43,9 @@ def artifact_file?(path)
 end
 
 def file_text(path)
-  File.binread(path).force_encoding("UTF-8")
+  # Scan ASCII safety patterns in all files, including binary image assets.
+  # Forcing a binary file to UTF-8 makes even header parsing raise.
+  File.binread(path)
 rescue Errno::ENOENT
   nil
 end
