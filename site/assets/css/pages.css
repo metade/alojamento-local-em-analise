@@ -1,0 +1,521 @@
+.hero {
+  min-height: calc(100vh - 79px);
+  padding: 130px 0 40px;
+}
+
+.chip {
+  border: 1px solid #176b8759;
+  margin-bottom: 28px;
+  padding: 7px 10px;
+  display: inline-block;
+}
+
+.hero-dek {
+  color: #17202aae;
+  max-width: 590px;
+  margin: 48px 0 0;
+  font-size: 20px;
+}
+
+.hero-number {
+  font: clamp(90px,15vw,230px)/.7 var(--font-serif);
+  letter-spacing: -.08em;
+  white-space: nowrap;
+  text-align: right;
+}
+
+.hero-number b {
+  color: var(--color-terra);
+  vertical-align: top;
+  font-size: .42em;
+}
+
+.chapter-paper {
+  border-block: var(--border-rule);
+  background: #fff5;
+}
+
+.method-grid {
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  margin-bottom: 60px;
+  display: grid;
+}
+
+.method-copy {
+  color: #17202aa3;
+}
+
+.district-hero, .district-index-hero, .method-hero {
+  padding: 105px 0 85px;
+}
+
+.district-mark {
+  border: 3px solid var(--color-ink);
+  align-content: center;
+  place-items: center;
+  gap: var(--space-small);
+  width: 270px;
+  height: 270px;
+  display: grid;
+  transform: rotate(-4deg);
+}
+
+.district-mark span {
+  font: 70px var(--font-serif);
+  color: var(--color-blue);
+}
+
+.district-mark b {
+  font: 44px var(--font-serif);
+}
+
+.metric {
+  border-top: 3px solid var(--color-ink);
+  padding-top: 16px;
+}
+
+.metric.platform {
+  border-color: var(--color-yellow);
+}
+
+.metric.official {
+  border-color: var(--color-blue);
+}
+
+.metric-value {
+  font: clamp(48px,6vw,88px)/1 var(--font-serif);
+  letter-spacing: -.06em;
+}
+
+.metric-label {
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  margin-top: 9px;
+  font-size: 11px;
+}
+
+.composition {
+  border-top: var(--border-rule);
+}
+
+.composition-row {
+  border-bottom: var(--border-rule);
+  grid-template-columns: 1fr 120px;
+  padding: 18px 0;
+  display: grid;
+}
+
+.composition-row strong {
+  text-align: right;
+  font: 30px var(--font-serif);
+}
+
+.map-placeholder {
+  text-align: center;
+  color: #f3efe599;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  border: 1px solid #f3efe533;
+  place-items: center;
+  min-height: 350px;
+  font-size: 11px;
+  display: grid;
+  position: relative;
+}
+
+.map-grid {
+  grid-template-columns: repeat(7, 1fr);
+  gap: var(--space-small);
+  display: grid;
+  position: absolute;
+  inset: 22px;
+}
+
+.map-grid i {
+  background: var(--color-yellow);
+  opacity: .35;
+  align-self: end;
+  height: 18px;
+}
+
+.district-list {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  display: grid;
+}
+
+.district-card {
+  border: var(--border-rule);
+  background: #fff5;
+  flex-direction: column;
+  min-height: 245px;
+  padding: 22px;
+  text-decoration: none;
+  display: flex;
+}
+
+.district-card:hover {
+  background: #fff;
+  transform: translateY(-3px);
+}
+
+.shape-glyph {
+  height: 90px;
+  color: var(--color-blue);
+  font: 60px var(--font-serif);
+  background: #176b8714;
+  place-items: center;
+  margin-bottom: auto;
+  display: grid;
+  transform: rotate(-3deg);
+}
+
+.district-card strong {
+  font: 38px var(--font-serif);
+  margin-top: 12px;
+}
+
+.district-card small {
+  color: #17202a99;
+  font-size: 12px;
+}
+
+.method-copy p {
+  color: #17202aae;
+  font-size: 18px;
+}
+
+.method-copy dl {
+  border-block: var(--border-rule);
+  grid-template-columns: 160px 1fr;
+  gap: 12px;
+  padding: 22px 0;
+  display: grid;
+}
+
+.method-copy dt {
+  text-transform: uppercase;
+  color: var(--color-blue);
+  letter-spacing: .1em;
+  font-size: 11px;
+}
+
+.method-copy dd {
+  margin: 0;
+}
+
+.lisbon-tile {
+  --bg: #f3efe5;
+  --stone: #17202a09;
+  --blue: #176b870e;
+  background-color: var(--bg);
+  background-image: radial-gradient(circle at 0 0,transparent 47%,var(--stone) 48% 52%,transparent 53%),radial-gradient(circle at 100% 100%,transparent 47%,var(--stone) 48% 52%,transparent 53%),radial-gradient(circle at 100% 0,transparent 47%,var(--blue) 48% 50%,transparent 51%),radial-gradient(circle at 0 100%,transparent 47%,var(--blue) 48% 50%,transparent 51%);
+  background-size: 120px 120px;
+}
+
+.story-opening {
+  background: var(--color-paper);
+  min-height: auto;
+  padding: 6vh 0 7vh;
+}
+
+.opening-inner {
+  max-width: 1180px;
+}
+
+.story-opening h1 {
+  max-width: 1000px;
+  font-size: clamp(52px, 7vw, 116px);
+}
+
+.opening-quote {
+  font: clamp(24px,3vw,42px)/1.08 var(--font-serif);
+  color: #17202ab8;
+  max-width: 720px;
+  margin: 7vh 0 0;
+}
+
+.quote-strip {
+  border-block: var(--border-rule);
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  margin-top: 7vh;
+  display: grid;
+}
+
+.quote-item {
+  border-right: var(--border-rule);
+  padding: 22px 24px 24px 0;
+}
+
+.quote-item:last-child {
+  border: 0;
+}
+
+.quote-date {
+  font: 700 10px/1 var(--font-sans);
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: #17202a80;
+}
+
+.quote-item blockquote {
+  font: clamp(20px,2vw,29px)/1.08 var(--font-serif);
+  margin: 32px 0 26px;
+}
+
+.quote-item cite {
+  font: 700 10px/1.4 var(--font-sans);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--color-blue);
+  font-style: normal;
+  display: block;
+}
+
+.quote-item cite a {
+  text-underline-offset: 3px;
+  text-decoration: underline;
+}
+
+.story-opening .hero-number {
+  text-align: left;
+  margin-top: 7vh;
+  font-size: clamp(105px, 18vw, 260px);
+}
+
+.opening-close {
+  font: clamp(25px,3vw,42px) var(--font-serif);
+  color: var(--color-terra);
+  margin: 0;
+}
+
+.estimate-intro {
+  color: #17202ab8;
+  max-width: 560px;
+  font-size: clamp(18px, 2vw, 25px);
+}
+
+/* The comparison uses Tailwind for its grid, card padding, and stack spacing. */
+.source-comparison-card {
+  min-width: 0;
+  border-top-color: var(--color-ink);
+}
+
+@media (min-width: 900px) {
+  .source-comparison-card:not(:last-child) {
+    border-right-color: var(--color-line);
+  }
+}
+
+.source-comparison-card--official {
+  border-top-color: var(--color-blue);
+}
+
+.source-comparison-card--airbnb {
+  border-top-color: var(--color-yellow);
+}
+
+.source-label {
+  margin: 0;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 800;
+  display: block;
+}
+
+.source-comparison-card .source-label {
+  font-size: 12px;
+}
+
+.source-claims {
+  color: var(--color-ink);
+}
+
+.source-official {
+  color: var(--color-blue);
+}
+
+.source-airbnb {
+  color: #a57800;
+}
+
+.source-comparison-value {
+  font: clamp(70px, 7vw, 110px)/.95 var(--font-serif);
+  white-space: nowrap;
+}
+
+.source-comparison-card--official .source-comparison-value {
+  color: var(--color-blue);
+}
+
+.source-comparison-card--airbnb .source-comparison-value {
+  color: var(--color-yellow);
+}
+
+.source-comparison-card p {
+  color: #17202aa8;
+  margin: 0;
+  max-width: 23rem;
+}
+
+.source-comparison-description {
+  font-size: 17px;
+  line-height: 1.45;
+}
+
+.source-comparison-card a {
+  text-underline-offset: 3px;
+}
+
+.source-comparison-card p a {
+  text-decoration: underline;
+}
+
+.source-comparison-card small {
+  color: #17202a80;
+  font-size: 11px;
+}
+
+.source-comparison-card .source-note {
+  color: #17202a90;
+  font-size: 14px;
+}
+
+.findings-chapter {
+  background: var(--color-ink);
+  color: var(--color-paper);
+}
+
+.findings-chapter .eyebrow {
+  color: #8ec6d4;
+}
+
+.findings-chapter .display em {
+  color: #f3efe56b;
+}
+
+.notice-dark {
+  color: #f3efe5b8;
+  margin-top: 0;
+}
+
+.estimate-chapter {
+  background: var(--color-paper);
+}
+
+.estimate-intro {
+  margin-top: 7vh;
+}
+
+.estimate-steps {
+  border-block: var(--border-rule);
+  grid-template-columns: 1fr 1fr 1fr;
+  margin-top: 8vh;
+  display: grid;
+}
+
+.estimate-steps > div {
+  border-right: var(--border-rule);
+  min-height: 290px;
+  padding: 28px 30px 30px 0;
+}
+
+.estimate-steps > div + div {
+  padding-left: 30px;
+}
+
+.estimate-steps > div:last-child {
+  border: 0;
+}
+
+.estimate-steps span {
+  color: var(--color-terra);
+  font-weight: 800;
+}
+
+.estimate-steps strong {
+  font: clamp(50px,7vw,110px) var(--font-serif);
+  margin: 45px 0 15px;
+  line-height: .9;
+  display: block;
+}
+
+.estimate-steps p {
+  max-width: 200px;
+  margin: 0;
+}
+
+.estimate-steps small {
+  color: #17202a90;
+}
+
+.estimate-result strong {
+  color: var(--color-blue);
+}
+
+.geography-chapter {
+  border-top: var(--border-rule);
+  background: #f3efe5 radial-gradient(8px 5px, #17202a07 0 46%, #0000 52%) 0 0 / 22px 15px;
+}
+
+.story-link {
+  color: var(--color-blue);
+  margin-top: 24px;
+  font-weight: 700;
+  display: inline-block;
+}
+
+.lisbon-schematic {
+  background: #ece8de;
+  border-color: #17202a2a;
+}
+
+.story-opening {
+  padding-bottom: 3vh;
+}
+
+.source-method-link {
+  color: var(--color-blue);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.method-source-section {
+  border-top: var(--border-rule);
+}
+
+.method-quotes {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  margin-top: 55px;
+  display: grid;
+}
+
+.method-quote {
+  border-top: var(--border-rule);
+  padding-top: 18px;
+}
+
+.method-quote blockquote {
+  font: clamp(22px,2.5vw,36px)/1.05 var(--font-serif);
+  margin: 24px 0;
+}
+
+.method-quote cite {
+  font: 700 10px/1.4 var(--font-sans);
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--color-blue);
+  font-style: normal;
+}
+
+.method-quote cite a {
+  text-underline-offset: 3px;
+  text-decoration: underline;
+}

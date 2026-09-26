@@ -15,6 +15,15 @@ class AlIlegalTest < Minitest::Test
     assert_nil AlIlegal.parse_al_license("406/UT/2017")
   end
 
+  def test_distinguishes_empty_license_fields_from_unrecognised_formats
+    assert_equal "sem licença", AlIlegal.missing_license_assessment(nil)
+    assert_equal "sem licença", AlIlegal.missing_license_assessment("  ")
+    assert_equal "sem licença identificável", AlIlegal.missing_license_assessment("406/UT/2017")
+    assert_equal "sem licença identificável", AlIlegal.missing_license_assessment("Exempt")
+    assert_equal "sem licença", AlIlegal.license_group_assessment([{licensa: nil, licensa_raw: nil}], nil)
+    assert_equal "sem licença identificável", AlIlegal.license_group_assessment([{licensa: nil, licensa_raw: "406/UT/2017"}], nil)
+  end
+
   def test_parses_coordinates_with_spaces_around_separator
     assert_equal [38.7530581, -9.181339], AlIlegal.parse_lat_long("38.7530581 ; -9.181339")
   end

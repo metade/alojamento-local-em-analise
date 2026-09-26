@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="pt-PT">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="description" content="{{ site.description }}">
+    <title>{{ page.title }} · AL em análise</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ '/assets/story.css' | relative_url }}">
+  </head>
+  <body class="antialiased">
+    <a class="skip-link" href="#conteudo">Saltar para o conteúdo</a>
+    <header class="site-header"><div class="wrap header-inner">
+      <a class="brand" href="{{ '/' | relative_url }}"><span class="al-mark">AL</span><span><strong>Quantos alojamentos locais existem realmente em Lisboa?</strong></span></a>
+      <nav aria-label="Navegação principal">
+        <a class="nav-link" href="{{ '/' | relative_url }}">Investigação</a>
+        <a class="nav-link" href="{{ '/freguesias/' | relative_url }}">Freguesias</a>
+        <a class="nav-link" href="{{ '/metodologia.html' | relative_url }}">Metodologia</a>
+      </nav>
+    </div></header>
+    <div class="tile-rule"></div>
+    <main id="conteudo">{{ content }}</main>
+    <footer class="site-footer"><div class="wrap footer-grid"><span>Alojamento Local em Análise</span><span>Dados públicos · indicadores para verificação</span><a href="{{ '/metodologia.html' | relative_url }}">Metodologia →</a></div></footer>
+  </body>
+</html>

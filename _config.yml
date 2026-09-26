@@ -1,0 +1,15 @@
+title: AL em análise
+description: Uma investigação de dados sobre o alojamento local em Lisboa.
+source: site
+destination: _site
+baseurl: ""
+keep_files:
+  - runs
+  - LICENSE
+  - NOTICE
+exclude:
+  - _data/site.json
+  - assets/css
+  - README.md
+  - Gemfile
+  - Gemfile.lock

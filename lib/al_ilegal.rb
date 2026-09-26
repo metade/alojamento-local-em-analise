@@ -11,9 +11,9 @@ require "erb"
 require "time"
 
 module AlIlegal
-  ANALYSIS_VERSION = "2.1.0"
+  ANALYSIS_VERSION = "2.2.0"
   OUTPUT_SCHEMA_VERSION = "3.1.0"
-  METHODOLOGY_VERSION = "1.0.0"
+  METHODOLOGY_VERSION = "1.1.0"
   PUBLIC_CSV_SCHEMAS = {
     "listings.csv" => %w[freguesia classification listings identifiable_licences establishments_estimate],
     "licence_groups.csv" => %w[classification official_municipality official_type licence_groups listings spatial_locations establishments_estimate],
@@ -27,6 +27,7 @@ module AlIlegal
     "provável estabelecimento com anúncios múltiplos",
     "licença repetida na mesma localização"
   ].freeze
+  DISTANCE_RANGE_KEYS = %w[500_m_1_km 1_2_km 2_5_km over_5_km].freeze
 
   module CLI
     module_function
@@ -87,6 +88,10 @@ module AlIlegal
     nil
   end
 
+  def self.missing_license_assessment(raw_license)
+    raw_license.to_s.strip.empty? ? "sem licença" : "sem licença identificável"
+  end
+
   def self.parse_lat_long(string)
     coordinates = string.to_s.split(/\s*;\s*/)
     raise ArgumentError, "Invalid LatLong value: #{string.inspect}" unless coordinates.size == 2
@@ -121,8 +126,34 @@ module AlIlegal
     clusters
   end
 
+  def self.max_cross_cluster_distance_km(listings)
+    clusters = spatial_clusters(listings)
+    raise ArgumentError, "Expected listings in multiple spatial clusters" if clusters.size < 2
+
+    maximum = 0.0
+    clusters.combination(2) do |first, second|
+      first.each do |left|
+        second.each do |right|
+          distance = Haversine.distance(left[:lat].to_f, left[:lng].to_f, right[:lat].to_f, right[:lng].to_f).to_km
+          maximum = distance if distance > maximum
+        end
+      end
+    end
+    maximum
+  end
+
+  def self.distance_range_key(distance_km)
+    raise ArgumentError, "Distance below 500 metres" if distance_km < 0.5
+
+    return "500_m_1_km" if distance_km < 1
+    return "1_2_km" if distance_km < 2
+    return "2_5_km" if distance_km <= 5
+
+    "over_5_km"
+  end
+
   def self.license_group_assessment(listings, official_record)
-    return "sem licença identificável" if listings.first[:licensa].to_s.empty?
+    return missing_license_assessment(listings.first[:licensa_raw]) if listings.first[:licensa].to_s.empty?
     return "licença oficial fora de Lisboa" if official_record && official_record["Concelho"] != "Lisboa"
     return "licença única em Lisboa" if listings.size == 1
     return "licença repetida em várias localizações" if spatial_clusters(listings).size > 1
@@ -267,6 +298,8 @@ module AlIlegal
       end
       generate_pdf_file(run_dir) if generate_pdf
       append_history(history_path, summary)
+      append_distance_history(File.join(File.dirname(history_path), "distance_ranges.csv"), run_id, listings) if mode == "public"
+      append_outside_region_history(File.join(File.dirname(history_path), "outside_regions.csv"), run_id, listings) if mode == "public"
       validate_public_outputs!(run_dir) if mode == "public"
       {run_id: run_id, path: run_dir, summary: summary}
     end
@@ -289,7 +322,7 @@ module AlIlegal
           url: row["listing_url"], bairro: row["neighbourhood_cleansed"], nome: row["name"], lat: row["latitude"], lng: row["longitude"],
           room_type: row["room_type"], property_type: row["property_type"], quartos: row["bedrooms"], host_id: row["host_id"],
           airbnb_date: parse_date(row["last_scraped"]), official_date: record && parse_date(record["DataRegisto"]),
-          official_name: record && record["Denominacao"], official_address: record && record["Endereco"], official_concelho: record && record["Concelho"],
+          official_name: record && record["Denominacao"], official_address: record && record["Endereco"], official_concelho: record && record["Concelho"], official_region: record && record["NUTSII"],
           official_modalidade: record && record["Modalidade"], official_capacity: record && record["NrUtentes"], distance_km: distance
         }
       end
@@ -297,7 +330,10 @@ module AlIlegal
         next if license.to_s.empty?
         members.each { |row| row[:spatial_cluster_count] = AlIlegal.spatial_clusters(members).size; row[:license_group_assessment] = AlIlegal.license_group_assessment(members, official[license]) }
       end
-      data.each { |row| row[:spatial_cluster_count] ||= 1; row[:license_group_assessment] ||= "sem licença identificável" }
+      data.each do |row|
+        row[:spatial_cluster_count] ||= 1
+        row[:license_group_assessment] ||= AlIlegal.missing_license_assessment(row[:licensa_raw])
+      end
       [data, official]
     end
 
@@ -310,7 +346,7 @@ module AlIlegal
       values.join(";")
     end
     def licence_groups(listings, official)
-      listings.group_by { |row| row[:licensa].to_s }.map do |license, rows|
+      listings.group_by { |row| [row[:licensa].to_s, row[:license_group_assessment].to_s] }.map do |(license, _assessment), rows|
         {licensa: license, licence_raw_examples: rows.map { |r| r[:licensa_raw] }.compact.uniq.join(" | "), listings: rows.size,
          spatial_locations: rows.map { |r| [r[:lat], r[:lng]] }.uniq.size, classification: rows.first[:license_group_assessment],
          official_name: rows.first[:official_name], official_concelho: rows.first[:official_concelho], official_modalidade: rows.first[:official_modalidade],
@@ -419,6 +455,64 @@ module AlIlegal
       values = {"source_airbnb_date" => row[:source_dates][:airbnb_snapshot_date], "source_official_register_download_date" => row[:source_dates][:official_register_download_date]}
       CSV.open(path, "a", write_headers: !existing, headers: headers) { |csv| csv << headers.map { |key| row[key.to_sym] || values[key] } }
     end
+
+    def distance_range_counts(listings)
+      counts = DISTANCE_RANGE_KEYS.to_h { |key| [key, 0] }
+      listings.select { |row| row[:license_group_assessment] == "licença repetida em várias localizações" }
+        .group_by { |row| row[:licensa] }.each_value do |rows|
+          distance = AlIlegal.max_cross_cluster_distance_km(rows)
+          counts[AlIlegal.distance_range_key(distance)] += 1
+        end
+      counts
+    end
+
+    def append_distance_history(path, run_id, listings)
+      headers = %w[run_id distance_method range licence_groups]
+      if File.exist?(path) && CSV.foreach(path, headers: true).any? { |row| row["run_id"] == run_id }
+        raise "Distance ranges already exist for immutable run #{run_id}"
+      end
+
+      counts = distance_range_counts(listings)
+      FileUtils.mkdir_p(File.dirname(path))
+      existing = File.exist?(path) && !File.empty?(path)
+      CSV.open(path, "a", write_headers: !existing, headers: headers) do |csv|
+        DISTANCE_RANGE_KEYS.each { |range| csv << [run_id, "max_cross_cluster_pair_km_v1", range, counts.fetch(range)] }
+      end
+    end
+
+    def outside_region_counts(listings)
+      listings.each_with_object(Hash.new(0)) do |row, counts|
+        next unless row[:license_group_assessment] == "licença oficial fora de Lisboa"
+
+        municipality = row[:official_concelho].to_s.strip
+        region = row[:official_region].to_s.strip
+        key = if municipality.empty?
+          ["municipality_missing", ""]
+        elsif region.empty?
+          ["region_missing", ""]
+        else
+          ["resolved", region]
+        end
+        counts[key] += 1
+      end
+    end
+
+    def append_outside_region_history(path, run_id, listings)
+      headers = %w[run_id region_method resolution official_region listings]
+      if File.exist?(path) && CSV.foreach(path, headers: true).any? { |row| row["run_id"] == run_id }
+        raise "Outside region counts already exist for immutable run #{run_id}"
+      end
+
+      counts = outside_region_counts(listings)
+      FileUtils.mkdir_p(File.dirname(path))
+      existing = File.exist?(path) && !File.empty?(path)
+      CSV.open(path, "a", write_headers: !existing, headers: headers) do |csv|
+        counts.sort_by { |(resolution, region), _| [resolution, region] }.each do |(resolution, region), count|
+          csv << [run_id, "official_register_nutsii_v1", resolution, region, count]
+        end
+      end
+    end
+
     def historical_comparisons(path, current)
       return [] unless File.exist?(path)
       CSV.foreach(path, headers: true).map do |old|

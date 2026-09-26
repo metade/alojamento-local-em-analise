@@ -21,6 +21,10 @@ jobs:
         with:
           ruby-version: '3.2'
           bundler-cache: true
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: npm
       - name: Testes
         run: |
           bundle exec ruby -Itest test/al_ilegal_test.rb
@@ -39,13 +43,19 @@ jobs:
           git diff --cached --quiet || git commit -m "Atualiza análise trimestral"
           git push
       - name: Construir site público
-        run: ruby scripts/build_site.rb
+        env:
+          JEKYLL_BASEURL: /alojamento-local-em-analise
+        run: |
+          npm ci
+          bundle exec ruby scripts/build_site.rb
+      - name: Verificar estrutura do site
+        run: bundle exec ruby scripts/check_site.rb _site
       - name: Gate do artefacto de publicação
-        run: ruby scripts/audit_publication.rb --artifact site
+        run: bundle exec ruby scripts/audit_publication.rb --artifact _site
       - name: Upload do site sanitizado
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
         with:
-          path: site
+          path: _site
 
   deploy:
     needs: build

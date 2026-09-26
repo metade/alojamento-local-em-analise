@@ -46,7 +46,7 @@ Cada run contém:
 - `freguesias.csv` — métricas por freguesia;
 - `report.html` — relatório autónomo em português.
 
-O histórico append-only está em `data/history/summary.csv`. Runs existentes nunca são sobrescritos. Para gerar também um PDF derivado, instale `wkhtmltopdf` ou `weasyprint` e execute:
+O histórico append-only está em `data/history/summary.csv`. O gráfico de distâncias do site usa `data/history/distance_ranges.csv`: cada run público novo acrescenta quatro contagens agregadas de números de licença, sem coordenadas nem números de licença individuais. Para preencher este agregado num run público anterior sem alterar o snapshot, use `bundle exec ruby scripts/backfill_distance_ranges.rb <run_id>` com os ficheiros fonte originais; o script verifica os hashes do metadata antes de escrever. Runs existentes nunca são sobrescritos. Para gerar também um PDF derivado, instale `wkhtmltopdf` ou `weasyprint` e execute:
 
 ```bash
 GENERATE_PDF=1 bundle exec ruby run_me.rb --mode public
@@ -54,17 +54,53 @@ GENERATE_PDF=1 bundle exec ruby run_me.rb --mode public
 
 ## Site público
 
-O site estático publicável é montado a partir dos snapshots já versionados:
+O site estático publicável é montado a partir dos snapshots e do histórico agregado já versionados:
 
 ```bash
-ruby scripts/build_site.rb
+npm ci
+npm run site:build
 ```
 
-O resultado fica em `site/` e inclui apenas a página inicial, relatórios HTML,
+`site:build` prepara os dados do Jekyll, gera as páginas, compila o CSS,
+verifica a estrutura e executa a auditoria de publicação do artefacto. Para
+repetir apenas as etapas de CSS ou verificação:
+
+```bash
+npm run site:css
+npm run site:check
+ruby scripts/audit_publication.rb --artifact _site
+```
+
+O CSS editável está em `site/assets/css/`: `input.css` importa os tokens, as
+regras de base, layout, componentes, páginas e media queries. O Tailwind gera
+`_site/assets/story.css` a partir deste ficheiro; `_site/` não é fonte editável.
+Jekyll não copia os ficheiros fonte CSS para o artefacto. As classes utilitárias
+servem para layout e estados simples; ilustrações, fundos e composições
+editoriais permanecem em CSS próprio. Veja o [checklist visual](docs/css-visual-checklist.md)
+antes de alterar o aspeto do site.
+
+O resultado fica em `_site/` e inclui apenas a página inicial, relatórios HTML,
 CSVs agregados, metadata, licença e avisos de atribuição. Datasets brutos,
-resultados locais e caches não são copiados. O diretório `site/` pode ser usado
+resultados locais e caches não são copiados. O diretório `_site/` pode ser usado
 como artefacto de um deployment estático. O workflow trimestral constrói e
 valida esse diretório antes de o publicar no GitHub Pages.
+
+O site é mantido como um projeto Jekyll em `site/`: layouts e includes
+partilham a estrutura HTML, as páginas Liquid tratam a narrativa editorial e
+`scripts/build_site.rb` prepara os dados públicos e chama Jekyll.
+
+Para rever alterações localmente, construa o artefacto e sirva `_site/`:
+
+```bash
+npm run site:build
+python3 -m http.server 4000 --directory _site
+```
+
+Abra `http://localhost:4000`. Depois de editar apenas CSS, execute
+`npm run site:css` e atualize a página. Depois de editar templates ou dados,
+execute `npm run site:build` e atualize a página.
+
+O workflow de GitHub Pages define automaticamente a base `/alojamento-local-em-analise`.
 
 ## Testes
 
@@ -90,7 +126,7 @@ O primeiro comando verifica os ficheiros publicáveis na árvore atual; o segund
 `.github/workflows/publication-audit.yml` executa automaticamente a verificação de segurança dos outputs em pushes e pull requests.
 
 O repositório pode permanecer privado enquanto um deployment separado publica o
-conteúdo sanitizado de `site/`.
+conteúdo sanitizado de `_site/`.
 
 O workflow trimestral faz commit apenas dos outputs públicos sanitizados em `data/snapshots/` e `data/history/`; o site é publicado como artefacto separado através do GitHub Pages, depois de executar testes, construir o site e passar os gates de publicação. Os snapshots commitados e o histórico são a fonte permanente do projeto. Datasets brutos em `data_sources/`, resultados detalhados em `data/private/` e caches em `tmp/` continuam fora do Git por defeito. Os CSVs dos snapshots são agregados e não contêm identificadores de anúncios, anfitriões, nomes, endereços, coordenadas ou valores de licença individuais.
 
@@ -107,7 +143,8 @@ As licenças são normalizadas de forma conservadora. O analisador distingue, en
 - licença repetida na mesma localização;
 - mesma licença em várias localizações;
 - licença oficial fora de Lisboa;
-- ausência de licença identificável.
+- campo de licença vazio;
+- valor de licença não identificável como AL.
 
 `host_id` pode ser usado apenas durante a análise local como metadado, nunca como critério de agrupamento; não é escrito nos outputs públicos. A estimativa de estabelecimentos colapsa apenas categorias de menor risco e mantém casos de possível reutilização separados para verificação.
 

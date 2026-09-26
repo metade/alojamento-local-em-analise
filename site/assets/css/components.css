@@ -1,0 +1,149 @@
+.sticky-copy {
+  align-self: start;
+  position: sticky;
+  top: 110px;
+}
+
+.sticky-copy p {
+  color: #17202aa3;
+  max-width: 400px;
+  margin-top: 28px;
+}
+
+.caption {
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: #17202a80;
+  font-size: 12px;
+}
+
+.chapter-dark {
+  background: var(--color-ink);
+  color: var(--color-paper);
+}
+
+.light {
+  color: #f3efe599;
+}
+
+.chapter-dark .display em {
+  color: #f3efe552;
+}
+
+.notice-dark {
+  color: #f3efe5a8;
+  margin-top: 55px;
+  padding-top: 22px;
+}
+
+.compare-row i {
+  background: var(--color-yellow);
+  height: 24px;
+  width: var(--bar);
+  display: block;
+}
+
+.compare {
+  max-width: 900px;
+  margin: 55px auto 0;
+}
+
+.compare-row {
+  border-top: var(--border-rule);
+  grid-template-columns: 180px 1fr 80px;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+  font-size: 14px;
+  display: grid;
+}
+
+.compare-row i {
+  background: var(--color-sage);
+  height: 14px;
+}
+
+.compare-row strong {
+  text-align: right;
+}
+
+.lisbon-schematic {
+  border: var(--border-rule);
+  background: #e9e4d8;
+  min-height: 300px;
+  padding: 35px;
+  position: relative;
+}
+
+.tejo-block {
+  bottom: 0;
+  background: #b9d8df8c;
+  height: 65px;
+  position: absolute;
+  inset-inline: 0;
+}
+
+.districts {
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-small);
+  margin-top: 35px;
+  display: grid;
+  position: relative;
+  transform: rotate(-5deg);
+}
+
+.districts span {
+  text-transform: uppercase;
+  background: #176b8740;
+  padding: 15px;
+  font-size: 11px;
+}
+
+.districts span:nth-child(2n) {
+  background: #d9a51459;
+  margin-top: 18px;
+}
+
+.lisbon-schematic small {
+  text-transform: uppercase;
+  font-size: 10px;
+  position: absolute;
+  bottom: 12px;
+  left: 15px;
+}
+
+.metric-grid {
+  border-block: var(--border-rule);
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+  margin-top: 65px;
+  padding: 35px 0;
+  display: grid;
+}
+
+.table-wrap {
+  margin-top: 35px;
+  overflow: auto;
+}
+
+table {
+  border-collapse: collapse;
+  text-align: left;
+  width: 100%;
+}
+
+th, td {
+  border-bottom: var(--border-rule);
+  padding: 15px 12px;
+}
+
+th {
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: #17202a99;
+  font-size: 11px;
+}
+
+td {
+  text-align: right;
+}

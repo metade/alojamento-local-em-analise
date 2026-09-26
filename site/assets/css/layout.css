@@ -1,0 +1,167 @@
+.wrap {
+  width: min(1440px, 100% - 48px);
+  margin: auto;
+}
+
+.site-header {
+  z-index: 5;
+  backdrop-filter: blur(10px);
+  border-bottom: var(--border-rule);
+  background: #f3efe5ee;
+  position: sticky;
+  top: 0;
+}
+
+.header-inner {
+  justify-content: space-between;
+  align-items: center;
+  min-height: 72px;
+  display: flex;
+}
+
+.brand {
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  display: flex;
+}
+
+.brand small, .brand strong {
+  display: block;
+}
+
+.brand small {
+  color: var(--color-blue);
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  font-size: 9px;
+}
+
+.al-mark {
+  border: 3px solid var(--color-ink);
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  font-weight: 800;
+  display: grid;
+  position: relative;
+  overflow: visible;
+}
+
+.al-mark:after {
+  content: "?";
+  color: var(--color-terra);
+  font: 25px/1 var(--font-serif);
+  background: var(--color-paper);
+  padding: 0 1px;
+  position: absolute;
+  bottom: -20px;
+  right: -11px;
+}
+
+nav {
+  gap: var(--space-large);
+  display: flex;
+}
+
+.nav-link {
+  color: #17202a99;
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.nav-link:hover {
+  color: var(--color-ink);
+}
+
+.tile-rule {
+  background: repeating-linear-gradient(90deg,var(--color-blue) 0 24px,var(--color-paper) 24px 28px,var(--color-yellow) 28px 36px,var(--color-paper) 36px 40px);
+  height: 7px;
+}
+
+.district-grid, .split {
+  grid-template-columns: 1.2fr .8fr;
+  align-items: end;
+  gap: 60px;
+  display: grid;
+}
+
+.method-strip, .site-footer {
+  border-top: var(--border-rule);
+  padding: 60px 0;
+}
+
+.footer-grid {
+  grid-template-columns: 1fr 1fr auto;
+  align-items: start;
+  gap: 30px;
+  display: grid;
+}
+
+.method-strip h2 {
+  font: 36px var(--font-serif);
+  margin: 12px 0;
+  line-height: 1;
+}
+
+.provenance {
+  border-top: var(--border-rule);
+  color: #17202a99;
+  max-width: 1440px;
+  margin: auto;
+  padding: 20px 24px;
+  font-size: 11px;
+}
+
+.site-header {
+  background: #f3efe5f5;
+}
+
+.header-inner {
+  min-height: 52px;
+}
+
+.al-mark {
+  border-width: 2px;
+  width: 30px;
+  height: 30px;
+  font-size: 11px;
+}
+
+.al-mark:after {
+  z-index: 1;
+  padding: 0 2px;
+  font-size: 19px;
+  line-height: .85;
+  bottom: -9px;
+  right: -7px;
+}
+
+.brand {
+  gap: 9px;
+}
+
+.brand strong {
+  font-size: 12px;
+}
+
+.brand small {
+  font-size: 8px;
+}
+
+nav {
+  gap: 18px;
+}
+
+.tile-rule {
+  opacity: .55;
+  height: 3px;
+}
+
+.source-chapter, .geography-chapter {
+  background: var(--color-paper);
+}
+
+.provenance {
+  font-size: 10px;
+}

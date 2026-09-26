@@ -1,0 +1,136 @@
+@media (width <= 850px) {
+.wrap {
+    width: min(100% - 32px, 680px);
+  }
+
+  .nav-link {
+    font-size: 11px;
+  }
+
+  .hero {
+    min-height: auto;
+    padding-top: 85px;
+  }
+
+  .district-grid, .split, .method-grid {
+    grid-template-columns: 1fr;
+    gap: 38px;
+  }
+
+  .hero-number {
+    text-align: left;
+    font-size: clamp(85px, 23vw, 150px);
+  }
+
+  .metric-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sticky-copy {
+    position: static;
+  }
+
+  .district-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .district-card {
+    min-height: 205px;
+    padding: 15px;
+  }
+
+  .shape-glyph {
+    height: 65px;
+    font-size: 42px;
+  }
+
+  .compare-row {
+    grid-template-columns: 130px 1fr 65px;
+    font-size: 12px;
+  }
+
+  .footer-grid, .method-copy dl {
+    grid-template-columns: 1fr;
+  }
+
+.story-opening {
+    min-height: auto;
+    padding: 10vh 0;
+  }
+
+  .story-opening h1 {
+    font-size: clamp(48px, 12vw, 82px);
+  }
+
+  .opening-quote {
+    margin-top: 6vh;
+    font-size: clamp(23px, 6vw, 34px);
+  }
+
+  .quote-strip {
+    grid-template-columns: 1fr;
+    gap: 0;
+    margin-top: 6vh;
+  }
+
+  .quote-item {
+    border-right: 0;
+    border-bottom: var(--border-rule);
+    padding: 22px 0;
+  }
+
+  .quote-item:last-child {
+    border-bottom: 0;
+  }
+
+  .quote-item blockquote {
+    margin: 18px 0;
+  }
+
+  .story-opening .hero-number {
+    margin-top: 8vh;
+    font-size: clamp(92px, 25vw, 150px);
+  }
+
+  .estimate-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .estimate-steps > div, .estimate-steps > div + div {
+    border-right: 0;
+    border-bottom: var(--border-rule);
+    min-height: 0;
+    padding: 28px 0;
+  }
+
+  .estimate-steps > div:last-child {
+    border-bottom: 0;
+  }
+
+  .estimate-steps strong {
+    margin: 24px 0 12px;
+  }
+
+  .method-quotes {
+    grid-template-columns: 1fr;
+    gap: 34px;
+  }
+
+.header-inner {
+    min-height: 52px;
+  }
+
+  nav {
+    gap: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+html {
+    scroll-behavior: auto;
+  }
+
+  .district-card:hover {
+    transform: none;
+  }
+}
