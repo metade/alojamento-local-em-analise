@@ -1,3 +1,4 @@
 run_id,source_airbnb_date,source_official_register_download_date,methodology_version,listings,licence_groups,establishment_estimate,generated_at
 2026-06-23__2026-09-18,2026-06-23,2026-09-18,1.0.0,17064,8888,14103,2026-09-18T08:44:39Z
 2026-06-23__2026-09-19,2026-06-23,2026-09-19,1.0.0,17064,8888,14103,2026-09-19T08:42:19Z
+2026-06-23__2026-09-26,2026-06-23,2026-09-26,1.1.0,17064,8889,14103,2026-09-26T17:32:17Z

@@ -26,6 +26,7 @@ class VersionedAnalysisTest < Minitest::Test
       CSV.open(airbnb, "w", write_headers: true, headers: HEADERS) do |csv|
         csv << ["Lisboa", "00123/AL", "https://example/1", "Alfama", "Apartment", "38.71", "-9.14", "Entire home/apt", "Apartment", "1", "1", "2026-06-23"]
         csv << ["Lisboa", nil, "https://example/2", "Alfama", "No licence", "38.72", "-9.14", "Entire home/apt", "Apartment", "1", "2", "2026-06-23"]
+        csv << ["Lisboa", "406/UT/2017", "https://example/3", "Alfama", "Other scheme", "38.73", "-9.14", "Entire home/apt", "Apartment", "1", "3", "2026-06-23"]
       end
       CSV.open(official, "w", write_headers: true, headers: %w[NrRNAL LatLong DataRegisto Denominacao Endereco Concelho Modalidade NrUtentes]) do |csv|
         csv << ["123", "38.71;-9.14", "2020-01-01", "Casa", "Rua", "Lisboa", "Apartamento", "2"]
@@ -36,9 +37,12 @@ class VersionedAnalysisTest < Minitest::Test
       assert_equal "2026-06-23__2026-09-17", result[:run_id]
       assert_equal %w[metadata.json report.html summary.json listings.csv licence_groups.csv freguesias.csv].sort, Dir.children(run_dir).sort
       public_listings = CSV.read(File.join(run_dir, "listings.csv"), headers: true)
-      assert_equal 2, public_listings.length
+      assert_equal 3, public_listings.length
+      assert_equal 1, public_listings.find { |row| row["classification"] == "sem licença" }["listings"].to_i
+      assert_equal 1, public_listings.find { |row| row["classification"] == "sem licença identificável" }["listings"].to_i
       summary = JSON.parse(File.read(File.join(run_dir, "summary.json")))
       assert_equal 1, summary.fetch("official_registers_lisbon")
+      assert_equal "1.1.0", summary.fetch("methodology_version")
       assert_equal AlIlegal::PUBLIC_CSV_SCHEMAS["listings.csv"], public_listings.headers
       refute_includes public_listings.headers, "host_id"
       refute public_listings.to_csv.match?(%r{https?://|/rooms/})

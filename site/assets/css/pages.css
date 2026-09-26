@@ -397,32 +397,37 @@
   color: #f3efe56b;
 }
 
-.finding-story {
-  border-top: 1px solid #f3efe526;
-  grid-template-columns: minmax(280px, .9fr) minmax(340px, 1.1fr);
-  align-items: center;
-  gap: 8vw;
-  min-height: 70vh;
-  padding: 12vh 0;
+.findings-grid {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  margin: 7vh 0 36px;
+}
+
+.finding-story {
+  border: 1px solid #f3efe533;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: clamp(24px, 3vw, 42px);
 }
 
 .finding-number {
   color: var(--color-yellow);
-  font: clamp(86px,12vw,190px)/.8 var(--font-serif);
+  font: clamp(68px,7vw,112px)/.85 var(--font-serif);
   letter-spacing: -.08em;
   display: block;
 }
 
 .finding-copy h3 {
-  font: clamp(30px,4vw,58px)/.95 var(--font-serif);
+  font: clamp(28px,3vw,42px)/1.02 var(--font-serif);
   max-width: 500px;
-  margin: 24px 0;
+  margin: 20px 0 16px;
 }
 
 .finding-copy > p {
   color: #f3efe5b8;
-  font-size: 20px;
+  font-size: 17px;
 }
 
 .signal-label {
@@ -434,42 +439,40 @@
   display: block;
 }
 
-.dot-field {
-  grid-template-columns: repeat(10, 1fr);
-  gap: 12px;
-  max-width: 530px;
-  display: grid;
-}
-
-.dot-field .dot {
-  aspect-ratio: 1;
-  background: #f3efe533;
-  border-radius: 50%;
-}
-
-.dot-field .dot.is-signal {
-  background: var(--color-yellow);
-}
-
-.dot-field > span {
-  color: #f3efe5ad;
-  grid-column: 1 / -1;
-  margin-top: 14px;
-  font-size: 12px;
-}
-
-.spatial-graphic, .municipality-graphic {
+.signal-graphic {
   border-block: 1px solid #f3efe552;
-  min-height: 300px;
+  height: 150px;
+  margin-top: auto;
   position: relative;
+}
+
+.empty-graphic, .format-graphic {
+  align-items: center;
+  display: flex;
+  gap: 18px;
+}
+
+.empty-graphic > span, .format-graphic > span {
+  color: #f3efe5ad;
+  font-size: 11px;
+  letter-spacing: .12em;
+}
+
+.empty-graphic > b, .format-graphic > b {
+  color: var(--color-yellow);
+  font: 64px/1 var(--font-serif);
+}
+
+.empty-graphic > small, .format-graphic > small {
+  color: #f3efe5ad;
 }
 
 .spatial-graphic > b {
   color: var(--color-yellow);
-  font: 32px var(--font-serif);
+  font: 24px var(--font-serif);
   position: absolute;
-  top: 45%;
-  left: 40%;
+  top: 42%;
+  left: 38%;
 }
 
 .spatial-line {
@@ -481,21 +484,21 @@
 
 .line-one {
   width: 39%;
-  top: 46%;
-  left: 40%;
+  top: 43%;
+  left: 38%;
   transform: rotate(-24deg);
 }
 
 .line-two {
   width: 39%;
-  top: 48%;
-  left: 40%;
+  top: 47%;
+  left: 38%;
   transform: rotate(24deg);
 }
 
 .place {
   color: #f3efe5d0;
-  font-size: 15px;
+  font-size: 13px;
   font-style: normal;
   position: absolute;
 }
@@ -513,28 +516,23 @@
 .municipality-graphic {
   align-content: center;
   justify-items: center;
-  gap: 7px;
+  gap: 2px;
   display: grid;
 }
 
 .municipality-graphic b {
-  font: clamp(32px,4vw,58px) var(--font-serif);
-}
-
-.municipality-graphic i {
-  color: var(--color-terra);
-  font: 20px monospace;
+  font: 25px var(--font-serif);
 }
 
 .municipality-arrow {
   color: var(--color-terra);
-  font-size: 34px;
+  font-size: 18px;
 }
 
 .meaning {
   border-top: 1px solid #f3efe533;
   max-width: 580px;
-  margin-top: 30px;
+  margin: 24px 0;
 }
 
 .meaning summary {

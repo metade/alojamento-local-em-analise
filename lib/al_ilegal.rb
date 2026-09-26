@@ -11,9 +11,9 @@ require "erb"
 require "time"
 
 module AlIlegal
-  ANALYSIS_VERSION = "2.1.0"
+  ANALYSIS_VERSION = "2.2.0"
   OUTPUT_SCHEMA_VERSION = "3.1.0"
-  METHODOLOGY_VERSION = "1.0.0"
+  METHODOLOGY_VERSION = "1.1.0"
   PUBLIC_CSV_SCHEMAS = {
     "listings.csv" => %w[freguesia classification listings identifiable_licences establishments_estimate],
     "licence_groups.csv" => %w[classification official_municipality official_type licence_groups listings spatial_locations establishments_estimate],
@@ -87,6 +87,10 @@ module AlIlegal
     nil
   end
 
+  def self.missing_license_assessment(raw_license)
+    raw_license.to_s.strip.empty? ? "sem licença" : "sem licença identificável"
+  end
+
   def self.parse_lat_long(string)
     coordinates = string.to_s.split(/\s*;\s*/)
     raise ArgumentError, "Invalid LatLong value: #{string.inspect}" unless coordinates.size == 2
@@ -122,7 +126,7 @@ module AlIlegal
   end
 
   def self.license_group_assessment(listings, official_record)
-    return "sem licença identificável" if listings.first[:licensa].to_s.empty?
+    return missing_license_assessment(listings.first[:licensa_raw]) if listings.first[:licensa].to_s.empty?
     return "licença oficial fora de Lisboa" if official_record && official_record["Concelho"] != "Lisboa"
     return "licença única em Lisboa" if listings.size == 1
     return "licença repetida em várias localizações" if spatial_clusters(listings).size > 1
@@ -297,7 +301,10 @@ module AlIlegal
         next if license.to_s.empty?
         members.each { |row| row[:spatial_cluster_count] = AlIlegal.spatial_clusters(members).size; row[:license_group_assessment] = AlIlegal.license_group_assessment(members, official[license]) }
       end
-      data.each { |row| row[:spatial_cluster_count] ||= 1; row[:license_group_assessment] ||= "sem licença identificável" }
+      data.each do |row|
+        row[:spatial_cluster_count] ||= 1
+        row[:license_group_assessment] ||= AlIlegal.missing_license_assessment(row[:licensa_raw])
+      end
       [data, official]
     end
 
@@ -310,7 +317,7 @@ module AlIlegal
       values.join(";")
     end
     def licence_groups(listings, official)
-      listings.group_by { |row| row[:licensa].to_s }.map do |license, rows|
+      listings.group_by { |row| [row[:licensa].to_s, row[:license_group_assessment].to_s] }.map do |(license, _assessment), rows|
         {licensa: license, licence_raw_examples: rows.map { |r| r[:licensa_raw] }.compact.uniq.join(" | "), listings: rows.size,
          spatial_locations: rows.map { |r| [r[:lat], r[:lng]] }.uniq.size, classification: rows.first[:license_group_assessment],
          official_name: rows.first[:official_name], official_concelho: rows.first[:official_concelho], official_modalidade: rows.first[:official_modalidade],

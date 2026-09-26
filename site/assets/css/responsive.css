@@ -92,26 +92,21 @@
     font-size: clamp(92px, 25vw, 150px);
   }
 
-  .finding-story, .estimate-steps {
+  .findings-grid, .estimate-steps {
     grid-template-columns: 1fr;
   }
 
-  .finding-story {
-    gap: 50px;
-    padding: 10vh 0;
-  }
-
-  .dot-field {
-    gap: 9px;
-    max-width: 100%;
+  .findings-grid {
+    gap: 16px;
+    margin-top: 5vh;
   }
 
   .meaning-grid {
     grid-template-columns: 1fr;
   }
 
-  .spatial-graphic, .municipality-graphic {
-    min-height: 240px;
+  .signal-graphic {
+    height: 130px;
   }
 
   .estimate-steps > div, .estimate-steps > div + div {

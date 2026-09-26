@@ -143,7 +143,8 @@ As licenças são normalizadas de forma conservadora. O analisador distingue, en
 - licença repetida na mesma localização;
 - mesma licença em várias localizações;
 - licença oficial fora de Lisboa;
-- ausência de licença identificável.
+- campo de licença vazio;
+- valor de licença não identificável como AL.
 
 `host_id` pode ser usado apenas durante a análise local como metadado, nunca como critério de agrupamento; não é escrito nos outputs públicos. A estimativa de estabelecimentos colapsa apenas categorias de menor risco e mantém casos de possível reutilização separados para verificação.
 

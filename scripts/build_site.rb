@@ -15,6 +15,7 @@ SITE = File.join(ROOT, "_site")
 QUOTES = File.join(ROOT, "site_content", "quotes.json")
 PUBLIC_FILES = %w[metadata.json summary.json listings.csv licence_groups.csv freguesias.csv report.html].freeze
 LABELS = {
+  "sem licença" => "Sem licença",
   "sem licença identificável" => "Sem licença identificável",
   "licença repetida em várias localizações" => "Licença repetida em diferentes localizações",
   "licença oficial fora de Lisboa" => "Licença registada fora de Lisboa",
