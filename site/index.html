@@ -45,32 +45,38 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
   </div>
 </section>
 <section class="chapter findings-chapter"><div class="wrap"><div class="eyebrow">05 · Sinais</div><h2 class="display display-medium">O que os dados revelam<br><em>Padrões que merecem atenção.</em></h2>
-  <div class="mt-10 grid grid-cols-1 gap-4 min-[850px]:grid-cols-2 min-[850px]:gap-6">
-    <article class="flex min-w-0 flex-col gap-6 border border-[#f3efe533] p-6 sm:p-8" aria-labelledby="finding-empty">
+  <div class="mt-10 grid grid-cols-1 min-[850px]:grid-cols-2">
+    <article class="flex min-w-0 flex-col gap-6 border-b border-[#f3efe54d] px-2 py-4 min-[850px]:border-r min-[850px]:px-6 min-[850px]:py-6" aria-labelledby="finding-empty">
       <div>
         <h3 id="finding-empty" class="max-w-[24ch] text-balance font-[family-name:var(--font-serif)] text-[clamp(1.75rem,2.6vw,2.65rem)] leading-[1.12]"><span class="text-[1.35em] text-[var(--color-yellow)]">{% if split_available %}{{ missing | pt_number }}{% else %}—{% endif %}</span> sem número de licença no anúncio</h3>
         <p class="mt-4 text-[17px] text-[#f3efe5c7]">{% if split_available %}O campo da licença está vazio nos dados do anúncio.{% else %}Este snapshot ainda não separa campos vazios de valores não reconhecidos.{% endif %}</p>
       </div>
-      {% if split_available %}<div class="mt-auto border-y border-[#f3efe54d] py-6">
+      {% if split_available %}<div class="mt-auto py-6">
         <div class="h-4 w-full overflow-hidden rounded-full bg-[#f3efe533]" role="img" aria-label="{{ missing_pct | replace: '.', ',' }}% dos {{ s.listings | pt_number }} anúncios têm o campo da licença vazio"><span class="block h-full rounded-full bg-[var(--color-yellow)]" style="width: {{ missing_pct }}%"></span></div>
         <div class="mt-3 flex flex-wrap justify-between gap-x-4 gap-y-1 text-sm"><strong>{{ missing_pct | replace: '.', ',' }}% com campo vazio</strong><span class="text-[#f3efe599]">restantes anúncios</span></div>
       </div>{% endif %}
       <div class="flex flex-wrap items-start justify-between gap-x-5 gap-y-2 text-sm max-[550px]:flex-col"><p class="m-0! flex min-w-0 flex-1 items-start gap-2 text-[#f3efe5c7]"><span aria-hidden="true" class="text-[var(--color-yellow)]">ⓘ</span><span>Campo vazio não prova ausência de licença.</span></p><a class="shrink-0 font-semibold text-[var(--color-yellow)] underline-offset-4 hover:underline focus-visible:underline" href="{{ '/metodologia.html#campo-vazio' | relative_url }}">Como foi contado ↗</a></div>
     </article>
-    <article class="flex min-w-0 flex-col gap-6 border border-[#f3efe533] p-6 sm:p-8" aria-labelledby="finding-unrecognised">
+    <article class="flex min-w-0 flex-col gap-6 border-b border-[#f3efe54d] px-2 py-4 min-[850px]:px-6 min-[850px]:py-6" aria-labelledby="finding-unrecognised">
       <div>
         <h3 id="finding-unrecognised" class="max-w-[24ch] text-balance font-[family-name:var(--font-serif)] text-[clamp(1.75rem,2.6vw,2.65rem)] leading-[1.12]"><span class="text-[1.35em] text-[var(--color-yellow)]">{% if split_available %}{{ unrecognised | pt_number }}{% else %}—{% endif %}</span> com valor não reconhecido como licença AL</h3>
-        <p class="mt-4 text-[17px] text-[#f3efe5c7]">{% if split_available %}Há um valor no campo, mas a análise não o conseguiu converter num número de licença AL.{% else %}Este snapshot ainda não permite contar esta categoria em separado.{% endif %}</p>
+        <p class="mt-4 text-[17px] text-[#f3efe5c7]">{% if split_available %}O valor preenchido não segue um formato de licença AL reconhecido pela análise.{% else %}Este snapshot ainda não permite contar esta categoria em separado.{% endif %}</p>
       </div>
-      {% if split_available %}<div class="mt-auto border-y border-[#f3efe54d] py-6">
-        <div class="h-4 w-full overflow-hidden rounded-full bg-[#f3efe533]" role="img" aria-label="{{ unrecognised_pct | replace: '.', ',' }}% dos {{ s.listings | pt_number }} anúncios têm um valor não reconhecido como número de licença AL"><span class="block h-full rounded-full bg-[var(--color-yellow)]" style="width: {{ unrecognised_pct }}%"></span></div>
-        <div class="mt-3 flex flex-wrap justify-between gap-x-4 gap-y-1 text-sm"><strong>{{ unrecognised_pct | replace: '.', ',' }}% não reconhecidos</strong><span class="text-[#f3efe599]">restantes anúncios</span></div>
-      </div>{% endif %}
+      {% if split_available %}<figure class="mt-auto py-6">
+        <svg class="sr-only" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg"><symbol id="listing-house" viewBox="0 0 100 100"><path d="M50 6 30 23V13H19v20L3 46l7 8 6-5v43h23V68h22v24h23V49l6 5 7-8L50 6Z"/></symbol></svg>
+        <div class="grid grid-cols-5 items-end gap-1.5 sm:gap-3 min-[1100px]:gap-4" role="img" aria-label="Esquema aproximado: uma casa amarela entre cinco ícones representa anúncios com valor não reconhecido como licença AL; as outras quatro são cinzentas. Cada casa simboliza um anúncio, não um alojamento verificado. A percentagem apresentada é {{ unrecognised_pct | replace: '.', ',' }}% dos {{ s.listings | pt_number }} anúncios analisados.">
+          {% for house in (1..5) %}<svg class="aspect-square w-full max-w-[108px] {% if forloop.first %}fill-[var(--color-yellow)]{% else %}fill-[#69747c]{% endif %}" viewBox="0 0 100 100" aria-hidden="true" focusable="false"><use href="#listing-house"/></svg>{% endfor %}
+        </div>
+        <figcaption class="mt-5">
+          <strong class="block font-[family-name:var(--font-serif)] text-[clamp(1.25rem,2vw,1.7rem)] font-normal leading-tight text-[var(--color-yellow)]">Cerca de 1 em cada 5 anúncios</strong>
+          <span class="mt-1 block text-sm text-[#f3efe5c7]">{{ unrecognised_pct | replace: '.', ',' }}% dos anúncios analisados</span>
+        </figcaption>
+      </figure>{% endif %}
       <div class="flex flex-wrap items-start justify-between gap-x-5 gap-y-2 text-sm max-[550px]:flex-col"><p class="m-0! flex min-w-0 flex-1 items-start gap-2 text-[#f3efe5c7]"><span aria-hidden="true" class="text-[var(--color-yellow)]">ⓘ</span><span>Há valores que exigem análise individual.</span></p><a class="shrink-0 font-semibold text-[var(--color-yellow)] underline-offset-4 hover:underline focus-visible:underline" href="{{ '/metodologia.html#valor-nao-reconhecido' | relative_url }}">Como foi contado ↗</a></div>
     </article>
-    <article class="flex min-w-0 flex-col gap-6 border border-[#f3efe533] p-6 sm:p-8" aria-labelledby="finding-repeated">
+    <article class="flex min-w-0 flex-col gap-6 border-b border-[#f3efe54d] px-2 py-4 min-[850px]:border-r min-[850px]:border-b-0 min-[850px]:px-6 min-[850px]:py-6" aria-labelledby="finding-repeated">
       <div><h3 id="finding-repeated" class="max-w-[24ch] text-balance font-[family-name:var(--font-serif)] text-[clamp(1.75rem,2.6vw,2.65rem)] leading-[1.12]"><span class="text-[1.35em] text-[var(--color-yellow)]">{{ repeated | pt_number }}</span> com o mesmo número em localizações diferentes</h3><p class="mt-4 text-[17px] text-[#f3efe5c7]">O mesmo número normalizado aparece em agrupamentos geograficamente separados.</p></div>
-      <figure class="mt-auto border-y border-[#f3efe54d] py-5">
+      <figure class="mt-auto py-5">
         <figcaption class="text-xs font-semibold uppercase tracking-[.12em] text-[#f3efe5b8]">Distância máxima entre localizações</figcaption>
         {% if d.distance_ranges.size > 0 %}
           <p class="my-2! text-xs text-[#f3efe599]">{{ d.distance_total | pt_number }} números de licença · {{ d.repeated_listings | pt_number }} anúncios</p>
@@ -87,12 +93,21 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
       </figure>
       <div class="flex flex-wrap items-start justify-between gap-x-5 gap-y-2 text-sm max-[550px]:flex-col"><p class="m-0! flex min-w-0 flex-1 items-start gap-2 text-[#f3efe5c7]"><span aria-hidden="true" class="text-[var(--color-yellow)]">ⓘ</span><span>Repetição não prova uso indevido.</span></p><a class="shrink-0 font-semibold text-[var(--color-yellow)] underline-offset-4 hover:underline focus-visible:underline" href="{{ '/metodologia.html#localizacoes-diferentes' | relative_url }}">Como foi contado ↗</a></div>
     </article>
-    <article class="flex min-w-0 flex-col gap-6 border border-[#f3efe533] p-6 sm:p-8" aria-labelledby="finding-outside">
+    <article class="flex min-w-0 flex-col gap-6 px-2 py-4 min-[850px]:px-6 min-[850px]:py-6" aria-labelledby="finding-outside">
       <div><h3 id="finding-outside" class="max-w-[24ch] text-balance font-[family-name:var(--font-serif)] text-[clamp(1.75rem,2.6vw,2.65rem)] leading-[1.12]"><span class="text-[1.35em] text-[var(--color-yellow)]">{{ outside | pt_number }}</span> com licença registada fora de Lisboa</h3><p class="mt-4 text-[17px] text-[#f3efe5c7]">O anúncio surge no conjunto de Lisboa, mas o registo oficial da licença aponta para outro município.</p></div>
-      <div class="mt-auto flex min-h-[198px] flex-col justify-center border-y border-[#f3efe54d] py-5" role="img" aria-label="Divergência entre os dados: anúncio Airbnb no conjunto de Lisboa associado a licença registada noutro município no registo oficial">
-        <p class="text-xs font-semibold uppercase tracking-[.12em] text-[#f3efe599]">O que os dois conjuntos de dados dizem</p>
-        <div class="mt-5 flex items-center gap-2 text-sm sm:gap-4"><div class="min-w-0 flex-1 border border-[#f3efe555] p-2 sm:p-3"><span class="block text-xs text-[#f3efe599]">Anúncio Airbnb</span><strong>Lisboa</strong></div><span aria-hidden="true" class="text-[var(--color-yellow)]">→</span><div class="min-w-0 flex-1 border border-[var(--color-terra)] p-2 sm:p-3"><span class="block text-xs text-[#f3efe599]">Registo oficial</span><strong>Outro município</strong></div></div>
-      </div>
+      <figure class="mt-auto py-5">
+        <figcaption class="text-xs font-semibold uppercase tracking-[.12em] text-[#f3efe5b8]">Região (NUTS II) no registo oficial</figcaption>
+        <p class="my-2! text-xs text-[#f3efe599]">Percentagem dos {{ d.outside_regions.total | pt_number }} anúncios deste sinal</p>
+        <ul class="m-0! mt-4! space-y-2.5 p-0!" aria-label="Distribuição dos anúncios por região NUTS II da licença no registo oficial">
+          {% for region in d.outside_regions.rows %}
+            <li class="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1.5 text-xs sm:grid-cols-[minmax(115px,auto)_minmax(0,1fr)_auto] sm:items-center sm:text-sm">
+              <span class="min-w-0">{{ region.name }}</span>
+              <span class="col-span-2 row-start-2 h-3 overflow-hidden rounded-full bg-[#f3efe533] sm:col-span-1 sm:col-start-2 sm:row-start-1" aria-hidden="true"><span class="block h-full rounded-full {% if region.unresolved %}bg-[#90999e]{% else %}bg-[var(--color-yellow)]{% endif %}" style="width: {{ region.width }}%"></span></span>
+              <span class="col-start-2 row-start-1 whitespace-nowrap text-right tabular-nums sm:col-start-3"><strong>{{ region.count | pt_number }}</strong> <span class="text-[#f3efe599]">{{ region.percent | replace: '.', ',' }}%</span></span>
+            </li>
+          {% endfor %}
+        </ul>
+      </figure>
       <div class="flex flex-wrap items-start justify-between gap-x-5 gap-y-2 text-sm max-[550px]:flex-col"><p class="m-0! flex min-w-0 flex-1 items-start gap-2 text-[#f3efe5c7]"><span aria-hidden="true" class="text-[var(--color-yellow)]">ⓘ</span><span>A divergência exige verificação caso a caso.</span></p><a class="shrink-0 font-semibold text-[var(--color-yellow)] underline-offset-4 hover:underline focus-visible:underline" href="{{ '/metodologia.html#fora-de-lisboa' | relative_url }}">Como foi contado ↗</a></div>
     </article>
   </div>

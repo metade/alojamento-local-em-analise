@@ -14,6 +14,7 @@ SOURCE = File.join(ROOT, "site")
 SITE = File.join(ROOT, "_site")
 QUOTES = File.join(ROOT, "site_content", "quotes.json")
 DISTANCE_HISTORY = File.join(ROOT, "data", "history", "distance_ranges.csv")
+OUTSIDE_REGION_HISTORY = File.join(ROOT, "data", "history", "outside_regions.csv")
 PUBLIC_FILES = %w[metadata.json summary.json listings.csv licence_groups.csv freguesias.csv report.html].freeze
 DISTANCE_LABELS = {
   "500_m_1_km" => "500 m–1 km",
@@ -85,6 +86,40 @@ def distance_ranges(run_id, summary)
   DISTANCE_LABELS.map { |key, label| {"key" => key, "label" => label, "count" => counts.fetch(key)} }
 end
 
+def outside_regions(run_id, listings)
+  expected = listings.select { |row| row["classification"] == "licença oficial fora de Lisboa" }
+    .sum { |row| row["listings"].to_i }
+  return {"rows" => [], "total" => 0, "unresolved_municipality" => 0, "unresolved_region" => 0} if expected.zero?
+
+  raise "Missing outside region counts for #{run_id}" unless File.file?(OUTSIDE_REGION_HISTORY)
+
+  rows = CSV.read(OUTSIDE_REGION_HISTORY, headers: true).select { |row| row["run_id"] == run_id }
+  keys = rows.map { |row| [row["resolution"], row["official_region"].to_s.strip] }
+  unless rows.any? && keys.uniq.size == keys.size && rows.all? { |row|
+    region = row["official_region"].to_s.strip
+    resolution = row["resolution"]
+    row["region_method"] == "official_register_nutsii_v1" && row["listings"].to_s.match?(/\A[1-9]\d*\z/) &&
+      ((resolution == "resolved" && !region.empty?) || (%w[municipality_missing region_missing].include?(resolution) && region.empty?))
+  }
+    raise "Invalid outside region counts for #{run_id}"
+  end
+
+  counts = rows.to_h { |row| [[row["resolution"], row["official_region"].to_s.strip], row["listings"].to_i] }
+  raise "Outside region count differs from listings for #{run_id}" unless counts.values.sum == expected
+
+  unresolved_municipality = counts.delete(["municipality_missing", ""]).to_i
+  unresolved_region = counts.delete(["region_missing", ""]).to_i
+  chart = counts.sort_by { |(_, name), count| [-count, name] }.map { |(_, name), count| {"name" => name, "count" => count} }
+  chart << {"name" => "Município não identificado", "count" => unresolved_municipality, "unresolved" => true} if unresolved_municipality.positive?
+  chart << {"name" => "Região não identificada", "count" => unresolved_region, "unresolved" => true} if unresolved_region.positive?
+  maximum = chart.map { |row| row["count"] }.max
+  chart.each do |row|
+    row["percent"] = (row["count"] * 100.0 / expected).round(1)
+    row["width"] = (row["count"] * 100.0 / maximum).round(1)
+  end
+  {"rows" => chart, "total" => expected, "unresolved_municipality" => unresolved_municipality, "unresolved_region" => unresolved_region}
+end
+
 def site_data(runs)
   run_id = File.basename(runs.first)
   run_dir = runs.first
@@ -94,6 +129,7 @@ def site_data(runs)
   freguesias = CSV.read(File.join(run_dir, "freguesias.csv"), headers: true).map(&:to_h)
   grouped = listings.group_by { |row| row["freguesia"] }.transform_values { |rows| counts(rows) }
   ranges = distance_ranges(run_id, summary)
+  regions = outside_regions(run_id, listings)
   districts = freguesias.map do |row|
     raw_name = row["freguesia"]
     {
@@ -119,6 +155,7 @@ def site_data(runs)
     "distance_ranges" => ranges,
     "distance_total" => ranges.sum { |range| range["count"] },
     "distance_max" => ranges.map { |range| range["count"] }.max.to_i,
+    "outside_regions" => regions,
     "districts" => districts,
     "labels" => LABELS.values,
     "quotes" => File.exist?(QUOTES) ? JSON.parse(File.read(QUOTES)) : [],

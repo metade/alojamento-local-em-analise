@@ -299,6 +299,7 @@ module AlIlegal
       generate_pdf_file(run_dir) if generate_pdf
       append_history(history_path, summary)
       append_distance_history(File.join(File.dirname(history_path), "distance_ranges.csv"), run_id, listings) if mode == "public"
+      append_outside_region_history(File.join(File.dirname(history_path), "outside_regions.csv"), run_id, listings) if mode == "public"
       validate_public_outputs!(run_dir) if mode == "public"
       {run_id: run_id, path: run_dir, summary: summary}
     end
@@ -321,7 +322,7 @@ module AlIlegal
           url: row["listing_url"], bairro: row["neighbourhood_cleansed"], nome: row["name"], lat: row["latitude"], lng: row["longitude"],
           room_type: row["room_type"], property_type: row["property_type"], quartos: row["bedrooms"], host_id: row["host_id"],
           airbnb_date: parse_date(row["last_scraped"]), official_date: record && parse_date(record["DataRegisto"]),
-          official_name: record && record["Denominacao"], official_address: record && record["Endereco"], official_concelho: record && record["Concelho"],
+          official_name: record && record["Denominacao"], official_address: record && record["Endereco"], official_concelho: record && record["Concelho"], official_region: record && record["NUTSII"],
           official_modalidade: record && record["Modalidade"], official_capacity: record && record["NrUtentes"], distance_km: distance
         }
       end
@@ -476,6 +477,39 @@ module AlIlegal
       existing = File.exist?(path) && !File.empty?(path)
       CSV.open(path, "a", write_headers: !existing, headers: headers) do |csv|
         DISTANCE_RANGE_KEYS.each { |range| csv << [run_id, "max_cross_cluster_pair_km_v1", range, counts.fetch(range)] }
+      end
+    end
+
+    def outside_region_counts(listings)
+      listings.each_with_object(Hash.new(0)) do |row, counts|
+        next unless row[:license_group_assessment] == "licença oficial fora de Lisboa"
+
+        municipality = row[:official_concelho].to_s.strip
+        region = row[:official_region].to_s.strip
+        key = if municipality.empty?
+          ["municipality_missing", ""]
+        elsif region.empty?
+          ["region_missing", ""]
+        else
+          ["resolved", region]
+        end
+        counts[key] += 1
+      end
+    end
+
+    def append_outside_region_history(path, run_id, listings)
+      headers = %w[run_id region_method resolution official_region listings]
+      if File.exist?(path) && CSV.foreach(path, headers: true).any? { |row| row["run_id"] == run_id }
+        raise "Outside region counts already exist for immutable run #{run_id}"
+      end
+
+      counts = outside_region_counts(listings)
+      FileUtils.mkdir_p(File.dirname(path))
+      existing = File.exist?(path) && !File.empty?(path)
+      CSV.open(path, "a", write_headers: !existing, headers: headers) do |csv|
+        counts.sort_by { |(resolution, region), _| [resolution, region] }.each do |(resolution, region), count|
+          csv << [run_id, "official_register_nutsii_v1", resolution, region, count]
+        end
       end
     end
 

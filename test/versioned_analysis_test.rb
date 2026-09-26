@@ -136,6 +136,34 @@ class VersionedAnalysisTest < Minitest::Test
     end
   end
 
+  def test_public_run_counts_outside_regions_per_announcement_and_separates_unknown
+    Dir.mktmpdir do |dir|
+      airbnb = File.join(dir, "listings-2026-06-23.csv")
+      official = File.join(dir, "official-outside-regions-2026-09-17.csv")
+      history = File.join(dir, "history", "summary.csv")
+      CSV.open(airbnb, "w", write_headers: true, headers: HEADERS) do |csv|
+        2.times { |index| csv << ["Lisboa", "123/AL", "https://example/#{index}", "Alfama", "Apartment", "38.71", "-9.14", "Entire home/apt", "Apartment", "1", "1", "2026-06-23"] }
+        csv << ["Lisboa", "456/AL", "https://example/3", "Alfama", "Apartment", "38.71", "-9.14", "Entire home/apt", "Apartment", "1", "2", "2026-06-23"]
+        csv << ["Lisboa", "789/AL", "https://example/4", "Alfama", "Apartment", "38.71", "-9.14", "Entire home/apt", "Apartment", "1", "3", "2026-06-23"]
+      end
+      CSV.open(official, "w", write_headers: true, headers: %w[NrRNAL LatLong DataRegisto Denominacao Endereco Concelho NUTSII Modalidade NrUtentes]) do |csv|
+        csv << ["123", "38.71;-9.14", "2020-01-01", "Casa", "Rua", "Porto", "Norte", "Apartamento", "2"]
+        csv << ["456", "38.71;-9.14", "2020-01-01", "Casa", "Rua", nil, "Norte", "Apartamento", "2"]
+        csv << ["789", "38.71;-9.14", "2020-01-01", "Casa", "Rua", "Lisboa", "Grande Lisboa", "Apartamento", "2"]
+      end
+
+      result = AlIlegal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "public", output_root: File.join(dir, "snapshots"), history_path: history)
+      rows = CSV.read(File.join(dir, "history", "outside_regions.csv"), headers: true)
+      counts = rows.to_h { |row| [[row["resolution"], row["official_region"].to_s], row["listings"].to_i] }
+
+      assert_equal({["resolved", "Norte"] => 2, ["municipality_missing", ""] => 1}, counts)
+      assert_equal 3, counts.values.sum
+      assert rows.all? { |row| row["region_method"] == "official_register_nutsii_v1" }
+      assert_equal 3, CSV.read(File.join(result[:path], "listings.csv"), headers: true).select { |row| row["classification"] == "licença oficial fora de Lisboa" }.sum { |row| row["listings"].to_i }
+      assert_raises(RuntimeError) { AlIlegal::Analysis.append_outside_region_history(File.join(dir, "history", "outside_regions.csv"), result[:run_id], []) }
+    end
+  end
+
   def test_discovers_latest_lisbon_snapshot_from_inside_airbnb_page
     page = <<~HTML
       <h3>Lisbon, Lisbon, Portugal</h3>
