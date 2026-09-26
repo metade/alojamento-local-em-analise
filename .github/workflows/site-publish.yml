@@ -41,11 +41,11 @@ jobs:
       - name: Construir site público
         run: bundle exec ruby scripts/build_site.rb
       - name: Gate do artefacto de publicação
-        run: bundle exec ruby scripts/audit_publication.rb --artifact site
+        run: bundle exec ruby scripts/audit_publication.rb --artifact _site
       - name: Upload do site sanitizado
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
         with:
-          path: site
+          path: _site
 
   deploy:
     needs: build

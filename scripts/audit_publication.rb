@@ -5,7 +5,7 @@ require "open3"
 require "json"
 
 PUBLIC_ROOTS = ["data/snapshots/", "data/history/"].freeze
-ARTIFACT_ROOTS = ["site/"].freeze
+ARTIFACT_ROOTS = ["_site/"].freeze
 PRIVATE_PATHS = [
   %r{\Adata_sources/},
   %r{\Adata/private/},

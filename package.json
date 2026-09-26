@@ -1,7 +1,7 @@
 {
   "private": true,
   "scripts": {
-    "build:css": "tailwindcss -i site/assets/.story-input.css -o site/assets/story.css --minify"
+    "build:css": "tailwindcss -i site/assets/story.css -o _site/assets/story.css --minify"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.13",

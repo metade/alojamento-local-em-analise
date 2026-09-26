@@ -6,3 +6,7 @@ data/private/**/*
 tmp/*
 tmp/**/*
 node_modules/
+.jekyll-cache/
+**/.jekyll-cache/
+_site/
+site/_data/site.json

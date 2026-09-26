@@ -179,7 +179,7 @@ Implementação concluída:
 - [x] A página inicial documenta objetivo, fontes e atribuição, metodologia, limitações, aviso não jurídico, correções e datas dos snapshots.
 - [x] Cada run publicado inclui apenas HTML, CSVs agregados e metadata; `LICENSE` e `NOTICE` acompanham o site.
 - [x] O construtor não copia `data_sources/`, `data/private/` ou caches para o artefacto.
-- [x] A documentação regista que o repositório pode permanecer privado enquanto um deployment separado publica `site/`.
+- [x] A documentação regista que o repositório pode permanecer privado enquanto um deployment separado publica `_site/`.
 
 Critério de conclusão: cumprido. O artefacto é gerado apenas a partir de `data/snapshots/` e a auditoria de publicação confirma que os ficheiros publicáveis não contêm campos proibidos nem URLs de anúncios.
 

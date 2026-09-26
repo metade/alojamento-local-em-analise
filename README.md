@@ -57,14 +57,30 @@ GENERATE_PDF=1 bundle exec ruby run_me.rb --mode public
 O site estático publicável é montado a partir dos snapshots já versionados:
 
 ```bash
-ruby scripts/build_site.rb
+bundle exec ruby scripts/build_site.rb
 ```
 
-O resultado fica em `site/` e inclui apenas a página inicial, relatórios HTML,
+O resultado fica em `_site/` e inclui apenas a página inicial, relatórios HTML,
 CSVs agregados, metadata, licença e avisos de atribuição. Datasets brutos,
-resultados locais e caches não são copiados. O diretório `site/` pode ser usado
+resultados locais e caches não são copiados. O diretório `_site/` pode ser usado
 como artefacto de um deployment estático. O workflow trimestral constrói e
 valida esse diretório antes de o publicar no GitHub Pages.
+
+O site é mantido como um projeto Jekyll em `site/`: layouts e includes
+partilham a estrutura HTML, as páginas Liquid tratam a narrativa editorial e
+`scripts/build_site.rb` prepara os dados públicos e chama Jekyll.
+
+Para desenvolver com o servidor Jekyll, prepare primeiro os dados e depois
+inicie o servidor:
+
+```bash
+bundle exec ruby scripts/build_site.rb
+bundle exec jekyll serve --livereload
+```
+
+Abra `http://localhost:4000`. Alterações em `site/` são reconstruídas
+automaticamente; se os snapshots públicos mudarem, execute novamente o
+primeiro comando.
 
 ## Testes
 
@@ -90,7 +106,7 @@ O primeiro comando verifica os ficheiros publicáveis na árvore atual; o segund
 `.github/workflows/publication-audit.yml` executa automaticamente a verificação de segurança dos outputs em pushes e pull requests.
 
 O repositório pode permanecer privado enquanto um deployment separado publica o
-conteúdo sanitizado de `site/`.
+conteúdo sanitizado de `_site/`.
 
 O workflow trimestral faz commit apenas dos outputs públicos sanitizados em `data/snapshots/` e `data/history/`; o site é publicado como artefacto separado através do GitHub Pages, depois de executar testes, construir o site e passar os gates de publicação. Os snapshots commitados e o histórico são a fonte permanente do projeto. Datasets brutos em `data_sources/`, resultados detalhados em `data/private/` e caches em `tmp/` continuam fora do Git por defeito. Os CSVs dos snapshots são agregados e não contêm identificadores de anúncios, anfitriões, nomes, endereços, coordenadas ou valores de licença individuais.
 
