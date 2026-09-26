@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>AL em análise</title>
+  <rect width="64" height="64" fill="#f3efe5"/>
+  <rect x="5" y="5" width="47" height="47" fill="none" stroke="#17202a" stroke-width="4"/>
+  <path fill="#17202a" fill-rule="evenodd" d="M12 36 19 17h6l7 19h-5l-1.4-4.2h-7.2L17 36Zm7.8-8.4h4.5l-2.2-6.8ZM34 17h5v15h10v4H34Z"/>
+  <rect x="40" y="35" width="24" height="29" fill="#f3efe5"/>
+  <text x="43" y="59" fill="#b7472a" font-family="Georgia,serif" font-size="31" font-weight="bold">?</text>
+</svg>
