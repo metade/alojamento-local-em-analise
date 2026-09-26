@@ -58,6 +58,7 @@ O site estático publicável é montado a partir dos snapshots já versionados:
 
 ```bash
 bundle exec ruby scripts/build_site.rb
+bundle exec ruby scripts/check_site.rb _site
 ```
 
 O resultado fica em `_site/` e inclui apenas a página inicial, relatórios HTML,
@@ -81,6 +82,8 @@ bundle exec jekyll serve --livereload
 Abra `http://localhost:4000`. Alterações em `site/` são reconstruídas
 automaticamente; se os snapshots públicos mudarem, execute novamente o
 primeiro comando.
+
+O workflow de GitHub Pages define automaticamente a base `/alojamento-local-em-analise`.
 
 ## Testes
 

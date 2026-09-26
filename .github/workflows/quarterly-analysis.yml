@@ -43,9 +43,13 @@ jobs:
           git diff --cached --quiet || git commit -m "Atualiza análise trimestral"
           git push
       - name: Construir site público
+        env:
+          JEKYLL_BASEURL: /alojamento-local-em-analise
         run: |
           npm ci
           bundle exec ruby scripts/build_site.rb
+      - name: Verificar estrutura do site
+        run: bundle exec ruby scripts/check_site.rb _site
       - name: Gate do artefacto de publicação
         run: bundle exec ruby scripts/audit_publication.rb --artifact _site
       - name: Upload do site sanitizado

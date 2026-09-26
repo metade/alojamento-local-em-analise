@@ -103,7 +103,9 @@ FileUtils.rm_rf(SITE)
 FileUtils.mkdir_p(File.join(SOURCE, "_data"))
 File.write(File.join(SOURCE, "_data", "site.json"), JSON.pretty_generate(site_data(runs)))
 
-system("bundle", "exec", "jekyll", "build", "--config", File.join(ROOT, "_config.yml"), chdir: ROOT, exception: true)
+jekyll = ["bundle", "exec", "jekyll", "build", "--config", File.join(ROOT, "_config.yml")]
+jekyll.concat(["--baseurl", ENV["JEKYLL_BASEURL"]]) if ENV["JEKYLL_BASEURL"]
+system(*jekyll, chdir: ROOT, exception: true)
 
 runs.each do |source|
   destination = File.join(SITE, "runs", File.basename(source))
