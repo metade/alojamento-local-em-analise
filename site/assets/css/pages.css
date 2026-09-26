@@ -35,6 +35,126 @@
   background: #fff5;
 }
 
+.missing-card {
+  container: missing-card / inline-size;
+}
+
+.missing-analysis {
+  padding-block: 24px;
+}
+
+.missing-analysis-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 110px;
+  gap: 18px;
+  align-items: center;
+}
+
+.missing-analysis-sheet {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #f3efe566;
+  background: #f3efe50d;
+}
+
+.missing-analysis-title {
+  display: block;
+  margin-bottom: 14px;
+  color: #f3efe5c7;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.missing-analysis-fields {
+  display: grid;
+  gap: 9px;
+  margin: 0;
+}
+
+.missing-analysis-row {
+  display: grid;
+  grid-template-columns: minmax(95px, 40%) minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.missing-analysis-row dt {
+  color: #f3efe5c7;
+  font-size: 12px;
+}
+
+.missing-analysis-row dd {
+  min-width: 0;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid #f3efe566;
+  font-size: 13px;
+}
+
+.missing-analysis-row .missing-analysis-value {
+  border: 1px dashed var(--color-yellow);
+  background: #d9a51417;
+  color: var(--color-yellow);
+  font-weight: 700;
+}
+
+.missing-analysis-caption {
+  margin: 12px 0 0;
+  color: #f3efe5a8;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.missing-analysis-stat {
+  text-align: center;
+}
+
+.missing-analysis-stat strong {
+  display: block;
+  color: var(--color-yellow);
+  font: 42px/1 var(--font-serif);
+}
+
+.missing-analysis-stat span {
+  display: block;
+  margin-top: 6px;
+  color: #f3efe5c7;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+@container missing-card (width < 460px) {
+  .missing-analysis-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .missing-analysis-stat {
+    text-align: left;
+  }
+
+  .missing-analysis-stat strong,
+  .missing-analysis-stat span {
+    display: inline;
+  }
+
+  .missing-analysis-stat strong {
+    font-size: 36px;
+  }
+
+  .missing-analysis-stat span {
+    margin: 0 0 0 8px;
+  }
+}
+
+@container missing-card (width < 330px) {
+  .missing-analysis-row {
+    grid-template-columns: 1fr;
+    gap: 5px;
+  }
+}
+
 .method-grid {
   grid-template-columns: 1fr 1fr;
   gap: 60px;
