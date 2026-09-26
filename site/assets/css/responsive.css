@@ -92,30 +92,8 @@
     font-size: clamp(92px, 25vw, 150px);
   }
 
-  .source-numbers, .finding-story, .estimate-steps {
+  .finding-story, .estimate-steps {
     grid-template-columns: 1fr;
-  }
-
-  .source-rail {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-
-  .source-rail .source-label {
-    border-top: 0;
-    border-left: 3px solid;
-    padding: 8px 0 8px 12px;
-  }
-
-  .source-numbers article, .source-numbers article + article {
-    border-right: 0;
-    border-bottom: var(--border-rule);
-    min-height: 0;
-    padding: 32px 0;
-  }
-
-  .source-numbers strong {
-    margin: 22px 0 12px;
   }
 
   .finding-story {
@@ -151,57 +129,9 @@
     margin: 24px 0 12px;
   }
 
-  .source-rail .source-label {
-    border-right: 0;
-    padding-left: 12px;
-  }
-
   .method-quotes {
     grid-template-columns: 1fr;
     gap: 34px;
-  }
-
-  .source-chapter .source-rail {
-    display: none;
-  }
-
-  .source-numbers article {
-    padding-top: 62px;
-    position: relative;
-  }
-
-  .source-numbers article:before {
-    content: "O QUE SE DIZ";
-    border-left: 3px solid var(--color-ink);
-    color: var(--color-ink);
-    letter-spacing: .13em;
-    text-transform: uppercase;
-    padding-left: 12px;
-    font-size: 11px;
-    font-weight: 800;
-    position: absolute;
-    top: 0;
-    left: 0;
-  }
-
-  .source-numbers article:nth-child(2):before {
-    content: "REGISTO OFICIAL";
-    border-color: var(--color-blue);
-    color: var(--color-blue);
-  }
-
-  .source-numbers article:nth-child(3):before {
-    content: "LISTAGENS DE AIRBNB";
-    border-color: var(--color-yellow);
-    color: #a57800;
-  }
-
-  .source-numbers article {
-    padding-top: 1em;
-  }
-
-  .source-numbers strong {
-    margin-top: 0;
   }
 
 .header-inner {

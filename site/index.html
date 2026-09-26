@@ -18,11 +18,29 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
   {% if quotes.size > 0 %}<div class="quote-strip">{% for quote in quotes %}<article class="quote-item"><div class="quote-date">{{ quote.date }}</div><blockquote>“{{ quote.excerpt }}”</blockquote><cite>{{ quote.person }} · <a href="{{ quote.url }}">{{ quote.source }} ↗</a></cite></article>{% endfor %}</div>{% else %}<p class="opening-quote">É um número que aparece repetidamente quando se fala de alojamento local em Lisboa.</p>{% endif %}
   <div class="hero-number"><span>~11 000</span><b>?</b></div><p class="opening-close">Fomos aos dados tentar perceber.</p>
 </div></section>
-<section class="chapter source-chapter" id="investigacao"><div class="wrap"><div class="source-rail"><span class="source-label source-claims">O que se diz</span><span class="source-label source-official">Registo oficial</span><span class="source-label source-airbnb">Listagens de Airbnb</span></div><div class="source-numbers">
-  <article><strong>~11 000</strong><p>número recorrente no debate público</p><a class="source-method-link" href="{{ '/metodologia.html#o-que-se-diz' | relative_url }}">fontes e contexto ↗</a></article>
-  <article><strong>{% if d.official_count %}{{ d.official_count | pt_number }}{% else %}—{% endif %}</strong><p><a href="{{ d.metadata.source_urls.official }}">registos no concelho de Lisboa · RNAL ↗</a><br><small>registo de {{ d.metadata.source_dates.official_register_date }}</small></p><a class="source-method-link" href="{{ '/metodologia.html#registo-oficial' | relative_url }}">como contamos ↗</a></article>
-  <article><strong>{{ s.establishment_estimate | pt_number }}</strong><p>estimativa de estabelecimentos representados</p><p class="source-note"><a href="https://insideairbnb.com/lisbon/">{{ s.listings | pt_number }} anúncios no snapshot · Inside Airbnb ↗</a><br><small>snapshot de {{ d.metadata.source_dates.airbnb_snapshot_date }} · estimativa analítica</small></p><a class="source-method-link" href="{{ '/metodologia.html#listagens-airbnb' | relative_url }}">como contamos ↗</a></article>
-</div></div></section>
+<section class="source-chapter py-12 min-[900px]:py-20" id="investigacao">
+  <div class="wrap grid grid-cols-1 min-[900px]:grid-cols-3">
+    <article class="source-comparison-card source-comparison-card--claims flex flex-col items-start gap-6 border-t-[3px] py-8 min-[900px]:border-r min-[900px]:px-7 min-[900px]:first:pl-0">
+      <h2 class="source-label source-claims">O que se diz</h2>
+      <strong class="source-comparison-value">~11 000</strong>
+      <p class="source-comparison-description">número recorrente no debate público</p>
+      <a class="source-method-link" href="{{ '/metodologia.html#o-que-se-diz' | relative_url }}">fontes e contexto ↗</a>
+    </article>
+    <article class="source-comparison-card source-comparison-card--official flex flex-col items-start gap-6 border-t-[3px] py-8 min-[900px]:border-r min-[900px]:px-7">
+      <h2 class="source-label source-official">Registo oficial</h2>
+      <strong class="source-comparison-value">{% if d.official_count %}{{ d.official_count | pt_number }}{% else %}—{% endif %}</strong>
+      <p class="source-comparison-description"><a href="{{ d.metadata.source_urls.official }}">registos no concelho de Lisboa · RNAL ↗</a><br><small>registo de {{ d.metadata.source_dates.official_register_date }}</small></p>
+      <a class="source-method-link" href="{{ '/metodologia.html#registo-oficial' | relative_url }}">como contamos ↗</a>
+    </article>
+    <article class="source-comparison-card source-comparison-card--airbnb flex flex-col items-start gap-6 border-t-[3px] py-8 min-[900px]:px-7 min-[900px]:last:pr-0">
+      <h2 class="source-label source-airbnb">Listagens de Airbnb</h2>
+      <strong class="source-comparison-value">{{ s.establishment_estimate | pt_number }}</strong>
+      <p class="source-comparison-description">estimativa de estabelecimentos representados</p>
+      <p class="source-note"><a href="https://insideairbnb.com/lisbon/">{{ s.listings | pt_number }} anúncios no snapshot · Inside Airbnb ↗</a><br><small>snapshot de {{ d.metadata.source_dates.airbnb_snapshot_date }} · estimativa analítica</small></p>
+      <a class="source-method-link" href="{{ '/metodologia.html#listagens-airbnb' | relative_url }}">como contamos ↗</a>
+    </article>
+  </div>
+</section>
 <section class="chapter findings-chapter"><div class="wrap"><div class="eyebrow">05 · Sinais</div><h2 class="display display-medium">O que os dados revelam<br><em>Padrões que merecem atenção.</em></h2>
   <div class="finding-story"><div class="finding-copy"><span class="signal-label">CONTAGEM</span><strong class="finding-number">{{ no | pt_number }}</strong><h3>sem licença identificável</h3><p>{{ no_pct }}% dos anúncios no snapshot.</p><details class="meaning"><summary>O que significa?</summary><div class="meaning-grid"><div><b>O que sabemos</b><p>O anúncio não apresenta um número que consigamos reconhecer e normalizar como licença de AL.</p></div><div><b>O que não sabemos</b><p>Não podemos concluir que o alojamento seja ilegal.</p></div></div></details></div><div class="dot-field" role="img" aria-label="Anúncios sem licença identificável">{% assign filled = no | times: 40 | divided_by: s.listings %}{% for i in (1..40) %}<i class="dot{% if i <= filled %} is-signal{% endif %}" aria-hidden="true"></i>{% endfor %}<span>{{ no_pct }}% dos anúncios</span></div></div>
   <div class="finding-story"><div class="finding-copy"><span class="signal-label">SINAL</span><strong class="finding-number">{{ repeated | pt_number }}</strong><h3>licença repetida em diferentes localizações</h3><p>O mesmo número aparece associado a anúncios geograficamente separados.</p><details class="meaning"><summary>O que significa?</summary><div class="meaning-grid"><div><b>O que sabemos</b><p>A licença normalizada surge em agrupamentos espaciais distintos.</p></div><div><b>O que não sabemos</b><p>Pode haver mais do que uma explicação.</p></div></div></details></div><div class="spatial-graphic" aria-label="Uma mesma licença ligada a duas localizações"><b>AL 12345</b><span class="spatial-line line-one"></span><span class="spatial-line line-two"></span><i class="place place-one">● Arroios</i><i class="place place-two">● Belém</i></div></div>
