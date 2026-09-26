@@ -13,7 +13,14 @@ SNAPSHOTS = File.join(ROOT, "data", "snapshots")
 SOURCE = File.join(ROOT, "site")
 SITE = File.join(ROOT, "_site")
 QUOTES = File.join(ROOT, "site_content", "quotes.json")
+DISTANCE_HISTORY = File.join(ROOT, "data", "history", "distance_ranges.csv")
 PUBLIC_FILES = %w[metadata.json summary.json listings.csv licence_groups.csv freguesias.csv report.html].freeze
+DISTANCE_LABELS = {
+  "500_m_1_km" => "500 m–1 km",
+  "1_2_km" => "1–2 km",
+  "2_5_km" => "2–5 km",
+  "over_5_km" => "Mais de 5 km"
+}.freeze
 LABELS = {
   "sem licença" => "Sem licença",
   "sem licença identificável" => "Sem licença identificável",
@@ -61,6 +68,23 @@ def public_runs
   end.sort.reverse
 end
 
+def distance_ranges(run_id, summary)
+  return [] unless File.file?(DISTANCE_HISTORY)
+
+  rows = CSV.read(DISTANCE_HISTORY, headers: true).select { |row| row["run_id"] == run_id }
+  return [] if rows.empty?
+
+  keys = rows.map { |row| row["range"] }
+  raise "Invalid distance ranges for #{run_id}" unless keys.sort == DISTANCE_LABELS.keys.sort &&
+    rows.all? { |row| row["distance_method"] == "max_cross_cluster_pair_km_v1" && row["licence_groups"].to_s.match?(/\A\d+\z/) }
+
+  counts = rows.to_h { |row| [row["range"], row["licence_groups"].to_i] }
+  expected = summary.fetch("classifications").fetch("licença repetida em várias localizações")
+  raise "Distance range count differs from licence groups for #{run_id}" unless counts.values.sum == expected
+
+  DISTANCE_LABELS.map { |key, label| {"key" => key, "label" => label, "count" => counts.fetch(key)} }
+end
+
 def site_data(runs)
   run_id = File.basename(runs.first)
   run_dir = runs.first
@@ -69,6 +93,7 @@ def site_data(runs)
   listings = CSV.read(File.join(run_dir, "listings.csv"), headers: true).map(&:to_h)
   freguesias = CSV.read(File.join(run_dir, "freguesias.csv"), headers: true).map(&:to_h)
   grouped = listings.group_by { |row| row["freguesia"] }.transform_values { |rows| counts(rows) }
+  ranges = distance_ranges(run_id, summary)
   districts = freguesias.map do |row|
     raw_name = row["freguesia"]
     {
@@ -90,6 +115,10 @@ def site_data(runs)
     "metadata" => metadata,
     "official_count" => official_count(summary, run_id),
     "listings" => listings,
+    "repeated_listings" => listings.select { |row| row["classification"] == "licença repetida em várias localizações" }.sum { |row| row["listings"].to_i },
+    "distance_ranges" => ranges,
+    "distance_total" => ranges.sum { |range| range["count"] },
+    "distance_max" => ranges.map { |range| range["count"] }.max.to_i,
     "districts" => districts,
     "labels" => LABELS.values,
     "quotes" => File.exist?(QUOTES) ? JSON.parse(File.read(QUOTES)) : [],

@@ -27,6 +27,7 @@ module AlIlegal
     "provável estabelecimento com anúncios múltiplos",
     "licença repetida na mesma localização"
   ].freeze
+  DISTANCE_RANGE_KEYS = %w[500_m_1_km 1_2_km 2_5_km over_5_km].freeze
 
   module CLI
     module_function
@@ -123,6 +124,32 @@ module AlIlegal
     end
 
     clusters
+  end
+
+  def self.max_cross_cluster_distance_km(listings)
+    clusters = spatial_clusters(listings)
+    raise ArgumentError, "Expected listings in multiple spatial clusters" if clusters.size < 2
+
+    maximum = 0.0
+    clusters.combination(2) do |first, second|
+      first.each do |left|
+        second.each do |right|
+          distance = Haversine.distance(left[:lat].to_f, left[:lng].to_f, right[:lat].to_f, right[:lng].to_f).to_km
+          maximum = distance if distance > maximum
+        end
+      end
+    end
+    maximum
+  end
+
+  def self.distance_range_key(distance_km)
+    raise ArgumentError, "Distance below 500 metres" if distance_km < 0.5
+
+    return "500_m_1_km" if distance_km < 1
+    return "1_2_km" if distance_km < 2
+    return "2_5_km" if distance_km <= 5
+
+    "over_5_km"
   end
 
   def self.license_group_assessment(listings, official_record)
@@ -271,6 +298,7 @@ module AlIlegal
       end
       generate_pdf_file(run_dir) if generate_pdf
       append_history(history_path, summary)
+      append_distance_history(File.join(File.dirname(history_path), "distance_ranges.csv"), run_id, listings) if mode == "public"
       validate_public_outputs!(run_dir) if mode == "public"
       {run_id: run_id, path: run_dir, summary: summary}
     end
@@ -426,6 +454,31 @@ module AlIlegal
       values = {"source_airbnb_date" => row[:source_dates][:airbnb_snapshot_date], "source_official_register_download_date" => row[:source_dates][:official_register_download_date]}
       CSV.open(path, "a", write_headers: !existing, headers: headers) { |csv| csv << headers.map { |key| row[key.to_sym] || values[key] } }
     end
+
+    def distance_range_counts(listings)
+      counts = DISTANCE_RANGE_KEYS.to_h { |key| [key, 0] }
+      listings.select { |row| row[:license_group_assessment] == "licença repetida em várias localizações" }
+        .group_by { |row| row[:licensa] }.each_value do |rows|
+          distance = AlIlegal.max_cross_cluster_distance_km(rows)
+          counts[AlIlegal.distance_range_key(distance)] += 1
+        end
+      counts
+    end
+
+    def append_distance_history(path, run_id, listings)
+      headers = %w[run_id distance_method range licence_groups]
+      if File.exist?(path) && CSV.foreach(path, headers: true).any? { |row| row["run_id"] == run_id }
+        raise "Distance ranges already exist for immutable run #{run_id}"
+      end
+
+      counts = distance_range_counts(listings)
+      FileUtils.mkdir_p(File.dirname(path))
+      existing = File.exist?(path) && !File.empty?(path)
+      CSV.open(path, "a", write_headers: !existing, headers: headers) do |csv|
+        DISTANCE_RANGE_KEYS.each { |range| csv << [run_id, "max_cross_cluster_pair_km_v1", range, counts.fetch(range)] }
+      end
+    end
+
     def historical_comparisons(path, current)
       return [] unless File.exist?(path)
       CSV.foreach(path, headers: true).map do |old|

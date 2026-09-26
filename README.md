@@ -46,7 +46,7 @@ Cada run contém:
 - `freguesias.csv` — métricas por freguesia;
 - `report.html` — relatório autónomo em português.
 
-O histórico append-only está em `data/history/summary.csv`. Runs existentes nunca são sobrescritos. Para gerar também um PDF derivado, instale `wkhtmltopdf` ou `weasyprint` e execute:
+O histórico append-only está em `data/history/summary.csv`. O gráfico de distâncias do site usa `data/history/distance_ranges.csv`: cada run público novo acrescenta quatro contagens agregadas de números de licença, sem coordenadas nem números de licença individuais. Para preencher este agregado num run público anterior sem alterar o snapshot, use `bundle exec ruby scripts/backfill_distance_ranges.rb <run_id>` com os ficheiros fonte originais; o script verifica os hashes do metadata antes de escrever. Runs existentes nunca são sobrescritos. Para gerar também um PDF derivado, instale `wkhtmltopdf` ou `weasyprint` e execute:
 
 ```bash
 GENERATE_PDF=1 bundle exec ruby run_me.rb --mode public
@@ -54,7 +54,7 @@ GENERATE_PDF=1 bundle exec ruby run_me.rb --mode public
 
 ## Site público
 
-O site estático publicável é montado a partir dos snapshots já versionados:
+O site estático publicável é montado a partir dos snapshots e do histórico agregado já versionados:
 
 ```bash
 npm ci

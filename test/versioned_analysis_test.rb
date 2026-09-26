@@ -111,6 +111,31 @@ class VersionedAnalysisTest < Minitest::Test
     end
   end
 
+  def test_public_run_appends_distance_ranges_without_changing_snapshot_schema
+    Dir.mktmpdir do |dir|
+      airbnb = File.join(dir, "listings-2026-06-23.csv")
+      official = File.join(dir, "official-2026-09-17.csv")
+      history = File.join(dir, "history", "summary.csv")
+      CSV.open(airbnb, "w", write_headers: true, headers: HEADERS) do |csv|
+        csv << ["Lisboa", "123/AL", "https://example/1", "Alfama", "Apartment A", "38.71", "-9.14", "Entire home/apt", "Apartment", "1", "1", "2026-06-23"]
+        csv << ["Lisboa", "123/AL", "https://example/2", "Alfama", "Apartment B", "38.73", "-9.14", "Entire home/apt", "Apartment", "1", "2", "2026-06-23"]
+      end
+      CSV.open(official, "w", write_headers: true, headers: %w[NrRNAL LatLong DataRegisto Denominacao Endereco Concelho Modalidade NrUtentes]) do |csv|
+        csv << ["123", "38.71;-9.14", "2020-01-01", "Casa", "Rua", "Lisboa", "Apartamento", "2"]
+      end
+
+      result = AlIlegal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "public", output_root: File.join(dir, "snapshots"), history_path: history)
+      rows = CSV.read(File.join(dir, "history", "distance_ranges.csv"), headers: true)
+
+      assert_equal 4, rows.size
+      assert_equal 1, rows.sum { |row| row["licence_groups"].to_i }
+      assert_equal "1", rows.find { |row| row["range"] == "2_5_km" }["licence_groups"]
+      assert_equal 2, CSV.read(File.join(result[:path], "listings.csv"), headers: true).sum { |row| row["listings"].to_i }
+      assert_equal %w[metadata.json report.html summary.json listings.csv licence_groups.csv freguesias.csv].sort, Dir.children(result[:path]).sort
+      assert_raises(RuntimeError) { AlIlegal::Analysis.append_distance_history(File.join(dir, "history", "distance_ranges.csv"), result[:run_id], []) }
+    end
+  end
+
   def test_discovers_latest_lisbon_snapshot_from_inside_airbnb_page
     page = <<~HTML
       <h3>Lisbon, Lisbon, Portugal</h3>

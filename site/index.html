@@ -70,11 +70,21 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
     </article>
     <article class="flex min-w-0 flex-col gap-6 border border-[#f3efe533] p-6 sm:p-8" aria-labelledby="finding-repeated">
       <div><h3 id="finding-repeated" class="max-w-[24ch] text-balance font-[family-name:var(--font-serif)] text-[clamp(1.75rem,2.6vw,2.65rem)] leading-[1.12]"><span class="text-[1.35em] text-[var(--color-yellow)]">{{ repeated | pt_number }}</span> com o mesmo número em localizações diferentes</h3><p class="mt-4 text-[17px] text-[#f3efe5c7]">O mesmo número normalizado aparece em agrupamentos geograficamente separados.</p></div>
-      <div class="mt-auto border-y border-[#f3efe54d] py-5" role="img" aria-label="Esquema ilustrativo, sem dados reais: o número fictício AL 12345 associado ao anúncio A em Arroios e ao anúncio B em Belém, em localizações separadas">
-        <p class="text-xs font-semibold uppercase tracking-[.12em] text-[#f3efe599]">Esquema ilustrativo · sem dados reais</p>
-        <div class="mt-3 w-fit rounded border border-[var(--color-yellow)] px-3 py-1 font-[family-name:var(--font-serif)] text-xl text-[var(--color-yellow)]">AL 12345</div>
-        <div class="mt-4 flex items-center gap-2 text-sm sm:gap-4"><div class="min-w-0 flex-1 border border-[#f3efe555] p-2 sm:p-3"><span class="block text-xs text-[#f3efe599]">Anúncio A</span><strong>Arroios</strong></div><span aria-hidden="true" class="text-[var(--color-yellow)]">↔</span><div class="min-w-0 flex-1 border border-[#f3efe555] p-2 sm:p-3"><span class="block text-xs text-[#f3efe599]">Anúncio B</span><strong>Belém</strong></div></div>
-      </div>
+      <figure class="mt-auto border-y border-[#f3efe54d] py-5">
+        <figcaption class="text-xs font-semibold uppercase tracking-[.12em] text-[#f3efe5b8]">Distância máxima entre localizações</figcaption>
+        {% if d.distance_ranges.size > 0 %}
+          <p class="my-2! text-xs text-[#f3efe599]">{{ d.distance_total | pt_number }} números de licença · {{ d.repeated_listings | pt_number }} anúncios</p>
+          <ul class="m-0! mt-4! space-y-2 p-0!" aria-label="Números de licença por distância máxima entre localizações">
+            {% for range in d.distance_ranges %}
+              <li class="grid grid-cols-[100px_minmax(0,1fr)_2rem] items-center gap-2 text-xs sm:grid-cols-[130px_minmax(0,1fr)_2rem] sm:text-sm">
+                <span>{{ range.label }}</span>
+                <span class="h-3 overflow-hidden rounded-full bg-[#f3efe533]" aria-hidden="true"><span class="block h-full rounded-full bg-[var(--color-yellow)]" style="width: {{ range.count | times: 100.0 | divided_by: d.distance_max | round: 1 }}%"></span></span>
+                <strong class="text-right tabular-nums">{{ range.count | pt_number }}</strong>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}<p>Não há distâncias agregadas disponíveis para este snapshot.</p>{% endif %}
+      </figure>
       <div class="flex flex-wrap items-start justify-between gap-x-5 gap-y-2 text-sm max-[550px]:flex-col"><p class="m-0! flex min-w-0 flex-1 items-start gap-2 text-[#f3efe5c7]"><span aria-hidden="true" class="text-[var(--color-yellow)]">ⓘ</span><span>Repetição não prova uso indevido.</span></p><a class="shrink-0 font-semibold text-[var(--color-yellow)] underline-offset-4 hover:underline focus-visible:underline" href="{{ '/metodologia.html#localizacoes-diferentes' | relative_url }}">Como foi contado ↗</a></div>
     </article>
     <article class="flex min-w-0 flex-col gap-6 border border-[#f3efe533] p-6 sm:p-8" aria-labelledby="finding-outside">
