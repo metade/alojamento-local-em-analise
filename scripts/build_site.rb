@@ -114,5 +114,7 @@ runs.each do |source|
 end
 FileUtils.cp(File.join(ROOT, "LICENSE"), File.join(SITE, "LICENSE"))
 FileUtils.cp(File.join(ROOT, "NOTICE"), File.join(SITE, "NOTICE"))
-system("npm", "run", "build:css", chdir: ROOT, exception: true)
+system("npm", "run", "site:css", chdir: ROOT, exception: true)
+system("bundle", "exec", "ruby", "scripts/check_site.rb", SITE, chdir: ROOT, exception: true)
+system("bundle", "exec", "ruby", "scripts/audit_publication.rb", "--artifact", SITE, chdir: ROOT, exception: true)
 puts "Site Jekyll criado em #{SITE} (#{site_data(runs)["districts"].length} freguesias)."

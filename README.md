@@ -57,9 +57,27 @@ GENERATE_PDF=1 bundle exec ruby run_me.rb --mode public
 O site estático publicável é montado a partir dos snapshots já versionados:
 
 ```bash
-bundle exec ruby scripts/build_site.rb
-bundle exec ruby scripts/check_site.rb _site
+npm ci
+npm run site:build
 ```
+
+`site:build` prepara os dados do Jekyll, gera as páginas, compila o CSS,
+verifica a estrutura e executa a auditoria de publicação do artefacto. Para
+repetir apenas as etapas de CSS ou verificação:
+
+```bash
+npm run site:css
+npm run site:check
+ruby scripts/audit_publication.rb --artifact _site
+```
+
+O CSS editável está em `site/assets/css/`: `input.css` importa os tokens, as
+regras de base, layout, componentes, páginas e media queries. O Tailwind gera
+`_site/assets/story.css` a partir deste ficheiro; `_site/` não é fonte editável.
+Jekyll não copia os ficheiros fonte CSS para o artefacto. As classes utilitárias
+servem para layout e estados simples; ilustrações, fundos e composições
+editoriais permanecem em CSS próprio. Veja o [checklist visual](docs/css-visual-checklist.md)
+antes de alterar o aspeto do site.
 
 O resultado fica em `_site/` e inclui apenas a página inicial, relatórios HTML,
 CSVs agregados, metadata, licença e avisos de atribuição. Datasets brutos,
@@ -71,17 +89,16 @@ O site é mantido como um projeto Jekyll em `site/`: layouts e includes
 partilham a estrutura HTML, as páginas Liquid tratam a narrativa editorial e
 `scripts/build_site.rb` prepara os dados públicos e chama Jekyll.
 
-Para desenvolver com o servidor Jekyll, prepare primeiro os dados e depois
-inicie o servidor:
+Para rever alterações localmente, construa o artefacto e sirva `_site/`:
 
 ```bash
-bundle exec ruby scripts/build_site.rb
-bundle exec jekyll serve --livereload
+npm run site:build
+python3 -m http.server 4000 --directory _site
 ```
 
-Abra `http://localhost:4000`. Alterações em `site/` são reconstruídas
-automaticamente; se os snapshots públicos mudarem, execute novamente o
-primeiro comando.
+Abra `http://localhost:4000`. Depois de editar apenas CSS, execute
+`npm run site:css` e atualize a página. Depois de editar templates ou dados,
+execute `npm run site:build` e atualize a página.
 
 O workflow de GitHub Pages define automaticamente a base `/alojamento-local-em-analise`.
 

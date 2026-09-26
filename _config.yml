@@ -9,6 +9,7 @@ keep_files:
   - NOTICE
 exclude:
   - _data/site.json
+  - assets/css
   - README.md
   - Gemfile
   - Gemfile.lock

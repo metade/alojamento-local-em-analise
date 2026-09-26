@@ -1,7 +1,10 @@
 {
   "private": true,
   "scripts": {
-    "build:css": "tailwindcss -i site/assets/story.input.css -o _site/assets/story.css --minify"
+    "build:css": "npm run site:css",
+    "site:css": "tailwindcss -i site/assets/css/input.css -o _site/assets/story.css --minify",
+    "site:build": "bundle exec ruby scripts/build_site.rb",
+    "site:check": "bundle exec ruby scripts/check_site.rb _site"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.13",

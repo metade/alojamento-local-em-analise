@@ -4,9 +4,10 @@
 require "find"
 
 root = ARGV.fetch(0, "_site")
-required = %w[index.html metodologia.html freguesias/index.html NOTICE LICENSE]
+required = %w[index.html metodologia.html freguesias/index.html assets/story.css NOTICE LICENSE]
 missing = required.reject { |path| File.file?(File.join(root, path)) }
 abort "Ficheiros obrigatórios em falta: #{missing.join(", ")}" unless missing.empty?
+abort "Fontes CSS copiadas para o artefacto." if Dir.exist?(File.join(root, "assets", "css"))
 
 district_pages = Dir.glob(File.join(root, "freguesias", "*", "index.html"))
 abort "Nenhuma página de freguesia foi gerada." if district_pages.empty?
