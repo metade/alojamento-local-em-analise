@@ -30,11 +30,6 @@
   color: #f3efe552;
 }
 
-.finding-number {
-  color: var(--color-yellow);
-  font: 68px/.9 var(--font-serif);
-}
-
 .notice-dark {
   color: #f3efe5a8;
   border-top: 1px solid #f3efe526;
