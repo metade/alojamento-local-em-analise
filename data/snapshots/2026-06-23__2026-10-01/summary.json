@@ -1,0 +1,45 @@
+{
+  "run_id": "2026-06-23__2026-10-01",
+  "source_dates": {
+    "airbnb_snapshot_date": "2026-06-23",
+    "official_register_date": "2026-07-30",
+    "official_register_download_date": "2026-10-01"
+  },
+  "methodology_version": "1.1.0",
+  "listings": 17064,
+  "licence_groups": 8889,
+  "official_registers_lisbon": 11870,
+  "establishment_estimate": 14103,
+  "classifications": {
+    "sem licença": 1,
+    "sem licença identificável": 1,
+    "licença repetida em várias localizações": 141,
+    "licença única em Lisboa": 7275,
+    "provável estabelecimento com anúncios múltiplos": 901,
+    "licença repetida na mesma localização": 207,
+    "licença oficial fora de Lisboa": 363
+  },
+  "mode": "public",
+  "generated_at": "2026-10-01T14:09:02Z",
+  "historical_comparisons": [
+    {
+      "run_id": "2026-06-23__2026-09-18",
+      "status": "incompatível — metodologia diferente",
+      "metrics": {}
+    },
+    {
+      "run_id": "2026-06-23__2026-09-19",
+      "status": "incompatível — metodologia diferente",
+      "metrics": {}
+    },
+    {
+      "run_id": "2026-06-23__2026-09-26",
+      "status": "comparável",
+      "metrics": {
+        "listings": 17064,
+        "licence_groups": 8889,
+        "establishment_estimate": 14103
+      }
+    }
+  ]
+}

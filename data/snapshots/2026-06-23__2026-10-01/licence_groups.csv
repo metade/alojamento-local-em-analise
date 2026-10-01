@@ -1,0 +1,16 @@
+classification,official_municipality,official_type,licence_groups,listings,spatial_locations,establishments_estimate
+licença oficial fora de Lisboa,outro município,apartamento,330,520,455,520
+licença oficial fora de Lisboa,outro município,hospedagem,33,49,46,49
+licença repetida em várias localizações,Lisboa,apartamento,82,308,274,308
+licença repetida em várias localizações,Lisboa,hospedagem,15,112,102,112
+licença repetida em várias localizações,não identificado,não identificado,44,393,348,393
+licença repetida na mesma localização,Lisboa,apartamento,176,419,394,176
+licença repetida na mesma localização,não identificado,não identificado,31,83,75,31
+licença única em Lisboa,Lisboa,apartamento,6040,6040,6040,6040
+licença única em Lisboa,Lisboa,hospedagem,204,204,204,204
+licença única em Lisboa,não identificado,não identificado,1031,1031,1031,1031
+provável estabelecimento com anúncios múltiplos,Lisboa,apartamento,412,1265,1099,412
+provável estabelecimento com anúncios múltiplos,Lisboa,hospedagem,356,1724,1400,356
+provável estabelecimento com anúncios múltiplos,não identificado,não identificado,133,578,505,133
+sem licença,não identificado,não identificado,1,633,613,633
+sem licença identificável,não identificado,não identificado,1,3705,3432,3705
