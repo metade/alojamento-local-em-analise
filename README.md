@@ -71,12 +71,10 @@ npm run site:check
 ruby scripts/audit_publication.rb --artifact _site
 ```
 
-O CSS editável está em `site/assets/css/`: `input.css` importa os tokens, as
-regras de base, layout, componentes, páginas e media queries. O Tailwind gera
-`_site/assets/story.css` a partir deste ficheiro; `_site/` não é fonte editável.
-Jekyll não copia os ficheiros fonte CSS para o artefacto. As classes utilitárias
-servem para layout e estados simples; ilustrações, fundos e composições
-editoriais permanecem em CSS próprio.
+O CSS editável está em `site/assets/css/`: `input.css` importa os tokens e
+estilos existentes. Prefira classes Tailwind e os tokens do projeto nas alterações
+ao site. O CSS gerado fica em `_site/assets/story.css`; `_site/` não é fonte
+editável, e Jekyll não publica os ficheiros CSS de origem.
 
 O resultado fica em `_site/` e inclui apenas a página inicial, relatórios HTML,
 CSVs agregados, metadata, licença e avisos de atribuição. Datasets brutos,
