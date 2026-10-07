@@ -102,3 +102,4 @@ The establishment-level figure printed by the script is an analytical estimate. 
 - Do not commit raw downloaded datasets unless explicitly requested.
 - Treat `report.html` as the canonical self-contained report and `report.pdf` as a derivative.
 - Do not recreate or maintain the removed legacy `relatorio_anomalias_al.*` files; new reports belong inside their versioned run directory.
+- For homepage layout changes, run `npm run site:screenshots` and inspect the 1440, 768, and 390 px images in `tmp/screenshots/`.

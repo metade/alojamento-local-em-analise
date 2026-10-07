@@ -76,8 +76,7 @@ regras de base, layout, componentes, páginas e media queries. O Tailwind gera
 `_site/assets/story.css` a partir deste ficheiro; `_site/` não é fonte editável.
 Jekyll não copia os ficheiros fonte CSS para o artefacto. As classes utilitárias
 servem para layout e estados simples; ilustrações, fundos e composições
-editoriais permanecem em CSS próprio. Veja o [checklist visual](docs/css-visual-checklist.md)
-antes de alterar o aspeto do site.
+editoriais permanecem em CSS próprio.
 
 O resultado fica em `_site/` e inclui apenas a página inicial, relatórios HTML,
 CSVs agregados, metadata, licença e avisos de atribuição. Datasets brutos,
@@ -99,6 +98,18 @@ python3 -m http.server 4000 --directory _site
 Abra `http://localhost:4000`. Depois de editar apenas CSS, execute
 `npm run site:css` e atualize a página. Depois de editar templates ou dados,
 execute `npm run site:build` e atualize a página.
+
+Para rever a homepage em desktop, tablet e telemóvel:
+
+```bash
+npm run site:screenshots
+```
+
+O comando constrói o site e usa Playwright com o Chrome instalado para guardar
+capturas a 1440, 768 e 390 px em `tmp/screenshots/`. Defina `CHROME_BIN` se
+precisar de outro executável Chromium. O comando falha se houver deslocamento
+horizontal. Verifique também o foco por teclado, os links e as restantes páginas
+num browser local.
 
 O workflow de GitHub Pages define automaticamente a base `/alojamento-local-em-analise`.
 

@@ -4,10 +4,12 @@
     "build:css": "npm run site:css",
     "site:css": "tailwindcss -i site/assets/css/input.css -o _site/assets/story.css --minify",
     "site:build": "bundle exec ruby scripts/build_site.rb",
-    "site:check": "bundle exec ruby scripts/check_site.rb _site"
+    "site:check": "bundle exec ruby scripts/check_site.rb _site",
+    "site:screenshots": "npm run site:build && node scripts/capture_homepage.mjs"
   },
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.13",
+    "playwright-core": "^1.64.0",
     "tailwindcss": "^4.1.13"
   }
 }
