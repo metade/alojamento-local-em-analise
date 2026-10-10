@@ -1,38 +1,32 @@
-{% comment %}
-  UX examples shared by all district pages; not snapshot statistics.
-  Sets: RNAL 1000, Airbnb 800, intersection 400. Reuses the homepage's
-  proportional circle geometry at one tenth of its example counts.
-  Replace only with versioned parish aggregates; see AGENTS.md statistics backlog.
-{% endcomment %}
+{% assign m = include.metrics %}
 <figure class="m-0 min-w-0 border border-[var(--color-line)] bg-white/50 p-5 sm:p-8">
-  <p class="m-0! inline-block border border-[var(--color-terra)]/40 bg-[var(--color-terra)]/10 px-3 py-2 text-xs font-semibold text-[var(--color-terra)]">Valores de exemplo · desenho em preparação</p>
-  <div class="mt-5 flex flex-wrap gap-x-6 gap-y-2 text-sm">
-    <span class="text-[var(--color-blue)]">RNAL na freguesia · <strong>1 000 números</strong></span>
-    <span class="text-[var(--color-terra)]">Airbnb na freguesia · <strong>800 números</strong></span>
+  <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+    <span class="text-[var(--color-blue)]">RNAL · <strong>{{ m.rnal | pt_number }} números</strong></span>
+    <span class="text-[var(--color-terra)]">Airbnb · <strong>{{ m.airbnb | pt_number }} números</strong></span>
   </div>
-  <svg class="mt-5 block w-full" viewBox="0 0 640 560" aria-hidden="true" focusable="false">
-    <circle cx="200" cy="210" r="180" class="fill-[var(--color-blue)]/10 stroke-[var(--color-blue)]" stroke-width="2" />
-    <circle cx="353.281" cy="210" r="160.997" class="fill-[var(--color-terra)]/10 stroke-[var(--color-terra)]" stroke-width="2" />
-    <g text-anchor="middle" class="fill-[var(--color-ink)]">
-      <text x="110" y="190" class="hidden text-lg font-semibold sm:block">Só no RNAL</text>
-      <text x="110" y="232" class="font-[family-name:var(--font-serif)] text-4xl">600</text>
-      <text x="280" y="178" class="hidden text-lg font-semibold sm:block"><tspan x="280">Nas duas</tspan><tspan x="280" dy="24">fontes</tspan></text>
-      <text x="280" y="244" class="font-[family-name:var(--font-serif)] text-4xl">400</text>
-      <text x="440" y="190" class="hidden text-lg font-semibold sm:block">Só no Airbnb</text>
-      <text x="440" y="232" class="font-[family-name:var(--font-serif)] text-4xl">400</text>
-    </g>
-    <circle cx="520" cy="450" r="98.59" class="fill-[var(--color-yellow)]/15 stroke-[var(--color-yellow)]" stroke-width="2" />
-    <g text-anchor="middle" class="fill-[var(--color-ink)]">
-      <text x="520" y="410" class="hidden text-lg font-semibold sm:block"><tspan x="520">Sem número</tspan><tspan x="520" dy="24">identificável</tspan></text>
-      <text x="520" y="478" class="font-[family-name:var(--font-serif)] text-4xl">300</text>
-      <text x="520" y="508" class="hidden text-sm sm:block">anúncios</text>
-    </g>
+  <svg class="mt-5 block w-full" viewBox="0 0 640 510" aria-hidden="true" focusable="false">
+    <circle cx="{{ m.geometry.x }}" cy="190" r="{{ m.geometry.r }}" class="fill-[var(--color-blue)]/10 stroke-[var(--color-blue)]" stroke-width="2" />
+    <circle cx="{{ m.geometry.y }}" cy="190" r="{{ m.geometry.s }}" class="fill-[var(--color-terra)]/10 stroke-[var(--color-terra)]" stroke-width="2" />
+    <circle cx="520" cy="420" r="{{ m.bubble_radius }}" class="fill-[var(--color-yellow)]/15 stroke-[var(--color-yellow)]" stroke-width="2" />
+    <text x="20" y="430" class="fill-[var(--color-ink)] text-xl">Sem número identificável</text>
+    <text x="20" y="470" class="fill-[var(--color-ink)] font-[family-name:var(--font-serif)] text-4xl">{{ m.unresolved | pt_number }} anúncios</text>
   </svg>
-  <ul class="mt-5 grid gap-2 text-sm sm:sr-only">
-    <li class="border-l-4 border-[var(--color-blue)] bg-[var(--color-blue)]/10 p-3">Só no RNAL da freguesia: <strong>600 números</strong></li>
-    <li class="border-l-4 border-[var(--color-ink)] bg-[var(--color-ink)]/10 p-3">Nas duas fontes: <strong>400 números</strong></li>
-    <li class="border-l-4 border-[var(--color-terra)] bg-[var(--color-terra)]/10 p-3">Só no Airbnb da freguesia: <strong>400 números</strong></li>
-    <li class="border-l-4 border-[var(--color-yellow)] bg-[var(--color-yellow)]/15 p-3">Sem número identificável: <strong>300 anúncios</strong></li>
+  <ul class="mt-5 grid gap-2 text-sm sm:grid-cols-2">
+    <li class="border-l-4 border-[var(--color-blue)] bg-[var(--color-blue)]/10 p-3">Só no RNAL local: <strong>{{ m.rnal_only | pt_number }} números</strong></li>
+    <li class="border-l-4 border-[var(--color-ink)] bg-[var(--color-ink)]/10 p-3">Nas duas fontes: <strong>{{ m.intersection | pt_number }} números</strong></li>
+    <li class="border-l-4 border-[var(--color-terra)] bg-[var(--color-terra)]/10 p-3">Só no Airbnb local: <strong>{{ m.airbnb_only | pt_number }} números</strong></li>
+    <li class="border-l-4 border-[var(--color-yellow)] bg-[var(--color-yellow)]/15 p-3">Sem número identificável: <strong>{{ m.unresolved | pt_number }} anúncios</strong></li>
   </ul>
-  <figcaption class="mt-6 border-t border-[var(--color-line)] pt-5 text-sm text-[var(--color-ink)]/75">Valores ilustrativos, ainda por calcular para esta freguesia. Áreas e sobreposição proporcionais aos exemplos. A bolha separada conta anúncios, noutra escala; não integra os conjuntos de números de registo.</figcaption>
+  <figcaption class="mt-6 border-t border-[var(--color-line)] pt-5 text-sm text-[var(--color-ink)]/75">
+    <p>Áreas e sobreposição proporcionais aos números distintos nesta geografia. A bolha separada conta anúncios: a área representa a fração sem número identificável, noutra escala.</p>
+    <p>«Só no RNAL» significa ausente do Airbnb nesta geografia; pode aparecer noutra. «Só no Airbnb» pode ter registo nacional noutra localização.</p>
+    <ul class="space-y-1">
+      <li>Registo noutra freguesia de Lisboa: <strong>{{ m.another_lisbon_parish | pt_number }}</strong></li>
+      <li>Registo noutro município: <strong>{{ m.another_municipality | pt_number }}</strong></li>
+      <li>Sem correspondência nacional: <strong>{{ m.no_national_match | pt_number }}</strong></li>
+      <li>Geografia oficial por resolver: <strong>{{ m.unresolved_official_geography | pt_number }}</strong></li>
+    </ul>
+    {% if m.observed_unknown_parish > 0 or m.official_unknown_parish > 0 %}<p>Freguesia por resolver: {{ m.observed_unknown_parish | pt_number }} anúncios e {{ m.official_unknown_parish | pt_number }} entradas oficiais de Lisboa. Incluídos no total municipal, sem atribuição a uma freguesia conhecida.</p>{% endif %}
+    <p class="mt-4">Dos {{ m.announcements | pt_number }} anúncios: {{ m.empty_licence | pt_number }} têm campo vazio, {{ m.unrecognised_licence | pt_number }} têm valor não reconhecido e {{ m.identifiable_number | pt_number }} têm número identificável. Destes últimos, {{ m.confirmed_rnal_match | pt_number }} correspondem a um número no RNAL nacional datado.</p>
+  </figcaption>
 </figure>

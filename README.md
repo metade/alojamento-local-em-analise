@@ -29,13 +29,15 @@ Os resultados locais incluem diagnósticos como `host_id`, coordenadas e valores
 bundle exec ruby run_me.rb --mode public
 ```
 
-Para uma execução automatizada repetida, `bundle exec ruby run_me.rb --mode public --reuse-existing` reutiliza um run público já existente sem o reescrever e permite que a publicação do site continue.
+Para uma execução automatizada repetida, `bundle exec ruby run_me.rb --mode public --reuse-existing` reutiliza resultados com hashes e versões de análise/metodologia/schema atuais e todos os ficheiros exigidos. Versões anteriores são recalculadas na mesma pasta; hashes diferentes para as mesmas datas são rejeitados.
 
 O modo público cria o run em:
 
 ```text
 data/snapshots/<airbnb-snapshot-date>__<official-download-date>/
 ```
+
+Existe uma pasta pública por par de datas. Uma reanálise valida os novos outputs antes de substituir essa pasta e as suas linhas históricas. Os outros pares de datas permanecem iguais; o Git conserva as versões anteriormente commitadas. Os runs locais continuam imutáveis.
 
 Cada run contém:
 
@@ -44,9 +46,10 @@ Cada run contém:
 - `listings.csv` — contagens agregadas por freguesia e classificação;
 - `licence_groups.csv` — contagens agregadas por classificação e categorias oficiais;
 - `freguesias.csv` — métricas por freguesia;
+- `registration_metrics.json` — conjuntos de números AL e contagens de anúncios, com definições versionadas;
 - `report.html` — relatório autónomo em português.
 
-O histórico append-only está em `data/history/summary.csv`. O gráfico de distâncias do site usa `data/history/distance_ranges.csv`: cada run público novo acrescenta quatro contagens agregadas de números de licença, sem coordenadas nem números de licença individuais. Para preencher este agregado num run público anterior sem alterar o snapshot, use `bundle exec ruby scripts/backfill_distance_ranges.rb <run_id>` com os ficheiros fonte originais; o script verifica os hashes do metadata antes de escrever. Runs existentes nunca são sobrescritos. Para gerar também um PDF derivado, instale `wkhtmltopdf` ou `weasyprint` e execute:
+O histórico público em `data/history/summary.csv` mantém uma linha atual por par de datas. O gráfico de distâncias do site usa `data/history/distance_ranges.csv`: cada run público novo acrescenta quatro contagens agregadas de números de licença, sem coordenadas nem números de licença individuais. Para preencher este agregado num run público anterior sem alterar o snapshot, use `bundle exec ruby scripts/backfill_distance_ranges.rb <run_id>` com os ficheiros fonte originais; o script verifica os hashes do metadata antes de escrever. Uma reanálise substitui apenas as linhas históricas do mesmo par de datas, incluindo os agregados de distâncias e regiões. Para gerar também um PDF derivado, instale `wkhtmltopdf` ou `weasyprint` e execute:
 
 ```bash
 GENERATE_PDF=1 bundle exec ruby run_me.rb --mode public
@@ -126,10 +129,10 @@ node scripts/capture_homepage.mjs metodologia.html
 As capturas recebem o nome da página, por exemplo
 `tmp/screenshots/freguesias-arroios-390.png`.
 
-Os diagramas de sobreposição e o número RNAL nas páginas de freguesia ainda usam
-valores de exemplo para o tratamento visual. Não são estatísticas calculadas.
-O trabalho pendente está documentado em `AGENTS.md`, na secção
-“Statistics to complete after the UX treatment”.
+Os diagramas de sobreposição e os números RNAL nas páginas de freguesia usam
+métricas agregadas e versionadas. As definições e limitações estão em
+[docs/registration-metrics.md](docs/registration-metrics.md).
+O trabalho a retomar em futuras sessões está em [TODO.md](TODO.md).
 
 O workflow de GitHub Pages define automaticamente a base `/alojamento-local-em-analise`.
 
@@ -181,8 +184,8 @@ As licenças são normalizadas de forma conservadora. O analisador distingue, en
 
 O campo `identifiable_licences` dos CSVs conta anúncios com um número AL
 identificável, não números distintos nem correspondências confirmadas no RNAL.
-A categoria “licença única em Lisboa” indica um número presente num único anúncio
-do conjunto analisado; por si só, não confirma um registo oficial em Lisboa.
+Na metodologia 2.0.0, a categoria “licença única em Lisboa” exige um único anúncio
+e uma correspondência no RNAL com concelho Lisboa; não confirma validade ou atividade do registo.
 
 ### Exemplos de sinais
 

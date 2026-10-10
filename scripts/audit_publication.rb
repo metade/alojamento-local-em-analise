@@ -53,7 +53,7 @@ end
 def audit_worktree
   errors = []
 
-  tracked_files.each do |path|
+  (tracked_files + PUBLIC_ROOTS.flat_map { |root| Dir.glob("#{root}**/*").select { |path| File.file?(path) } }).uniq.each do |path|
     if PRIVATE_PATHS.any? { |pattern| pattern.match?(path) }
       errors << "ficheiro local/detalhado tracked: #{path}"
       next

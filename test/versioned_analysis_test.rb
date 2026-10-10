@@ -28,16 +28,31 @@ class VersionedAnalysisTest < Minitest::Test
       airbnb = File.join(dir, "listings-2026-06-23.csv")
       official = File.join(dir, "official-2026-09-19.csv")
       output_root = File.join(dir, "snapshots")
-      FileUtils.mkdir_p(File.join(output_root, "2026-06-23__2026-09-19"))
-
+      File.write(airbnb, "fixture")
+      File.write(official, "fixture")
+      run_id = AlIlegal::Analysis.run_id_for(airbnb_path: airbnb, official_path: official)
+      path = File.join(output_root, run_id)
+      FileUtils.mkdir_p(path)
+      meta = {methodology_version: AlIlegal::METHODOLOGY_VERSION, analysis_version: AlIlegal::ANALYSIS_VERSION,
+              output_schema_version: AlIlegal::OUTPUT_SCHEMA_VERSION,
+              mode: "public", source_files: {airbnb: {sha256: Digest::SHA256.file(airbnb).hexdigest}, official: {sha256: Digest::SHA256.file(official).hexdigest}}}
+      File.write(File.join(path, "metadata.json"), JSON.generate(meta))
+      (AlIlegal::PUBLIC_CSV_SCHEMAS.keys + %w[summary.json report.html registration_metrics.json]).each { |file| File.write(File.join(path, file), "fixture") }
+      before = File.binread(File.join(path, "metadata.json"))
       existing = AlIlegal::Analysis.existing_public_run(airbnb_path: airbnb, official_path: official, output_root: output_root)
-
-      assert_equal "2026-06-23__2026-09-19", existing[:run_id]
-      assert_equal File.join(output_root, existing[:run_id]), existing[:path]
+      assert_equal run_id, existing[:run_id]
+      assert_equal before, File.binread(File.join(path, "metadata.json"))
+      File.write(official, "changed bytes")
+      assert_raises(RuntimeError) { AlIlegal::Analysis.existing_public_run(airbnb_path: airbnb, official_path: official, output_root: output_root) }
+      assert_equal "2026-06-23__2026-09-19", run_id
+      File.write(official, "fixture")
+      meta[:methodology_version] = "1.1.0"
+      File.write(File.join(path, "metadata.json"), JSON.generate(meta))
+      assert_nil AlIlegal::Analysis.existing_public_run(airbnb_path: airbnb, official_path: official, output_root: output_root)
     end
   end
 
-  def test_creates_immutable_versioned_outputs_and_history
+  def test_public_runs_replace_the_date_pair_outputs_and_history
     Dir.mktmpdir do |dir|
       airbnb = File.join(dir, "listings.csv")
       official = File.join(dir, "official-2026-09-17.csv")
@@ -53,14 +68,14 @@ class VersionedAnalysisTest < Minitest::Test
       result = AlIlegal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "public", output_root: File.join(dir, "snapshots"), history_path: File.join(dir, "history", "summary.csv"))
       run_dir = result[:path]
       assert_equal "2026-06-23__2026-09-17", result[:run_id]
-      assert_equal %w[metadata.json report.html summary.json listings.csv licence_groups.csv freguesias.csv].sort, Dir.children(run_dir).sort
+      assert_equal %w[metadata.json report.html summary.json listings.csv licence_groups.csv freguesias.csv registration_metrics.json].sort, Dir.children(run_dir).sort
       public_listings = CSV.read(File.join(run_dir, "listings.csv"), headers: true)
       assert_equal 3, public_listings.length
       assert_equal 1, public_listings.find { |row| row["classification"] == "sem licença" }["listings"].to_i
       assert_equal 1, public_listings.find { |row| row["classification"] == "sem licença identificável" }["listings"].to_i
       summary = JSON.parse(File.read(File.join(run_dir, "summary.json")))
       assert_equal 1, summary.fetch("official_registers_lisbon")
-      assert_equal "1.1.0", summary.fetch("methodology_version")
+      assert_equal "2.0.0", summary.fetch("methodology_version")
       assert_equal AlIlegal::PUBLIC_CSV_SCHEMAS["listings.csv"], public_listings.headers
       refute_includes public_listings.headers, "host_id"
       refute public_listings.to_csv.match?(%r{https?://|/rooms/})
@@ -72,14 +87,22 @@ class VersionedAnalysisTest < Minitest::Test
       metadata = JSON.parse(File.read(File.join(run_dir, "metadata.json")))
       refute metadata.to_s.match?(/host_id|listing_url|licensa_raw|latitude|longitude|official_address/i)
       refute metadata.to_s.include?("path")
-      assert_equal "3.1.0", JSON.parse(File.read(File.join(run_dir, "metadata.json"))) ["output_schema_version"]
+      assert_raises(RuntimeError) { AlIlegal::Analysis.append_history(File.join(dir, "history", "summary.csv"), result[:summary]) }
+      assert_equal "4.0.0", JSON.parse(File.read(File.join(run_dir, "metadata.json"))) ["output_schema_version"]
       report = File.read(File.join(run_dir, "report.html"))
       assert_operator report.length, :>, 1_000
       assert_includes report, "Exemplos ilustrativos"
       assert_includes report, "Não correspondem a anúncios"
       assert_includes report, "Licença repetida em várias localizações"
       refute report.match?(%r{https?://[^<]+/rooms/|host[_ ]?id|Rua [A-Z]|\b\d{4,}/AL\b}i)
-      assert_raises(RuntimeError) { AlIlegal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "public", output_root: File.join(dir, "snapshots"), history_path: File.join(dir, "history", "summary.csv")) }
+      File.write(File.join(run_dir, "obsolete.pdf"), "obsolete")
+      repeated = AlIlegal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "public", output_root: File.join(dir, "snapshots"), history_path: File.join(dir, "history", "summary.csv"))
+      assert_equal result[:path], repeated[:path]
+      assert_equal [result[:run_id]], Dir.children(File.join(dir, "snapshots"))
+      assert_equal 1, CSV.read(File.join(dir, "history", "summary.csv"), headers: true).length
+      assert_equal 4, CSV.read(File.join(dir, "history", "distance_ranges.csv"), headers: true).length
+      assert_empty repeated[:summary][:historical_comparisons]
+      refute File.exist?(File.join(run_dir, "obsolete.pdf"))
     end
   end
 
@@ -120,10 +143,11 @@ class VersionedAnalysisTest < Minitest::Test
 
       result = AlIlegal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "local", output_root: File.join(dir, "private"), history_path: File.join(dir, "private", "history", "summary.csv"))
       run_dir = result[:path]
-      assert_equal %w[freguesias_summary.csv licence_groups_detailed.csv listings_detailed.csv metadata_local.json report_local.html summary_local.json].sort, Dir.children(run_dir).sort
+      assert_equal %w[freguesias_summary.csv licence_groups_detailed.csv listings_detailed.csv metadata_local.json report_local.html summary_local.json registration_metrics.json].sort, Dir.children(run_dir).sort
       detailed = CSV.read(File.join(run_dir, "listings_detailed.csv"), headers: true)
       assert_includes detailed.headers, "host_id"
       assert_includes detailed.headers, "licensa_raw"
+      assert_equal "00123/AL", detailed.first["licensa_raw"]
       assert_equal "local", JSON.parse(File.read(File.join(run_dir, "metadata_local.json"))) ["mode"]
       refute Dir.exist?(File.join(dir, "snapshots"))
     end
@@ -149,7 +173,7 @@ class VersionedAnalysisTest < Minitest::Test
       assert_equal 1, rows.sum { |row| row["licence_groups"].to_i }
       assert_equal "1", rows.find { |row| row["range"] == "2_5_km" }["licence_groups"]
       assert_equal 2, CSV.read(File.join(result[:path], "listings.csv"), headers: true).sum { |row| row["listings"].to_i }
-      assert_equal %w[metadata.json report.html summary.json listings.csv licence_groups.csv freguesias.csv].sort, Dir.children(result[:path]).sort
+      assert_equal %w[metadata.json report.html summary.json listings.csv licence_groups.csv freguesias.csv registration_metrics.json].sort, Dir.children(result[:path]).sort
       assert_raises(RuntimeError) { AlIlegal::Analysis.append_distance_history(File.join(dir, "history", "distance_ranges.csv"), result[:run_id], []) }
     end
   end
@@ -174,10 +198,10 @@ class VersionedAnalysisTest < Minitest::Test
       rows = CSV.read(File.join(dir, "history", "outside_regions.csv"), headers: true)
       counts = rows.to_h { |row| [[row["resolution"], row["official_region"].to_s], row["listings"].to_i] }
 
-      assert_equal({["resolved", "Norte"] => 2, ["municipality_missing", ""] => 1}, counts)
-      assert_equal 3, counts.values.sum
+      assert_equal({["resolved", "Norte"] => 2}, counts)
+      assert_equal 2, counts.values.sum
       assert rows.all? { |row| row["region_method"] == "official_register_nutsii_v1" }
-      assert_equal 3, CSV.read(File.join(result[:path], "listings.csv"), headers: true).select { |row| row["classification"] == "licença oficial fora de Lisboa" }.sum { |row| row["listings"].to_i }
+      assert_equal 2, CSV.read(File.join(result[:path], "listings.csv"), headers: true).select { |row| row["classification"] == "licença oficial fora de Lisboa" }.sum { |row| row["listings"].to_i }
       assert_raises(RuntimeError) { AlIlegal::Analysis.append_outside_region_history(File.join(dir, "history", "outside_regions.csv"), result[:run_id], []) }
     end
   end
@@ -190,5 +214,68 @@ class VersionedAnalysisTest < Minitest::Test
     HTML
 
     assert_equal ["2026-06-23", "https://data.insideairbnb.com/portugal/lisbon/lisbon/2026-06-23/data/listings.csv.gz"], AlIlegal::Data.latest_airbnb_snapshot(page)
+    older = '<a href="https://data.insideairbnb.com/portugal/lisbon/lisbon/2025-09-21/data/listings.csv.gz">older</a>'
+    unordered = page.sub('<h4>', older + '<h4>')
+    assert_equal "2026-06-23", AlIlegal::Data.latest_airbnb_snapshot(unordered).first
+    assert_raises(RuntimeError) { AlIlegal::Data.latest_airbnb_snapshot('<h3>Lisbon</h3>changed page') }
+  end
+  def test_replacement_updates_only_its_own_history_rows_and_preserves_other_dates
+    Dir.mktmpdir do |dir|
+      path = File.join(dir, "summary.csv")
+      first = {run_id: "2026-06-23__2026-09-26", source_dates: {airbnb_snapshot_date: "2026-06-23", official_register_download_date: "2026-09-26"}, methodology_version: "1.1.0", listings: 10, licence_groups: 5, establishment_estimate: 8, generated_at: "before"}
+      october = first.merge(run_id: "2026-06-23__2026-10-01", generated_at: "october")
+      AlIlegal::Analysis.append_history(path, first)
+      AlIlegal::Analysis.append_history(path, october)
+      original_october = File.readlines(path).find { |line| line.start_with?(october[:run_id] + ",") }
+      latest = first.merge(methodology_version: "2.0.0", establishment_estimate: 9, generated_at: "after")
+      AlIlegal::Analysis.append_history(path, latest, replace: true)
+      assert_equal original_october, File.readlines(path).find { |line| line.start_with?(october[:run_id] + ",") }
+      rows = CSV.read(path, headers: true)
+      assert_equal 2, rows.size
+      assert_equal "2.0.0", rows.find { |row| row["run_id"] == first[:run_id] }["methodology_version"]
+      comparisons = AlIlegal::Analysis.historical_comparisons(path, latest)
+      assert_equal [october[:run_id]], comparisons.map { |row| row[:run_id] }
+      assert_match(/incompatível/, comparisons.first[:status])
+      regions = File.join(dir, "outside_regions.csv")
+      AlIlegal::Analysis.append_outside_region_history(regions, first[:run_id], [{license_group_assessment: "licença oficial fora de Lisboa", official_concelho: "Porto", official_region: "Norte"}])
+      AlIlegal::Analysis.append_outside_region_history(regions, first[:run_id], [], replace: true)
+      assert_empty CSV.read(regions, headers: true)
+    end
+  end
+
+  def test_failed_public_install_restores_previous_snapshot_and_history
+    Dir.mktmpdir do |dir|
+      staging = File.join(dir, "staging")
+      candidate = File.join(staging, "snapshot")
+      destination = File.join(dir, "snapshot")
+      history = File.join(dir, "history.csv")
+      FileUtils.mkdir_p(candidate)
+      FileUtils.mkdir_p(destination)
+      File.write(File.join(candidate, "sentinel"), "new")
+      File.write(File.join(destination, "sentinel"), "old")
+      File.write(history, "old history")
+      assert_raises(Errno::ENOENT) do
+        AlIlegal::Analysis.publish_public_run!(candidate, destination, {File.join(staging, "missing.csv") => history}, staging)
+      end
+      assert_equal "old", File.read(File.join(destination, "sentinel"))
+      assert_equal "old history", File.read(history)
+    end
+  end
+
+end
+
+require_relative "registration_metrics_test"
+
+class VersionedAnalysisTest
+  def test_report_category_bars_use_number_groups_as_denominator
+    summary = {run_id: "test", mode: "public", generated_at: "test", listings: 100,
+               licence_groups: 100, establishment_estimate: 100,
+               classifications: {"licença única em Lisboa" => 75, "licença oficial fora de Lisboa" => 25}}
+    metadata = {source_urls: {airbnb: "https://example.com", official: "https://example.org"}, methodology_version: "2.0.0", analysis_version: "3.0.1"}
+    groups = [{classification: "licença única em Lisboa", licence_groups: 75, listings: 75, spatial_locations: 75},
+              {classification: "licença oficial fora de Lisboa", licence_groups: 25, listings: 25, spatial_locations: 25}]
+    html = AlIlegal::Report.html(metadata, summary, groups, [])
+    assert_includes html, "width:75%"
+    assert_includes html, "width:25%"
   end
 end

@@ -41,4 +41,15 @@ class AlIlegalTest < Minitest::Test
     assert_equal "local", AlIlegal::CLI.mode!(["--mode=local"])
     assert_raises(ArgumentError) { AlIlegal::CLI.mode!(["--include-details"]) }
   end
+
+  def test_accepts_only_the_explicit_single_al_registration_prefix
+    assert_equal "12807", AlIlegal.parse_al_license("Registration Number: 12807/AL")
+    assert_equal "123", AlIlegal.parse_al_license("registration number: 00123 /AL")
+    ["Registration Number: 406/UT/2017", "Registration Number: 123", "Registration Number: 123/AL and 456/AL", "Text 123/AL", "123/AL text"].each do |value|
+      assert_nil AlIlegal.parse_al_license(value)
+    end
+    {"81551/AL" => "81551", "34367" => "34367", "AL15252" => "15252", "00123/AL" => "123"}.each do |raw, normalized|
+      assert_equal normalized, AlIlegal.parse_al_license(raw)
+    end
+  end
 end

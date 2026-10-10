@@ -58,7 +58,8 @@ module AlIlegal
       lisbon_section = page[/<h3[^>]*>\s*Lisbon.*?<\/h3>(.*?)(?=<h3|\z)/mi, 1]
       raise "Could not find Lisbon on the Inside Airbnb data page" unless lisbon_section
 
-      link = lisbon_section[/href=["']([^"']*listings\.csv\.gz)["']/i, 1]
+      links = lisbon_section.scan(/href=["']([^"']*listings\.csv\.gz)["']/i).flatten
+      link = links.select { |url| url.match?(%r{/portugal/lisbon/lisbon/\d{4}-\d{2}-\d{2}/data/listings\.csv\.gz\z}i) }.max_by { |url| url[%r{/((?:19|20)\d{2}-\d{2}-\d{2})/}, 1] }
       raise "Could not find Lisbon listings.csv.gz on the Inside Airbnb data page" unless link
 
       date_text = link[%r{/((?:19|20)\d{2}-\d{2}-\d{2})/}, 1]

@@ -7,6 +7,8 @@
 require "csv"
 require "fileutils"
 require "json"
+require_relative "../lib/al_ilegal/registration_metrics"
+require_relative "../lib/al_ilegal/overlap"
 
 ROOT = File.expand_path("..", __dir__)
 SNAPSHOTS = File.join(ROOT, "data", "snapshots")
@@ -23,6 +25,9 @@ DISTANCE_LABELS = {
   "over_5_km" => "Mais de 5 km"
 }.freeze
 LABELS = {
+  "localização observada não identificada" => "Localização observada não identificada",
+  "número sem correspondência no RNAL" => "Número sem correspondência no RNAL",
+  "geografia oficial não identificada" => "Geografia oficial não identificada",
   "sem licença" => "Sem licença",
   "sem licença identificável" => "Sem licença identificável",
   "licença repetida em várias localizações" => "Licença repetida em diferentes localizações",
@@ -51,22 +56,17 @@ def counts(rows)
 end
 
 def official_count(summary, run_id)
-  return summary["official_registers_lisbon"] if summary["official_registers_lisbon"]
-
-  date = run_id[/__([0-9-]+)\z/, 1]
-  path = Dir[File.join(ROOT, "data_sources", "Estabelecimentos_de_Alojamento_Local-*.csv")]
-    .select { |candidate| candidate[/-(\d{4}-\d{2}-\d{2})\.csv\z/, 1].to_s <= date.to_s }
-    .max_by { |candidate| candidate[/-(\d{4}-\d{2}-\d{2})\.csv\z/, 1].to_s }
-  return nil unless path
-
-  CSV.foreach(path, headers: true).count { |row| row["Concelho"] == "Lisboa" }
+  summary["official_registers_lisbon"]
 end
 
 def public_runs
   Dir.children(SNAPSHOTS).filter_map do |name|
     path = File.join(SNAPSHOTS, name)
-    path if File.directory?(path)
-  end.sort.reverse
+    path if File.directory?(path) && name.match?(/\A\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}\z/)
+  end.sort_by do |path|
+    metadata = JSON.parse(File.read(File.join(path, "metadata.json")))
+    [metadata.fetch("source_dates").fetch("airbnb_snapshot_date"), metadata.fetch("source_dates").fetch("official_register_download_date"), Gem::Version.new(metadata.fetch("methodology_version")), Gem::Version.new(metadata.fetch("analysis_version"))]
+  end.reverse
 end
 
 def distance_ranges(run_id, summary)
@@ -80,7 +80,7 @@ def distance_ranges(run_id, summary)
     rows.all? { |row| row["distance_method"] == "max_cross_cluster_pair_km_v1" && row["licence_groups"].to_s.match?(/\A\d+\z/) }
 
   counts = rows.to_h { |row| [row["range"], row["licence_groups"].to_i] }
-  expected = summary.fetch("classifications").fetch("licença repetida em várias localizações")
+  expected = summary.fetch("classifications").fetch("licença repetida em várias localizações", 0)
   raise "Distance range count differs from licence groups for #{run_id}" unless counts.values.sum == expected
 
   DISTANCE_LABELS.map { |key, label| {"key" => key, "label" => label, "count" => counts.fetch(key)} }
@@ -120,9 +120,19 @@ def outside_regions(run_id, listings)
   {"rows" => chart, "total" => expected, "unresolved_municipality" => unresolved_municipality, "unresolved_region" => unresolved_region}
 end
 
+def measured_run(runs)
+  runs.find do |path|
+    metrics = File.join(path, "registration_metrics.json")
+    next false unless File.file?(metrics)
+    data = JSON.parse(File.read(metrics))
+    data["metric_version"] == AlIlegal::RegistrationMetrics::VERSION &&
+      data["methodology_version"] == AlIlegal::RegistrationMetrics::SUPPORTED_METHODOLOGY_VERSION
+  end || raise("No snapshot has supported measured registration metrics")
+end
+
 def site_data(runs)
-  run_id = File.basename(runs.first)
-  run_dir = runs.first
+  run_dir = measured_run(runs)
+  run_id = File.basename(run_dir)
   summary = JSON.parse(File.read(File.join(run_dir, "summary.json")))
   metadata = JSON.parse(File.read(File.join(run_dir, "metadata.json")))
   listings = CSV.read(File.join(run_dir, "listings.csv"), headers: true).map(&:to_h)
@@ -130,25 +140,51 @@ def site_data(runs)
   grouped = listings.group_by { |row| row["freguesia"] }.transform_values { |rows| counts(rows) }
   ranges = distance_ranges(run_id, summary)
   regions = outside_regions(run_id, listings)
-  districts = freguesias.map do |row|
+  metrics_path = File.join(run_dir, "registration_metrics.json")
+  raise "Missing measured registration metrics for #{run_id}" unless File.file?(metrics_path)
+  metrics = JSON.parse(File.read(metrics_path))
+  AlIlegal::RegistrationMetrics.validate!(JSON.parse(File.read(metrics_path), symbolize_names: true))
+  raise "Metric provenance differs" unless metrics["run_id"] == run_id && metrics["source_files"] == metadata["source_files"] && metrics["methodology_version"] == metadata["methodology_version"]
+  measures = metrics.fetch("rows").to_h do |row|
+    row["geometry"] = AlIlegal::Overlap.geometry(row["rnal"], row["airbnb"], row["intersection"])
+    row["unresolved"] = row["empty_licence"] + row["unrecognised_licence"]
+    row["bubble_radius"] = row["announcements"].zero? ? 0 : (85*Math.sqrt(row["unresolved"].to_f/row["announcements"])).round(3)
+    [row["geography"], row]
+  end
+  measures.fetch("Lisboa")["observed_unknown_parish"] = measures.fetch(AlIlegal::Geography::UNKNOWN).fetch("announcements")
+  measures.fetch("Lisboa")["official_unknown_parish"] = metrics.fetch("diagnostics").fetch("lisbon_entries_unresolved_parish")
+  raise "City announcement count differs" unless summary.fetch("listings") == measures.fetch("Lisboa").fetch("announcements")
+  districts = freguesias.reject { |row| row["freguesia"] == AlIlegal::Geography::UNKNOWN }.map do |row|
     raw_name = row["freguesia"]
+    measured = measures.fetch(raw_name)
+    unless measured.fetch("announcements") == row.fetch("listings").to_i && measured.fetch("identifiable_number") == row.fetch("identifiable_licences").to_i
+      raise "District announcement metrics differ: #{raw_name}"
+    end
+    # Keep the published routes while analysis now uses canonical parish names.
+    route_name = AlIlegal::Geography::ALIASES.key(raw_name) || raw_name
     {
+      "metrics" => measures.fetch(raw_name),
       "name" => raw_name,
       "display_name" => pretty(raw_name),
-      "slug" => raw_name.downcase.tr("áàâãäéêëíìîïóôõöúùûüç", "aaaaaeeeiiiioooouuuuc").gsub(/[^a-z0-9]+/, "-").gsub(/\A-|-$|\A\z/, ""),
+      "slug" => route_name.downcase.tr("áàâãäéêëíìîïóôõöúùûüç", "aaaaaeeeiiiioooouuuuc").gsub(/[^a-z0-9]+/, "-").gsub(/\A-|-$|\A\z/, ""),
       "listings" => row["listings"].to_i,
       # This snapshot field counts listing rows, not distinct registration numbers.
       "listings_with_identifiable_licence" => row["identifiable_licences"].to_i,
       "establishments_estimate" => row["establishments_estimate"].to_i,
       "categories" => LABELS.filter_map do |key, label|
         value = grouped.dig(raw_name, key)
-        value ? {"key" => key, "label" => label, **value} : nil
+        value && value["listings"].positive? ? {"key" => key, "label" => label, **value} : nil
       end
     }
   end
 
   {
     "run_id" => run_id,
+    "newer_snapshot_without_metrics" => run_dir == runs.first ? nil : {
+      "run_id" => File.basename(runs.first),
+      "official_date" => JSON.parse(File.read(File.join(runs.first, "metadata.json"))).fetch("source_dates").fetch("official_register_download_date")
+    },
+    "metrics" => measures.fetch("Lisboa"),
     "summary" => summary,
     "metadata" => metadata,
     "official_count" => official_count(summary, run_id),
@@ -168,6 +204,9 @@ end
 runs = public_runs
 abort "Não existem snapshots públicos em #{SNAPSHOTS}." if runs.empty?
 
+selected = measured_run(runs)
+warn "Newest snapshot #{File.basename(runs.first)} lacks supported set metrics; site uses #{File.basename(selected)}" unless selected == runs.first
+
 FileUtils.rm_rf(SITE)
 FileUtils.mkdir_p(File.join(SOURCE, "_data"))
 File.write(File.join(SOURCE, "_data", "site.json"), JSON.pretty_generate(site_data(runs)))
@@ -179,7 +218,7 @@ system(*jekyll, chdir: ROOT, exception: true)
 runs.each do |source|
   destination = File.join(SITE, "runs", File.basename(source))
   FileUtils.mkdir_p(destination)
-  PUBLIC_FILES.each { |file| FileUtils.cp(File.join(source, file), File.join(destination, file)) }
+  (PUBLIC_FILES + (File.file?(File.join(source, "registration_metrics.json")) ? ["registration_metrics.json"] : [])).each { |file| FileUtils.cp(File.join(source, file), File.join(destination, file)) }
 end
 FileUtils.cp(File.join(ROOT, "LICENSE"), File.join(SITE, "LICENSE"))
 FileUtils.cp(File.join(ROOT, "NOTICE"), File.join(SITE, "NOTICE"))

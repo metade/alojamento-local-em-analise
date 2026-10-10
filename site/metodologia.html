@@ -31,7 +31,7 @@ title: Metodologia e proveniência
         <div><dt class="font-semibold">Registos oficiais</dt><dd class="mt-1">Entradas no RNAL. A contagem de Lisboa usa o concelho indicado no registo, sem garantir que cada estabelecimento esteja hoje em funcionamento.</dd></div>
         <div><dt class="font-semibold">Estabelecimentos estimados</dt><dd class="mt-1">Estimativa a partir dos anúncios, depois de agrupar apenas as categorias de menor risco. Não é uma contagem oficial de AL ativos.</dd></div>
       </dl>
-      <p class="mt-6 text-sm text-[var(--color-ink)]/75">«Anúncios com número identificável» conta anúncios, não números distintos nem correspondências confirmadas no RNAL. Os diagramas de sobreposição e as contagens RNAL por freguesia continuam assinalados como exemplos de apresentação.</p>
+      <p class="mt-6 text-sm text-[var(--color-ink)]/75">«Anúncios com número identificável» conta anúncios, não números distintos nem correspondências confirmadas no RNAL. Os diagramas contam números distintos e usam o concelho e a freguesia oficiais no RNAL e a freguesia observada no Airbnb. Um número pode aparecer em várias freguesias; não somamos os seus totais para obter Lisboa.</p>
     </section>
 
     <section id="registo-oficial" class="border-t border-[var(--color-line)] pt-5" aria-labelledby="register-title">
@@ -63,11 +63,12 @@ title: Metodologia e proveniência
           <tr class="border-b border-[var(--color-line)]"><td class="py-3"><code>34367</code></td><td class="py-3"><code>34367</code></td></tr>
           <tr class="border-b border-[var(--color-line)]"><td class="py-3"><code>AL15252</code></td><td class="py-3"><code>15252</code></td></tr>
           <tr class="border-b border-[var(--color-line)]"><td class="py-3"><code>00123/AL</code></td><td class="py-3"><code>123</code></td></tr>
-          <tr class="border-b border-[var(--color-line)]"><td class="py-3"><code>Registration Number: 12807/AL</code></td><td class="py-3">Não reconhecido atualmente</td></tr>
+          <tr class="border-b border-[var(--color-line)]"><td class="py-3"><code>Registration Number: 12807/AL</code></td><td class="py-3"><code>12807</code></td></tr>
         </tbody>
       </table>
-      <p class="text-sm text-[var(--color-ink)]/75">O número normalizado contém apenas algarismos, como o campo <code>NrRNAL</code> da fonte oficial usada nesta análise. Os exemplos explicam formatos, não confirmam registos ou casos individuais. O prefixo <code>Registration Number:</code> ainda não é removido pelo método.</p>
+      <p class="text-sm text-[var(--color-ink)]/75">O número normalizado contém apenas algarismos, como o campo <code>NrRNAL</code> da fonte oficial usada nesta análise. Os exemplos explicam formatos, não confirmam registos ou casos individuais. Aceitamos o prefixo exato <code>Registration Number:</code> apenas com um único número seguido de <code>/AL</code>. Outros regimes, como <code>/UT/2017</code>, continuam excluídos.</p>
       <p>Depois da normalização, procuramos o número no RNAL, incluindo quando o anúncio contém apenas algarismos, como <code>34367</code>. Reconhecer o número não confirma uma correspondência: essa verificação usa a fonte oficial datada desta análise.</p>
+      <p class="text-sm text-[var(--color-ink)]/75">As diferenças contam números: «só no RNAL» é ausência no Airbnb da mesma geografia, não em toda a plataforma. «Só no Airbnb» distingue outra freguesia de Lisboa, outro município, ausência no RNAL nacional e geografia oficial por resolver. Entradas oficiais duplicadas contam uma vez nos conjuntos; continuam separadas na contagem de entradas. Freguesias ausentes ou desconhecidas ficam num agregado próprio e entram no total municipal.</p>
       <p>Outros regimes, como <code>/UT/AAAA</code>, não são convertidos em números AL. O valor original fica preservado na análise interna para conferência.</p>
     </section>
 
@@ -98,7 +99,7 @@ title: Metodologia e proveniência
         <section id="fora-de-lisboa" aria-labelledby="outside-title">
           <h3 id="outside-title">Licença registada fora de Lisboa</h3>
           <p>O anúncio pertence ao conjunto de Lisboa, mas o número encontra um registo oficial cujo campo <strong>Concelho</strong> é diferente de Lisboa. Esta divergência exige verificação individual.</p>
-          <p>O gráfico regional conta <strong>anúncios</strong>, agrupados pelo campo <strong>NUTSII</strong> do registo oficial. Mostra todas as regiões presentes. Concelhos vazios aparecem como «Município não identificado»; regiões vazias, como «Região não identificada».</p>
+          <p>O gráfico regional conta <strong>anúncios</strong>, agrupados pelo campo <strong>NUTSII</strong> do registo oficial. Mostra todas as regiões presentes. Concelhos vazios ou desconhecidos ficam separados deste sinal, como geografia por resolver; regiões vazias aparecem como «Região não identificada».</p>
           <p class="text-sm text-[var(--color-ink)]/75">As percentagens regionais usam apenas os anúncios deste sinal como denominador. São arredondadas a uma casa decimal e podem não somar exatamente 100%.</p>
         </section>
       </div>
@@ -106,9 +107,10 @@ title: Metodologia e proveniência
 
     <section id="limites" class="border-t border-[var(--color-line)] pt-5" aria-labelledby="limits-title">
       <h2 id="limits-title">Limitações</h2>
+      <p>Os agrupamentos são transitivos: ligamos anúncios separados por até 500 metros; os extremos de uma cadeia podem estar mais longe. Coordenadas ausentes não permitem agrupar. O concelho fora de Lisboa tem prioridade sobre os sinais de repetição. Números sem correspondência nacional e geografia por resolver ficam separados na estimativa; identificadores de anfitrião não são critérios de agrupamento. Estimativas por freguesia são calculadas independentemente e não se somam necessariamente à estimativa municipal.</p>
       <p>As fontes têm datas e finalidades diferentes. A presença de um anúncio no snapshot não confirma atividade atual; um registo no RNAL também não confirma que o estabelecimento esteja em funcionamento.</p>
       <p>As posições Airbnb são aproximadas. Um campo vazio, um formato não reconhecido ou uma divergência geográfica pode ter explicações que estes dados não permitem resolver. Os sinais requerem validação junto das fontes oficiais antes de qualquer conclusão legal.</p>
-      <p>«Licença única em Lisboa» significa que o número aparece num único anúncio do conjunto analisado. A categoria, por si só, não confirma um registo oficial em Lisboa.</p>
+      <p>«Licença única em Lisboa» significa que o número aparece num único anúncio da cidade e corresponde a um registo RNAL com concelho Lisboa. Não confirma atividade atual.</p>
       <p id="o-que-se-diz" class="scroll-mt-24 text-sm text-[var(--color-ink)]/75">Declarações públicas sobre o número de AL dão contexto à investigação; não são contagens produzidas por este projeto.</p>
     </section>
 
@@ -120,7 +122,7 @@ title: Metodologia e proveniência
         <div><dt class="font-semibold">RNAL</dt><dd class="mt-1">Descarregado em {{ d.metadata.source_dates.official_register_download_date }} · <a class="text-[var(--color-blue)] underline underline-offset-4" href="{{ d.metadata.source_urls.official }}">Turismo de Portugal ↗</a></dd></div>
         <div><dt class="font-semibold">Versões</dt><dd class="mt-1">Metodologia {{ s.methodology_version }} · análise {{ d.metadata.analysis_version }}</dd></div>
       </dl>
-      <p>Os resultados datados são preservados sem serem reescritos. As comparações históricas só são feitas entre métricas com a mesma versão da metodologia. O ficheiro de metadados regista URLs, datas, hashes SHA-256 das fontes, commit e versões da análise, metodologia e esquema de saída.</p>
+      <p>Cada par de datas tem uma análise pública atual; o Git conserva as versões anteriores. As comparações históricas só são feitas entre métricas com a mesma versão da metodologia. O ficheiro de metadados regista URLs, datas, hashes SHA-256 das fontes, commit e versões da análise, metodologia e esquema de saída.</p>
       <p>Os ficheiros públicos contêm apenas dados agregados. Não incluem identificadores de anúncios ou anfitriões, URLs de anúncios, nomes, endereços, coordenadas exatas ou valores originais de licença.</p>
       <div class="mt-6 flex flex-wrap gap-x-6 gap-y-4 text-sm text-[var(--color-blue)] [&_a]:underline [&_a]:underline-offset-4">
         <a href="{{ '/runs/' | append: d.run_id | append: '/' | relative_url }}">Dados agregados →</a>

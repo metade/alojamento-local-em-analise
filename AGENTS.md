@@ -40,9 +40,9 @@ Public runs are created under:
 data/snapshots/<airbnb-snapshot-date>__<official-download-date>/
 ```
 
-The public mode preserves run immutability. Automated workflows may use `bundle exec ruby run_me.rb --mode public --reuse-existing`: when the calculated public run ID already exists, the existing snapshot is reused without being rewritten so publication can continue.
+Public outputs use one folder per dated source pair. Reanalysis validates new outputs before replacing that folder and its history rows; Git retains previously committed versions. Other date pairs remain unchanged. Local runs remain immutable. Automated workflows may use `bundle exec ruby run_me.rb --mode public --reuse-existing`: reuse requires matching source hashes, analysis/methodology/schema versions and all required files. Outdated outputs are recalculated in the same folder; changed source hashes for an existing date pair are rejected.
 
-Local runs use distinct names such as `listings_detailed.csv`, `licence_groups_detailed.csv`, `metadata_local.json`, `summary_local.json`, and `report_local.html`; they may contain diagnostic fields and are ignored by Git. Public runs contain `metadata.json`, `summary.json`, `listings.csv`, `licence_groups.csv`, `freguesias.csv`, and `report.html`. Set `GENERATE_PDF=1` to create the optional PDF derivative when `wkhtmltopdf` or `weasyprint` is installed. Historical summary rows are appended to `data/history/summary.csv` for public runs and `data/private/history/summary.csv` for local runs; an existing run ID must never be overwritten.
+Local runs use distinct names such as `listings_detailed.csv`, `licence_groups_detailed.csv`, `metadata_local.json`, `summary_local.json`, and `report_local.html`; they may contain diagnostic fields and are ignored by Git. Public runs contain `metadata.json`, `summary.json`, `listings.csv`, `licence_groups.csv`, `freguesias.csv`, `registration_metrics.json`, and `report.html`. Set `GENERATE_PDF=1` to create the optional PDF derivative when `wkhtmltopdf` or `weasyprint` is installed. Public history in `data/history/` keeps the current summary and auxiliary rows for each dated source pair, replacing only that pair on reanalysis. Local history in `data/private/history/` is append-only.
 
 Run tests:
 
@@ -64,7 +64,7 @@ ruby -c lib/al_ilegal/data.rb
 
 Raw data under `data_sources/**/*.csv`, detailed local results under `data/private/`, and cached files under `tmp/` are intentionally ignored by Git. Transformed, versioned outputs under `data/snapshots/` and `data/history/` are publishable project outputs and may be committed. Snapshot CSVs are aggregate-only and must not contain listing/host identifiers, listing URLs, names, addresses, exact coordinates, or raw licence strings. Do not commit large raw upstream datasets.
 
-The GitHub Actions workflow in `.github/workflows/quarterly-analysis.yml` runs quarterly or through `workflow_dispatch`, tests before analysis, explicitly selects `--mode public --reuse-existing`, stages and audits only the sanitised `data/snapshots/` and `data/history/` outputs before committing them, builds the site from public snapshots, and publishes the site as a GitHub Pages artifact. Reusing an existing run is not a data rerun and never overwrites an immutable snapshot. It must never commit local/detailed outputs or the generated site.
+The GitHub Actions workflow in `.github/workflows/quarterly-analysis.yml` runs quarterly or through `workflow_dispatch`, tests before analysis, explicitly selects `--mode public --reuse-existing`, stages and audits only the sanitised `data/snapshots/` and `data/history/` outputs before committing them, builds the site from public snapshots, and publishes the site as a GitHub Pages artifact. Reusing an up-to-date run skips analysis; outdated versions are recalculated for the same dated source pair. It must never commit local/detailed outputs or the generated site.
 
 The `.github/workflows/site-publish.yml` workflow rebuilds and publishes the site on human pushes to `main` and through `workflow_dispatch`. It skips the automated `github-actions[bot]` / `Atualiza análise trimestral` push because the quarterly workflow already builds and publishes the site in that same run. Site publication is therefore separate from the data-analysis decision, while both use `scripts/build_site.rb` and the publication audit.
 
@@ -76,7 +76,7 @@ The official register is downloaded with the current date in its filename. The a
 
 Airbnb `last_scraped` values are listing-level collection dates and may span several days. They are not necessarily the same as the archive snapshot date.
 
-Historical comparisons are generated only for metrics with the same methodology version. When the methodology changes, old outputs remain untouched and comparisons are marked incompatible.
+Historical comparisons are generated only for metrics with the same methodology version. Comparisons across different methodology versions are marked incompatible. Reanalysis replaces the current public output for its dated source pair; previously committed results remain available through Git.
 
 ## Matching and classification
 
@@ -96,15 +96,18 @@ The establishment-level figure printed by the script is an analytical estimate. 
 
 ## Editing guidance
 
-### Statistics to complete after the UX treatment
+Track deferred work in [TODO.md](TODO.md).
 
-The homepage overlap diagram, `site/_includes/district-overlap.html`, and the RNAL metric in `site/_layouts/district.html` contain deliberate UX example counts. District examples are identical across freguesias and are not measured results. Keep the example labels visible until reproducible aggregate statistics replace them. The current scope is UX only; do not replace the examples with ad hoc calculations. Replace the district RNAL headline and overlap set total together so they remain consistent.
+### Registration statistics
 
-- Calculate distinct normalized AL registration numbers for Lisbon and each freguesia: the RNAL set uses official `Concelho` and `Freguesia`; the Airbnb set uses the observed announcement's freguesia. Publish both set totals, their intersection, and both differences.
-- Break down Airbnb numbers outside the local RNAL set into registrations in another Lisbon freguesia, another municipality, and numbers with no RNAL match. “Only Airbnb in this freguesia” must not imply absence from the national register. RNAL-only means absent from the Airbnb set for that freguesia, not necessarily absent from Airbnb elsewhere.
-- Count announcements with no identifiable AL number separately (empty field and unrecognised value). These are announcement counts, not a third set of distinct registration numbers. Existing `identifiable_licences` fields also count announcements, not unique licences or confirmed RNAL matches.
-- Use the exact dated sources and SHA-256 hashes of the selected run, normalize parish names consistently, and account explicitly for missing/unknown official freguesias. A registration may appear in Airbnb sets for several freguesias; do not sum parish distinct-number counts as a city total.
-- Add versioned, aggregate-only outputs and regression tests before wiring real values into the diagrams. Preserve existing snapshot immutability, record the metric definitions and versions, and audit publication. Scale circle areas and overlap to the real set counts, including zero, disjoint, and contained sets.
+Measured overlap metrics now live in versioned `registration_metrics.json` (metric version 1.0.0). See `docs/registration-metrics.md` for definitions, verification, and limitations. Preserve the homepage and district layout and keep each district RNAL headline consistent with its overlap total.
+
+- RNAL and Airbnb sets count distinct normalized AL numbers; announcement counts and official entry counts have separate fields. Never sum parish distinct counts to obtain Lisbon.
+- Use official Concelho/Freguesia for RNAL and observed geography for Airbnb. Retain unknown geography explicitly and qualify local set differences.
+- Public run IDs contain only the two source dates. Versions live in metadata. Reuse verifies source hashes and analysis/schema/method versions; reanalysis replaces only that dated pair after validation.
+- To reproduce a prior run with a new methodology from verified local dated sources: `bundle exec ruby scripts/reanalyse_public_run.rb <prior-public-run-id>`. Never relabel an old source as a fresh download.
+- Circle areas and overlap use measured sets, including empty, disjoint, identical and contained sets. Announcement bubbles use a separate fractional scale.
+- Regression metric/geometry tests in `test/registration_metrics_test.rb` also run through `test/versioned_analysis_test.rb`.
 
 ### General guidance
 

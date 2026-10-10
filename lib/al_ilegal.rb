@@ -9,11 +9,12 @@ require "digest"
 require "open3"
 require "erb"
 require "time"
+require "tmpdir"
 
 module AlIlegal
-  ANALYSIS_VERSION = "2.2.0"
-  OUTPUT_SCHEMA_VERSION = "3.1.0"
-  METHODOLOGY_VERSION = "1.1.0"
+  ANALYSIS_VERSION = "3.1.0"
+  OUTPUT_SCHEMA_VERSION = "4.0.0"
+  METHODOLOGY_VERSION = "2.0.0"
   PUBLIC_CSV_SCHEMAS = {
     "listings.csv" => %w[freguesia classification listings identifiable_licences establishments_estimate],
     "licence_groups.csv" => %w[classification official_municipality official_type licence_groups listings spatial_locations establishments_estimate],
@@ -70,6 +71,9 @@ module AlIlegal
 
   def self.parse_al_license(string)
     value = string.to_s.strip
+    if value =~ /\ARegistration Number:\s*0*(\d+)\s*\/AL\z/i
+      return $1.to_i.to_s
+    end
 
     if value =~ /\A0*(\d+)(\/|\s|_|-|\\|&)*al\.?\z/i
       return $1.to_i.to_s
@@ -99,16 +103,26 @@ module AlIlegal
     coordinates.map { |coordinate| Float(coordinate.tr(",", ".")) }
   end
 
+  def self.coordinates_for(listing)
+    lat, lng = Float(listing[:lat]), Float(listing[:lng])
+    [lat, lng] if lat.finite? && lng.finite? && lat.between?(-90, 90) && lng.between?(-180, 180)
+  rescue ArgumentError, TypeError
+    nil
+  end
+
   def self.spatial_clusters(listings, threshold_km: 0.5)
     clusters = []
 
     listings.each do |listing|
-      coordinates = [listing[:lat].to_f, listing[:lng].to_f]
+      coordinates = coordinates_for(listing)
+      unless coordinates
+        clusters << [listing]
+        next
+      end
       matching_clusters = clusters.each_index.select do |index|
         clusters[index].any? do |member|
-          Haversine.distance(
-            coordinates[0], coordinates[1], member[:lat].to_f, member[:lng].to_f
-          ).to_km <= threshold_km
+          other = coordinates_for(member)
+          other && Haversine.distance(coordinates[0], coordinates[1], other[0], other[1]).to_km <= threshold_km
         end
       end
 
@@ -154,9 +168,12 @@ module AlIlegal
 
   def self.license_group_assessment(listings, official_record)
     return missing_license_assessment(listings.first[:licensa_raw]) if listings.first[:licensa].to_s.empty?
-    return "licença oficial fora de Lisboa" if official_record && official_record["Concelho"] != "Lisboa"
+    return "licença oficial fora de Lisboa" if official_record && Geography.municipality(official_record["Concelho"]) && Geography.municipality(official_record["Concelho"]) != "Lisboa"
+    return "localização observada não identificada" unless listings.all? { |row| coordinates_for(row) }
+    return "licença repetida em várias localizações" if listings.size > 1 && spatial_clusters(listings).size > 1
+    return "número sem correspondência no RNAL" unless official_record
+    return "geografia oficial não identificada" unless Geography.municipality(official_record["Concelho"])
     return "licença única em Lisboa" if listings.size == 1
-    return "licença repetida em várias localizações" if spatial_clusters(listings).size > 1
 
     room_like = listings.count do |listing|
       [listing[:nome], listing[:room_type], listing[:property_type]].join(" ").match?(
@@ -184,21 +201,20 @@ module AlIlegal
   end
 
   def self.licensed_als(source_path = "data_sources/Estabelecimentos_de_Alojamento_Local.csv")
-    cache_path = "tmp/licensed_als-#{File.basename(source_path, ".csv")}.json"
-    @licensed_als_cache ||= {}
-    @licensed_als_cache[source_path] ||= if File.exist?(cache_path)
-      JSON.parse(File.read(cache_path))
-    else
-      valid_licenses = {}
-      CSV.foreach(source_path, headers: true) do |row|
-        license = row["NrRNAL"]
-        valid_licenses[license] = row.to_h
+    # Read the selected bytes, never a filename-only cache. Keep every record in
+    # RegistrationMetrics; an ambiguous number cannot supply a trusted location.
+    records = CSV.foreach(source_path, headers: true).map(&:to_h)
+    records.group_by { |row| parse_al_license(row["NrRNAL"]) }.filter_map do |number, group|
+      next unless number
+      locations = group.map { |r| [Geography.municipality(r["Concelho"]), Geography.parish(r["Freguesia"]), r["LatLong"]] }.uniq
+      record = group.first.dup
+      record["Concelho"] = Geography.municipality(record["Concelho"])
+      if locations.size > 1
+        record["Concelho"] = nil
+        record["LatLong"] = nil
       end
-      FileUtils.mkdir_p("tmp")
-      File.write(cache_path, JSON.pretty_generate(valid_licenses))
-
-      valid_licenses
-    end
+      [number, record]
+    end.to_h
   end
 
   def self.stats(data, header = "", include_establishment_estimate: false)
@@ -244,7 +260,21 @@ module AlIlegal
     def existing_public_run(airbnb_path:, official_path:, output_root: "data/snapshots")
       run_id = run_id_for(airbnb_path: airbnb_path, official_path: official_path)
       path = File.join(output_root, run_id)
-      Dir.exist?(path) ? {run_id: run_id, path: path} : nil
+      return nil unless Dir.exist?(path)
+      hashes = [airbnb_path, official_path].map { |source| Digest::SHA256.file(source).hexdigest }
+      return nil unless public_run_current?(path, hashes)
+      {run_id: run_id, path: path}
+    end
+
+    def public_run_current?(path, hashes)
+      metadata = JSON.parse(File.read(File.join(path, "metadata.json")))
+      expected = {"airbnb" => hashes[0], "official" => hashes[1]}
+      unless expected.all? { |key, hash| metadata.dig("source_files", key, "sha256") == hash }
+        raise "Source hashes differ for existing dated snapshot: #{path}"
+      end
+      metadata["methodology_version"] == METHODOLOGY_VERSION && metadata["output_schema_version"] == OUTPUT_SCHEMA_VERSION &&
+        metadata["analysis_version"] == ANALYSIS_VERSION && metadata["mode"] == "public" &&
+        (PUBLIC_CSV_SCHEMAS.keys + %w[summary.json report.html registration_metrics.json]).all? { |file| File.file?(File.join(path, file)) }
     end
 
     def run(airbnb_path:, official_path:, output_root: nil, history_path: nil, generate_pdf: false, mode: "local", force: false)
@@ -253,7 +283,9 @@ module AlIlegal
 
       output_root ||= mode == "public" ? "data/snapshots" : "data/private"
       history_path ||= mode == "public" ? "data/history/summary.csv" : "data/private/history/summary.csv"
+      source_hashes = [airbnb_path, official_path].map { |path| Digest::SHA256.file(path).hexdigest }
       listings, official = analyse(airbnb_path, official_path)
+      raise "No observed Lisbon announcements" if listings.empty?
       dates = AlIlegal.dates(listings)
       dates[:airbnb_snapshot_date] = File.basename(airbnb_path)[/(\d{4}-\d{2}-\d{2})/, 1] || dates[:airbnb_snapshot_date]
       official_download_date = File.basename(official_path)[/(\d{4}-\d{2}-\d{2})/, 1] || File.mtime(official_path).to_date.to_s
@@ -261,7 +293,8 @@ module AlIlegal
       base_run_id = "#{dates[:airbnb_snapshot_date]}__#{official_download_date}"
       run_id = base_run_id
       run_dir = File.join(output_root, run_id)
-      if Dir.exist?(run_dir)
+      public_run_current?(run_dir, source_hashes) if mode == "public" && Dir.exist?(run_dir)
+      if mode == "local" && Dir.exist?(run_dir)
         raise "Run already exists and is immutable: #{run_dir}; use --force for a preserved local rerun" unless force
 
         suffix = Time.now.utc.strftime("%Y%m%dT%H%M%S%6N")
@@ -280,46 +313,102 @@ module AlIlegal
       summary = summary(listings, groups, dates, run_id, mode, official: official)
       summary[:historical_comparisons] = historical_comparisons(history_path, summary)
       metadata = metadata(airbnb_path, official_path, dates, run_id, mode)
-      FileUtils.mkdir_p(run_dir)
-      if mode == "public"
-        write_csv(File.join(run_dir, "listings.csv"), public_listing_rows(listings))
-        write_csv(File.join(run_dir, "licence_groups.csv"), public_group_rows(groups))
-        write_csv(File.join(run_dir, "freguesias.csv"), freguesias)
-        write_json_outputs(run_dir, metadata, summary, "metadata.json", "summary.json")
-        report = Report.html(metadata, summary, public_group_rows(groups), public_listing_rows(listings))
-        File.write(File.join(run_dir, "report.html"), report.sub("</body></html>", Report.historical_section(summary) + "</body></html>"))
-      else
-        write_csv(File.join(run_dir, "listings_detailed.csv"), detailed_listing_rows(listings))
-        write_csv(File.join(run_dir, "licence_groups_detailed.csv"), detailed_group_rows(groups))
-        write_csv(File.join(run_dir, "freguesias_summary.csv"), freguesias)
-        write_json_outputs(run_dir, metadata, summary, "metadata_local.json", "summary_local.json")
-        report = Report.html(metadata, summary, public_group_rows(groups), public_listing_rows(listings))
-        File.write(File.join(run_dir, "report_local.html"), report.sub("</body></html>", Report.historical_section(summary) + "</body></html>"))
+      metrics = RegistrationMetrics.calculate(listings, official_path)
+      metrics[:run_id] = run_id
+      metrics[:source_files] = metadata[:source_files]
+      metrics[:methodology_version] = METHODOLOGY_VERSION
+      metrics[:source_dates] = dates
+      summary[:official_registers_lisbon] = metrics[:rows].first[:official_entries]
+      unless source_hashes == [airbnb_path, official_path].map { |path| Digest::SHA256.file(path).hexdigest }
+        raise "Source bytes changed during analysis"
       end
-      generate_pdf_file(run_dir) if generate_pdf
-      append_history(history_path, summary)
-      append_distance_history(File.join(File.dirname(history_path), "distance_ranges.csv"), run_id, listings) if mode == "public"
-      append_outside_region_history(File.join(File.dirname(history_path), "outside_regions.csv"), run_id, listings) if mode == "public"
-      validate_public_outputs!(run_dir) if mode == "public"
-      {run_id: run_id, path: run_dir, summary: summary}
+      if mode == "local" && File.exist?(history_path) && CSV.foreach(history_path, headers: true).any? { |old| old["run_id"] == run_id }
+        raise "History already exists for immutable local run #{run_id}"
+      end
+      destination = run_dir
+      if mode == "public"
+        FileUtils.mkdir_p(output_root)
+        staging = Dir.mktmpdir(".analysis-", output_root)
+        run_dir = File.join(staging, "snapshot")
+      end
+      begin
+        FileUtils.mkdir_p(run_dir)
+        File.write(File.join(run_dir, "registration_metrics.json"), JSON.pretty_generate(metrics) + "\n")
+        if mode == "public"
+          write_csv(File.join(run_dir, "listings.csv"), public_listing_rows(listings))
+          write_csv(File.join(run_dir, "licence_groups.csv"), public_group_rows(groups))
+          write_csv(File.join(run_dir, "freguesias.csv"), freguesias)
+          write_json_outputs(run_dir, metadata, summary, "metadata.json", "summary.json")
+          report = Report.html(metadata, summary, public_group_rows(groups), public_listing_rows(listings))
+          File.write(File.join(run_dir, "report.html"), report.sub("</body></html>", Report.metrics_section(metrics) + Report.historical_section(summary) + "</body></html>"))
+        else
+          write_csv(File.join(run_dir, "listings_detailed.csv"), detailed_listing_rows(listings))
+          write_csv(File.join(run_dir, "licence_groups_detailed.csv"), detailed_group_rows(groups))
+          write_csv(File.join(run_dir, "freguesias_summary.csv"), freguesias)
+          write_json_outputs(run_dir, metadata, summary, "metadata_local.json", "summary_local.json")
+          report = Report.html(metadata, summary, public_group_rows(groups), public_listing_rows(listings))
+          File.write(File.join(run_dir, "report_local.html"), report.sub("</body></html>", Report.metrics_section(metrics) + Report.historical_section(summary) + "</body></html>"))
+        end
+        generate_pdf_file(run_dir) if generate_pdf
+        if mode == "public"
+          validate_public_outputs!(run_dir)
+          staged_histories = {}
+          %w[summary.csv distance_ranges.csv outside_regions.csv].each do |filename|
+            target = filename == "summary.csv" ? history_path : File.join(File.dirname(history_path), filename)
+            staged_path = File.join(staging, filename)
+            FileUtils.cp(target, staged_path) if File.file?(target)
+            staged_histories[staged_path] = target
+          end
+          append_history(File.join(staging, "summary.csv"), summary, replace: true)
+          append_distance_history(File.join(staging, "distance_ranges.csv"), run_id, listings, replace: true)
+          append_outside_region_history(File.join(staging, "outside_regions.csv"), run_id, listings, replace: true)
+          publish_public_run!(run_dir, destination, staged_histories, staging)
+        else
+          append_history(history_path, summary)
+        end
+        {run_id: run_id, path: destination, summary: summary}
+      ensure
+        FileUtils.rm_rf(staging) if staging
+      end
+    end
+
+    # Validate the full result first, then replace the dated snapshot and its
+    # history rows together. Roll back the previous files if installation fails.
+    def publish_public_run!(staged_run, destination, histories, staging)
+      installed = []
+      {staged_run => destination, **histories}.each_with_index do |(source, target), index|
+        FileUtils.mkdir_p(File.dirname(target))
+        backup = File.join(staging, "previous-#{index}")
+        existed = File.exist?(target)
+        FileUtils.mv(target, backup) if existed
+        installed << [target, existed ? backup : nil]
+        FileUtils.mv(source, target)
+      end
+    rescue Exception
+      installed.reverse_each do |target, backup|
+        FileUtils.rm_rf(target)
+        FileUtils.mv(backup, target) if backup && File.exist?(backup)
+      end
+      raise
     end
 
     def analyse(airbnb_path, official_path)
       official = AlIlegal.licensed_als(official_path)
       counts = Hash.new(0)
       rows = CSV.foreach(airbnb_path, headers: true).map(&:to_h)
+      rows.select! { |row| Geography.municipality(row["neighbourhood_group_cleansed"]) == "Lisboa" }
       rows.each { |row| counts[AlIlegal.parse_al_license(row["license"])] += 1 }
       data = rows.filter_map do |row|
         next if row["neighbourhood_group_cleansed"] && !row["neighbourhood_group_cleansed"].empty? && row["neighbourhood_group_cleansed"] != "Lisboa"
         license = AlIlegal.parse_al_license(row["license"])
         record = official[license]
-        distance = if record && record["LatLong"] && !record["LatLong"].empty?
+        distance = if record && record["LatLong"] && !record["LatLong"].empty? && AlIlegal.coordinates_for({lat: row["latitude"], lng: row["longitude"]})
           official_lat, official_lng = AlIlegal.parse_lat_long(record["LatLong"])
           Haversine.distance(official_lat, official_lng, row["latitude"].to_f, row["longitude"].to_f).to_km
         end
         {
           fonte: "airbnb", licensa: license, licensa_raw: row["license"], license_status: status(record, distance, counts[license]),
-          url: row["listing_url"], bairro: row["neighbourhood_cleansed"], nome: row["name"], lat: row["latitude"], lng: row["longitude"],
+          url: row["listing_url"], bairro: Geography.parish(row["neighbourhood_cleansed"]), nome: row["name"], lat: row["latitude"], lng: row["longitude"],
           room_type: row["room_type"], property_type: row["property_type"], quartos: row["bedrooms"], host_id: row["host_id"],
           airbnb_date: parse_date(row["last_scraped"]), official_date: record && parse_date(record["DataRegisto"]),
           official_name: record && record["Denominacao"], official_address: record && record["Endereco"], official_concelho: record && record["Concelho"], official_region: record && record["NUTSII"],
@@ -328,7 +417,9 @@ module AlIlegal
       end
       data.group_by { |row| row[:licensa] }.each do |license, members|
         next if license.to_s.empty?
-        members.each { |row| row[:spatial_cluster_count] = AlIlegal.spatial_clusters(members).size; row[:license_group_assessment] = AlIlegal.license_group_assessment(members, official[license]) }
+        cluster_count = AlIlegal.spatial_clusters(members).size
+        assessment = AlIlegal.license_group_assessment(members, official[license])
+        members.each { |row| row[:spatial_cluster_count] = cluster_count; row[:license_group_assessment] = assessment }
       end
       data.each do |row|
         row[:spatial_cluster_count] ||= 1
@@ -348,7 +439,7 @@ module AlIlegal
     def licence_groups(listings, official)
       listings.group_by { |row| [row[:licensa].to_s, row[:license_group_assessment].to_s] }.map do |(license, _assessment), rows|
         {licensa: license, licence_raw_examples: rows.map { |r| r[:licensa_raw] }.compact.uniq.join(" | "), listings: rows.size,
-         spatial_locations: rows.map { |r| [r[:lat], r[:lng]] }.uniq.size, classification: rows.first[:license_group_assessment],
+         spatial_locations: license.empty? ? 0 : rows.first[:spatial_cluster_count], classification: rows.first[:license_group_assessment],
          official_name: rows.first[:official_name], official_concelho: rows.first[:official_concelho], official_modalidade: rows.first[:official_modalidade],
          establishment_estimate: AlIlegal.establishment_estimate(rows)}
       end.sort_by { |row| row[:licensa] }
@@ -374,7 +465,7 @@ module AlIlegal
           classification: classification,
           official_municipality: municipality,
           official_type: type,
-          licence_groups: rows.size,
+          licence_groups: rows.count { |row| !row[:licensa].to_s.empty? },
           listings: rows.sum { |row| row[:listings].to_i },
           spatial_locations: rows.sum { |row| row[:spatial_locations].to_i },
           establishments_estimate: rows.sum { |row| row[:establishment_estimate].to_i }
@@ -421,24 +512,28 @@ module AlIlegal
         end
       end
 
+      RegistrationMetrics.validate!(JSON.parse(File.read(File.join(run_dir, "registration_metrics.json")), symbolize_names: true))
       metadata = JSON.parse(File.read(File.join(run_dir, "metadata.json")))
       raise "Public metadata contains a local source path" if metadata.dig("source_files", "airbnb", "path") || metadata.dig("source_files", "official", "path")
       raise "Forbidden field in public output" if metadata.to_s.match?(/host_id|listing_url|licensa_raw|latitude|longitude|official_address/i)
     end
     def freguesia_rows(listings)
-      listings.group_by { |row| row[:bairro].to_s }.map { |name, rows| {freguesia: name, listings: rows.size, identifiable_licences: rows.count { |r| !r[:licensa].to_s.empty? }, establishments_estimate: AlIlegal.establishment_estimate(rows)} }.sort_by { |r| r[:freguesia] }
+      grouped = listings.group_by { |row| row[:bairro].to_s }
+      Geography::PARISHES.each { |name| grouped[name] ||= [] }
+      grouped.map { |name, rows| {freguesia: name, listings: rows.size, identifiable_licences: rows.count { |r| !r[:licensa].to_s.empty? }, establishments_estimate: AlIlegal.establishment_estimate(rows)} }.sort_by { |r| r[:freguesia] }
     end
     def summary(listings, groups, dates, run_id, mode, official: {})
-      counts = groups.group_by { |g| g[:classification] }.transform_values(&:size)
-      {run_id: run_id, source_dates: dates, methodology_version: METHODOLOGY_VERSION, listings: listings.size, licence_groups: groups.size,
+      counts = groups.reject { |g| g[:licensa].to_s.empty? }.group_by { |g| g[:classification] }.transform_values(&:size)
+      {run_id: run_id, source_dates: dates, methodology_version: METHODOLOGY_VERSION, listings: listings.size, licence_groups: groups.count { |g| !g[:licensa].to_s.empty? },
        official_registers_lisbon: official.values.count { |record| record["Concelho"] == "Lisboa" },
        establishment_estimate: AlIlegal.establishment_estimate(listings), classifications: counts, mode: mode, generated_at: Time.now.utc.iso8601}
     end
     def metadata(airbnb, official, dates, run_id, mode)
       commit, = Open3.capture2("git", "rev-parse", "HEAD")
+      changes, = Open3.capture2("git", "status", "--porcelain", "--untracked-files=no")
       {run_id: run_id, source_urls: {airbnb: Data.airbnb_url(dates[:airbnb_snapshot_date]), official: Data::OFFICIAL_URL}, source_dates: dates,
        source_files: {airbnb: {sha256: Digest::SHA256.file(airbnb).hexdigest}, official: {sha256: Digest::SHA256.file(official).hexdigest}},
-       git_commit: commit.strip, analysis_version: ANALYSIS_VERSION, methodology_version: METHODOLOGY_VERSION, output_schema_version: OUTPUT_SCHEMA_VERSION,
+       git_commit: commit.strip, git_worktree_dirty: !changes.empty?, analysis_version: ANALYSIS_VERSION, methodology_version: METHODOLOGY_VERSION, output_schema_version: OUTPUT_SCHEMA_VERSION,
        mode: mode}
     end
     def write_json_outputs(run_dir, metadata, summary, metadata_filename, summary_filename)
@@ -446,19 +541,39 @@ module AlIlegal
       File.write(File.join(run_dir, summary_filename), JSON.pretty_generate(summary) + "\n")
     end
     def write_csv(path, rows)
-      headers = rows.empty? ? [] : rows.first.keys
+      headers = rows.empty? ? PUBLIC_CSV_SCHEMAS.fetch(File.basename(path), []) : rows.first.keys
       CSV.open(path, "w", write_headers: true, headers: headers) { |csv| rows.each { |row| csv << headers.map { |h| row[h] } } }
     end
-    def append_history(path, row)
-      FileUtils.mkdir_p(File.dirname(path)); headers = %w[run_id source_airbnb_date source_official_register_download_date methodology_version listings licence_groups establishment_estimate generated_at]
-      existing = File.exist?(path) && File.read(path).include?("\n")
+    def append_history(path, row, replace: false)
+      headers = %w[run_id source_airbnb_date source_official_register_download_date methodology_version listings licence_groups establishment_estimate generated_at]
       values = {"source_airbnb_date" => row[:source_dates][:airbnb_snapshot_date], "source_official_register_download_date" => row[:source_dates][:official_register_download_date]}
-      CSV.open(path, "a", write_headers: !existing, headers: headers) { |csv| csv << headers.map { |key| row[key.to_sym] || values[key] } }
+      fields = headers.map { |key| row[key.to_sym] || values[key] }
+      write_history_rows(path, headers, row[:run_id], [fields], replace: replace)
+    end
+
+    # Preserve other date pairs byte for byte; each public run has one current
+    # summary and one current set of auxiliary rows. Git retains earlier results.
+    def write_history_rows(path, headers, run_id, rows, replace: false)
+      existing = File.file?(path) && !File.empty?(path) ? File.read(path) : CSV.generate_line(headers)
+      parser = CSV.new(existing, headers: true)
+      kept = []
+      parser.each do |row|
+        if row["run_id"] == run_id
+          raise "History already exists for run #{run_id}" unless replace
+        else
+          kept << parser.line
+        end
+      end
+      raise "Invalid history schema: #{path}" unless parser.headers == headers
+      header = existing.lines.first
+      output = header + kept.join + rows.map { |row| CSV.generate_line(row) }.join
+      FileUtils.mkdir_p(File.dirname(path))
+      File.write(path, output)
     end
 
     def distance_range_counts(listings)
       counts = DISTANCE_RANGE_KEYS.to_h { |key| [key, 0] }
-      listings.select { |row| row[:license_group_assessment] == "licença repetida em várias localizações" }
+      listings.select { |row| row[:license_group_assessment] == "licença repetida em várias localizações" && AlIlegal.coordinates_for(row) }
         .group_by { |row| row[:licensa] }.each_value do |rows|
           distance = AlIlegal.max_cross_cluster_distance_km(rows)
           counts[AlIlegal.distance_range_key(distance)] += 1
@@ -466,18 +581,11 @@ module AlIlegal
       counts
     end
 
-    def append_distance_history(path, run_id, listings)
+    def append_distance_history(path, run_id, listings, replace: false)
       headers = %w[run_id distance_method range licence_groups]
-      if File.exist?(path) && CSV.foreach(path, headers: true).any? { |row| row["run_id"] == run_id }
-        raise "Distance ranges already exist for immutable run #{run_id}"
-      end
-
       counts = distance_range_counts(listings)
-      FileUtils.mkdir_p(File.dirname(path))
-      existing = File.exist?(path) && !File.empty?(path)
-      CSV.open(path, "a", write_headers: !existing, headers: headers) do |csv|
-        DISTANCE_RANGE_KEYS.each { |range| csv << [run_id, "max_cross_cluster_pair_km_v1", range, counts.fetch(range)] }
-      end
+      rows = DISTANCE_RANGE_KEYS.map { |range| [run_id, "max_cross_cluster_pair_km_v1", range, counts.fetch(range)] }
+      write_history_rows(path, headers, run_id, rows, replace: replace)
     end
 
     def outside_region_counts(listings)
@@ -497,25 +605,17 @@ module AlIlegal
       end
     end
 
-    def append_outside_region_history(path, run_id, listings)
+    def append_outside_region_history(path, run_id, listings, replace: false)
       headers = %w[run_id region_method resolution official_region listings]
-      if File.exist?(path) && CSV.foreach(path, headers: true).any? { |row| row["run_id"] == run_id }
-        raise "Outside region counts already exist for immutable run #{run_id}"
+      rows = outside_region_counts(listings).sort_by { |(resolution, region), _| [resolution, region] }.map do |(resolution, region), count|
+        [run_id, "official_register_nutsii_v1", resolution, region, count]
       end
-
-      counts = outside_region_counts(listings)
-      FileUtils.mkdir_p(File.dirname(path))
-      existing = File.exist?(path) && !File.empty?(path)
-      CSV.open(path, "a", write_headers: !existing, headers: headers) do |csv|
-        counts.sort_by { |(resolution, region), _| [resolution, region] }.each do |(resolution, region), count|
-          csv << [run_id, "official_register_nutsii_v1", resolution, region, count]
-        end
-      end
+      write_history_rows(path, headers, run_id, rows, replace: replace)
     end
 
     def historical_comparisons(path, current)
       return [] unless File.exist?(path)
-      CSV.foreach(path, headers: true).map do |old|
+      CSV.foreach(path, headers: true).reject { |old| old["run_id"] == current[:run_id] }.map do |old|
         compatible = old["methodology_version"] == current[:methodology_version]
         {run_id: old["run_id"], status: compatible ? "comparável" : "incompatível — metodologia diferente",
          metrics: compatible ? {listings: old["listings"].to_i, licence_groups: old["licence_groups"].to_i, establishment_estimate: old["establishment_estimate"].to_i} : {}}
@@ -560,6 +660,14 @@ module AlIlegal
       ]
     end
 
+    def metrics_section(metrics)
+      safe = ->(value) { ERB::Util.html_escape(value.to_s) }
+      headers = RegistrationMetrics::COUNTS
+      rows = metrics[:rows].map { |row| "<tr><th>#{safe.call(row[:geography])}</th>#{headers.map { |key| "<td>#{row[key.to_sym]}</td>" }.join}</tr>" }.join
+      definitions = metrics[:definitions].map { |key, value| "<dt>#{safe.call(key)}</dt><dd>#{safe.call(value)}</dd>" }.join
+      "<section><h2>Números distintos e anúncios</h2><p>Métricas #{safe.call(metrics[:metric_version])}; unidades e definições em registration_metrics.json.</p><table><thead><tr><th>Geografia</th>#{headers.map { |key| "<th>#{safe.call(key)}</th>" }.join}</tr></thead><tbody>#{rows}</tbody></table><dl>#{definitions}</dl></section>"
+    end
+
     def historical_section(summary)
       rows = summary[:historical_comparisons].map do |item|
         metrics = item[:metrics]
@@ -570,13 +678,15 @@ module AlIlegal
 
     def html(metadata, summary, groups, freguesias)
       safe = ->(value) { ERB::Util.html_escape(value.to_s) }
-      labels = groups.group_by { |g| g[:classification] }.transform_values(&:size)
+      labels = summary[:classifications]
       rows = groups.map { |g| "<tr><td>#{safe.call(g[:classification])}</td><td>#{safe.call(g[:official_municipality])}</td><td>#{safe.call(g[:official_type])}</td><td>#{g[:licence_groups]}</td><td>#{g[:listings]}</td><td>#{g[:spatial_locations]}</td></tr>" }.join
       freg = freguesias.map { |r| "<tr><td>#{safe.call(r[:freguesia])}</td><td>#{safe.call(r[:classification])}</td><td>#{r[:listings]}</td><td>#{r[:identifiable_licences]}</td><td>#{r[:establishments_estimate]}</td></tr>" }.join
       examples = illustrative_anomalies.map do |example|
         "<tr><th scope='row'>#{safe.call(example[:signal])}</th><td>#{safe.call(example[:pattern])}</td><td>#{safe.call(example[:reading])}</td></tr>"
       end.join
-      "<!doctype html><html lang='pt'><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Alojamento Local em Lisboa — #{safe.call(summary[:run_id])}</title><style>body{font:16px system-ui;max-width:1200px;margin:auto;padding:1rem;color:#243447}header{background:#123;padding:1.5rem;color:white;border-radius:12px}section{margin:1.5rem 0}table{border-collapse:collapse;width:100%;display:block;overflow:auto}th,td{padding:.5rem;border-bottom:1px solid #ddd;text-align:left;vertical-align:top}th{background:#edf2f7}.cards{display:flex;flex-wrap:wrap;gap:1rem}.card{padding:1rem;background:#edf2f7;border-radius:10px;min-width:145px}.bar{background:#2878c8;color:white;padding:.35rem;margin:.3rem 0;border-radius:4px}@media print{body{font-size:11px}header{print-color-adjust:exact}.no-print{display:none}}@media(max-width:600px){.cards{display:grid;grid-template-columns:1fr 1fr}}</style><body><header><h1>Alojamento Local em Lisboa</h1><p>Run #{safe.call(summary[:run_id])} · modo #{safe.call(summary[:mode])} · gerado em #{safe.call(summary[:generated_at])}</p><p>Indicador para verificação oficial</p></header><section><h2>Resumo</h2><div class='cards'><div class='card'><b>#{summary[:listings]}</b><br>listagens</div><div class='card'><b>#{summary[:licence_groups]}</b><br>grupos de licença</div><div class='card'><b>#{summary[:establishment_estimate]}</b><br>estimativa de estabelecimentos</div></div>#{labels.map { |label,count| "<div class='bar' style='width:#{[count * 100 / [groups.size,1].max,100].min}%'>#{safe.call(label)}: #{count}</div>" }.join}</section><section><h2>Grupos de licenças (agregado)</h2><table><thead><tr><th>Classificação</th><th>Concelho oficial</th><th>Tipo oficial</th><th>Grupos</th><th>Listagens</th><th>Localizações</th></tr></thead><tbody>#{rows}</tbody></table></section><section><h2>Por freguesia e classificação</h2><table><thead><tr><th>Freguesia</th><th>Classificação</th><th>Listagens</th><th>Licenças identificáveis</th><th>Estimativa</th></tr></thead><tbody>#{freg}</tbody></table></section><section><h2>Exemplos ilustrativos</h2><p>Os exemplos seguintes são sintéticos e servem apenas para explicar os sinais. Não correspondem a anúncios, operadores, números de licença, endereços ou casos individuais.</p><table><thead><tr><th>Sinal</th><th>Padrão ilustrativo</th><th>Leitura prudente</th></tr></thead><tbody>#{examples}</tbody></table></section><section><h2>Proveniência e método</h2><p>Fontes: <a href='#{safe.call(metadata[:source_urls][:airbnb])}'>Airbnb</a> e <a href='#{safe.call(metadata[:source_urls][:official])}'>registo oficial</a>. Datas e hashes SHA-256 estão em <code>metadata.json</code>. Metodologia #{safe.call(metadata[:methodology_version])}; análise #{safe.call(metadata[:analysis_version])}.</p><p>As classificações são indicadores analíticos e não conclusões legais. Requerem verificação junto das fontes oficiais.</p></section></body></html>"
+      "<!doctype html><html lang='pt'><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>Alojamento Local em Lisboa — #{safe.call(summary[:run_id])}</title><style>body{font:16px system-ui;max-width:1200px;margin:auto;padding:1rem;color:#243447}header{background:#123;padding:1.5rem;color:white;border-radius:12px}section{margin:1.5rem 0}table{border-collapse:collapse;width:100%;display:block;overflow:auto}th,td{padding:.5rem;border-bottom:1px solid #ddd;text-align:left;vertical-align:top}th{background:#edf2f7}.cards{display:flex;flex-wrap:wrap;gap:1rem}.card{padding:1rem;background:#edf2f7;border-radius:10px;min-width:145px}.bar{background:#2878c8;color:white;padding:.35rem;margin:.3rem 0;border-radius:4px}@media print{body{font-size:11px}header{print-color-adjust:exact}.no-print{display:none}}@media(max-width:600px){.cards{display:grid;grid-template-columns:1fr 1fr}}</style><body><header><h1>Alojamento Local em Lisboa</h1><p>Run #{safe.call(summary[:run_id])} · modo #{safe.call(summary[:mode])} · gerado em #{safe.call(summary[:generated_at])}</p><p>Indicador para verificação oficial</p></header><section><h2>Resumo</h2><div class='cards'><div class='card'><b>#{summary[:listings]}</b><br>listagens</div><div class='card'><b>#{summary[:licence_groups]}</b><br>grupos de licença</div><div class='card'><b>#{summary[:establishment_estimate]}</b><br>estimativa de estabelecimentos</div></div>#{labels.map { |label,count| "<div class='bar' style='width:#{[count * 100 / [summary[:licence_groups],1].max,100].min}%'>#{safe.call(label)}: #{count}</div>" }.join}</section><section><h2>Grupos de licenças (agregado)</h2><table><thead><tr><th>Classificação</th><th>Concelho oficial</th><th>Tipo oficial</th><th>Grupos</th><th>Listagens</th><th>Localizações</th></tr></thead><tbody>#{rows}</tbody></table></section><section><h2>Por freguesia e classificação</h2><table><thead><tr><th>Freguesia</th><th>Classificação</th><th>Listagens</th><th>Licenças identificáveis</th><th>Estimativa</th></tr></thead><tbody>#{freg}</tbody></table></section><section><h2>Exemplos ilustrativos</h2><p>Os exemplos seguintes são sintéticos e servem apenas para explicar os sinais. Não correspondem a anúncios, operadores, números de licença, endereços ou casos individuais.</p><table><thead><tr><th>Sinal</th><th>Padrão ilustrativo</th><th>Leitura prudente</th></tr></thead><tbody>#{examples}</tbody></table></section><section><h2>Proveniência e método</h2><p>Fontes: <a href='#{safe.call(metadata[:source_urls][:airbnb])}'>Airbnb</a> e <a href='#{safe.call(metadata[:source_urls][:official])}'>registo oficial</a>. Datas e hashes SHA-256 estão em <code>metadata.json</code>. Metodologia #{safe.call(metadata[:methodology_version])}; análise #{safe.call(metadata[:analysis_version])}.</p><p>As classificações são indicadores analíticos e não conclusões legais. Requerem verificação junto das fontes oficiais.</p></section></body></html>"
     end
   end
 end
+
+require_relative "al_ilegal/registration_metrics"

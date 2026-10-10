@@ -72,3 +72,51 @@ class SpatialClustersTest < Minitest::Test
     assert_equal 3, AlIlegal.establishment_estimate(likely + suspicious)
   end
 end
+
+class SpatialClustersTest
+  def test_transitive_bridge_is_order_independent_and_not_a_diameter_limit
+    chain = [listing(38.71,-9.14), listing(38.714,-9.14), listing(38.718,-9.14)]
+    chain.permutation.each { |rows| assert_equal 1, AlIlegal.spatial_clusters(rows).size }
+    assert_operator Haversine.distance(38.71,-9.14,38.718,-9.14).to_km, :>, 0.5
+  end
+
+  def test_missing_coordinates_are_not_zero_locations_and_cannot_collapse
+    rows = [listing(nil,nil), listing(nil,nil)]
+    assert_equal 2, AlIlegal.spatial_clusters(rows).size
+    assessment = AlIlegal.license_group_assessment(rows, {"Concelho" => "Lisboa"})
+    assert_equal "localização observada não identificada", assessment
+    rows.each { |row| row[:license_group_assessment] = assessment }
+    assert_equal 2, AlIlegal.establishment_estimate(rows)
+  end
+
+  def test_priority_and_host_metadata_do_not_conflate_unmatched_with_lisbon
+    near = [listing(38.71,-9.14), listing(38.7101,-9.14)]
+    near.each_with_index { |row,i| row[:host_id] = i }
+    assert_equal "provável estabelecimento com anúncios múltiplos", AlIlegal.license_group_assessment(near, {"Concelho" => "Lisboa"})
+    assert_equal "número sem correspondência no RNAL", AlIlegal.license_group_assessment(near, nil)
+    assert_equal "geografia oficial não identificada", AlIlegal.license_group_assessment(near, {"Concelho" => nil})
+    far = [listing(38.71,-9.14), listing(38.75,-9.14)]
+    far.each { |row| row[:host_id] = "same" }
+    assert_equal "licença repetida em várias localizações", AlIlegal.license_group_assessment(far, nil)
+    assert_equal "licença oficial fora de Lisboa", AlIlegal.license_group_assessment(far, {"Concelho" => "Porto"})
+    near.each { |row| row[:license_group_assessment] = AlIlegal.license_group_assessment(near, nil) }
+    assert_equal 2, AlIlegal.establishment_estimate(near)
+  end
+end
+
+class SpatialClustersTest
+  def test_clustering_distance_threshold_is_inclusive
+    rows = [listing(38.71,-9.14), listing(38.72,-9.14)]
+    distance = Haversine.distance(38.71,-9.14,38.72,-9.14).to_km
+    assert_equal 1, AlIlegal.spatial_clusters(rows, threshold_km: distance).size
+    assert_equal 2, AlIlegal.spatial_clusters(rows, threshold_km: distance - 1e-9).size
+  end
+
+  def test_same_location_without_room_terms_remains_a_separate_lower_risk_category
+    rows = [listing(38.71,-9.14,name: "Place A",property_type: "House"), listing(38.7101,-9.14,name: "Place B",property_type: "House")]
+    assessment = AlIlegal.license_group_assessment(rows, {"Concelho" => "Lisboa", "Modalidade" => "Apartamento"})
+    assert_equal "licença repetida na mesma localização", assessment
+    rows.each { |row| row[:license_group_assessment] = assessment }
+    assert_equal 1, AlIlegal.establishment_estimate(rows)
+  end
+end
