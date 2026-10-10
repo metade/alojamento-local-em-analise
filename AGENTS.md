@@ -96,6 +96,18 @@ The establishment-level figure printed by the script is an analytical estimate. 
 
 ## Editing guidance
 
+### Statistics to complete after the UX treatment
+
+The homepage overlap diagram, `site/_includes/district-overlap.html`, and the RNAL metric in `site/_layouts/district.html` contain deliberate UX example counts. District examples are identical across freguesias and are not measured results. Keep the example labels visible until reproducible aggregate statistics replace them. The current scope is UX only; do not replace the examples with ad hoc calculations. Replace the district RNAL headline and overlap set total together so they remain consistent.
+
+- Calculate distinct normalized AL registration numbers for Lisbon and each freguesia: the RNAL set uses official `Concelho` and `Freguesia`; the Airbnb set uses the observed announcement's freguesia. Publish both set totals, their intersection, and both differences.
+- Break down Airbnb numbers outside the local RNAL set into registrations in another Lisbon freguesia, another municipality, and numbers with no RNAL match. “Only Airbnb in this freguesia” must not imply absence from the national register. RNAL-only means absent from the Airbnb set for that freguesia, not necessarily absent from Airbnb elsewhere.
+- Count announcements with no identifiable AL number separately (empty field and unrecognised value). These are announcement counts, not a third set of distinct registration numbers. Existing `identifiable_licences` fields also count announcements, not unique licences or confirmed RNAL matches.
+- Use the exact dated sources and SHA-256 hashes of the selected run, normalize parish names consistently, and account explicitly for missing/unknown official freguesias. A registration may appear in Airbnb sets for several freguesias; do not sum parish distinct-number counts as a city total.
+- Add versioned, aggregate-only outputs and regression tests before wiring real values into the diagrams. Preserve existing snapshot immutability, record the metric definitions and versions, and audit publication. Scale circle areas and overlap to the real set counts, including zero, disjoint, and contained sets.
+
+### General guidance
+
 - Preserve `licensa_raw` in internal analysis rows when changing licence parsing so the source value remains auditable; never write it to public outputs.
 - Add regression tests for new licence formats and spatial rules.
 - Do not describe unmatched or geographically inconsistent listings as illegal without official validation.

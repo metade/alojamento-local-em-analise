@@ -1,0 +1,21 @@
+{% assign map = site.data.freguesia_map %}
+<figure class="m-0 min-w-0 border border-[var(--color-line)] bg-white/40 p-5 sm:p-6">
+  <figcaption class="font-[family-name:var(--font-serif)] text-2xl">{{ include.district.display_name }} em Lisboa</figcaption>
+  <svg viewBox="{{ map.view_box }}" class="mx-auto mt-5 block w-full max-w-[280px]" role="group" aria-labelledby="locator-title locator-description">
+    <title id="locator-title">Localização de {{ include.district.display_name }} no concelho de Lisboa</title>
+    <desc id="locator-description">Mapa dos limites das freguesias, orientado a norte. {{ include.district.display_name }} está destacada a azul. As outras freguesias ligam às suas páginas. Este mapa não representa a localização dos anúncios.</desc>
+    {% for parish in site.data.site.districts %}
+      {% if parish.slug == include.district.slug %}
+        <path d="{{ map.paths[parish.display_name] }}" fill-rule="evenodd" class="fill-[var(--color-blue)] stroke-[var(--color-paper)]" stroke-width="1.5"><title>{{ parish.display_name }} · freguesia selecionada</title></path>
+      {% else %}
+        <a href="{{ '/freguesias/' | append: parish.slug | append: '/' | relative_url }}" class="group" aria-label="Explorar {{ parish.display_name }}">
+          <title>{{ parish.display_name }}</title>
+          <path d="{{ map.paths[parish.display_name] }}" fill-rule="evenodd" class="fill-[var(--color-ink)]/15 stroke-[var(--color-paper)] transition-colors group-hover:fill-[var(--color-blue)]/50 group-focus-visible:fill-[var(--color-blue)]/50" stroke-width="1.5" stroke-linejoin="round" />
+        </a>
+      {% endif %}
+    {% endfor %}
+  </svg>
+  <p class="mt-5 flex items-center gap-2 text-sm"><span class="inline-block size-3 shrink-0 bg-[var(--color-blue)]" aria-hidden="true"></span>{{ include.district.display_name }}<span class="ml-auto text-xs text-[var(--color-ink)]/75">↑ Norte</span></p>
+  <p class="text-xs text-[var(--color-ink)]/75">Mapa de localização da freguesia; não mostra a distribuição dos anúncios.</p>
+  <a class="text-xs text-[var(--color-ink)]/75 underline underline-offset-4" href="{{ map.source_url }}">Limites de freguesias: CML ↗</a>
+</figure>

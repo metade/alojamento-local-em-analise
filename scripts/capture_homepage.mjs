@@ -16,7 +16,9 @@ if (!existsSync(join(site, "assets", "story.css"))) {
 
 // The published site uses a root-relative CSS URL. A temporary copy lets
 // file:// screenshots load that same stylesheet without starting a server.
-const html = await readFile(join(site, "index.html"), "utf8");
+const pagePath = process.argv[2] || "index.html";
+const screenshotName = pagePath === "index.html" ? "homepage" : pagePath.split("/").filter(part => part !== "index.html").join("-");
+const html = await readFile(join(site, pagePath), "utf8");
 await writeFile(preview, html.replace('href="/assets/story.css"', 'href="assets/story.css"'));
 await mkdir(output, { recursive: true });
 
@@ -48,7 +50,7 @@ try {
       if (metrics.inner !== width) throw new Error(`Viewport inesperado: ${metrics.inner}px em vez de ${width}px.`);
       if (metrics.scroll > width) throw new Error(`Overflow horizontal a ${width}px: ${metrics.scroll}px.`);
 
-      const path = join(output, `homepage-${width}.png`);
+      const path = join(output, `${screenshotName}-${width}.png`);
       await page.screenshot({ path, fullPage: true, animations: "disabled" });
       console.log(`${width}px: ${path}`);
     } finally {

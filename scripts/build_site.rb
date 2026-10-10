@@ -137,6 +137,8 @@ def site_data(runs)
       "display_name" => pretty(raw_name),
       "slug" => raw_name.downcase.tr("áàâãäéêëíìîïóôõöúùûüç", "aaaaaeeeiiiioooouuuuc").gsub(/[^a-z0-9]+/, "-").gsub(/\A-|-$|\A\z/, ""),
       "listings" => row["listings"].to_i,
+      # This snapshot field counts listing rows, not distinct registration numbers.
+      "listings_with_identifiable_licence" => row["identifiable_licences"].to_i,
       "establishments_estimate" => row["establishments_estimate"].to_i,
       "categories" => LABELS.filter_map do |key, label|
         value = grouped.dig(raw_name, key)
