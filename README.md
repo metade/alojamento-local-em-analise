@@ -76,6 +76,12 @@ estilos existentes. Prefira classes Tailwind e os tokens do projeto nas alteraç
 ao site. O CSS gerado fica em `_site/assets/story.css`; `_site/` não é fonte
 editável, e Jekyll não publica os ficheiros CSS de origem.
 
+O hook `site/_plugins/tailwind.rb` compila o CSS com Node/Tailwind depois de
+Jekyll escrever as páginas. Assim, `bundle exec jekyll build` e os rebuilds de
+`bundle exec jekyll serve` também geram o CSS no destino configurado. É necessário
+ter Node e as dependências de `npm ci` instalados; uma falha na compilação faz
+falhar o build. `npm run site:css` continua disponível para compilar apenas o CSS.
+
 O resultado fica em `_site/` e inclui as páginas editoriais e de freguesias, relatórios HTML,
 CSVs agregados, metadata, licença e avisos de atribuição. Datasets brutos,
 resultados locais e caches não são copiados. O diretório `_site/` pode ser usado

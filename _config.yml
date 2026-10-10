@@ -4,6 +4,7 @@ source: site
 destination: _site
 baseurl: ""
 keep_files:
+  - assets/story.css
   - runs
   - LICENSE
   - NOTICE
