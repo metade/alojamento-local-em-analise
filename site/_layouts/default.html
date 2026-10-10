@@ -25,6 +25,13 @@
     </div></header>
     <div class="tile-rule"></div>
     <main id="conteudo">{{ content }}</main>
-    <footer class="site-footer"><div class="wrap footer-grid"><span>Alojamento Local em Análise</span><span>Dados públicos · indicadores para verificação</span><a href="{{ '/metodologia.html' | relative_url }}">Metodologia →</a></div></footer>
+    <footer class="border-t border-[var(--color-line)] py-8"><div class="wrap grid gap-4 lg:grid-cols-[1fr_auto_auto] lg:items-center lg:gap-8">
+      <span class="text-sm font-semibold">Alojamento Local em Análise</span>
+      {% include provenance.html %}
+      <div class="flex flex-wrap gap-4 text-sm">
+        <a class="text-[var(--color-blue)] underline underline-offset-4" href="{{ '/runs/' | append: site.data.site.run_id | append: '/report.html' | relative_url }}">Relatório técnico ↗</a>
+        <a class="text-[var(--color-blue)] underline underline-offset-4" href="{{ '/metodologia.html' | relative_url }}">Metodologia →</a>
+      </div>
+    </div></footer>
   </body>
 </html>

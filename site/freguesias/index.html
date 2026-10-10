@@ -2,7 +2,30 @@
 layout: default
 title: Freguesias de Lisboa
 ---
-{% assign districts = site.data.site.districts | sort: 'listings' | reverse %}
-<section class="district-index-hero lisbon-tile"><div class="wrap"><div class="eyebrow chip">Lisboa · {{ districts.size }} freguesias</div><h1 class="display">E onde <em>estão?</em></h1><p class="hero-dek">Uma leitura por freguesia dos anúncios observados e dos estabelecimentos estimados.</p></div></section>
-<section class="chapter chapter-paper"><div class="wrap"><div class="district-list">{% for district in districts %}<a class="district-card" href="{{ '/freguesias/' | append: district.slug | append: '/' | relative_url }}"><span class="shape-glyph">{{ district.display_name | split: ' ' | map: 'first' | join: '' }}</span><span class="eyebrow">{{ district.display_name }}</span><strong>{{ district.listings | pt_number }}</strong><small>anúncios · {{ district.establishments_estimate | pt_number }} estimados</small></a>{% endfor %}</div></div></section>
-{% include provenance.html %}
+{% assign districts = site.data.site.districts | sort: 'establishments_estimate' | reverse %}
+<section class="py-14 sm:py-20" aria-labelledby="districts-title"><div class="wrap">
+  <h1 id="districts-title" class="font-[family-name:var(--font-serif)] text-[clamp(3.4rem,7vw,7rem)] leading-[.95] tracking-[-.045em]">Onde estão?</h1>
+  <p class="mt-7 max-w-[68ch] text-lg">Veja como os anúncios Airbnb e os estabelecimentos estimados se distribuem pelas {{ districts.size }} freguesias de Lisboa. Escolha uma freguesia no mapa ou na lista para explorar os seus dados.</p>
+  <div class="mt-12 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:gap-16 lg:items-start">
+    <div class="min-w-0 lg:sticky lg:top-24">{% include freguesia-map.html size='max-w-[560px]' %}</div>
+    <div class="min-w-0">
+      <table class="w-full border-collapse text-sm sm:text-base [&_th]:normal-case! [&_th]:tracking-normal! [&_th]:text-[length:inherit]! [&_th]:text-[var(--color-ink)]! [&_th]:px-0! [&_td]:px-0! [&_thead_th]:py-2! [&_tbody_th]:py-2.5! [&_tbody_td]:py-2.5! [&_th:not(:first-child)]:pl-3! [&_td]:pl-3!" data-sortable-freguesias data-sort-status="district-sort-status">
+        <caption class="mb-6 text-left font-[family-name:var(--font-serif)] text-2xl leading-tight">Todas as freguesias</caption>
+        <thead><tr class="border-b-2 border-[var(--color-line)] text-sm sm:text-base">
+          <th scope="col" class="pb-4 text-left font-semibold"><button type="button" disabled data-sort-key="name" data-sort-label="freguesia" data-initial-direction="ascending" class="inline-flex min-h-11 cursor-pointer items-center gap-2 text-left hover:text-[var(--color-blue)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-blue)] disabled:cursor-default"><span>Freguesia</span><span data-sort-indicator aria-hidden="true" class="shrink-0 text-xl leading-none text-[var(--color-blue)]">↕</span></button></th>
+          <th scope="col" class="pb-4 pl-3 text-right font-semibold"><button type="button" disabled data-sort-key="listings" data-sort-label="anúncios" data-initial-direction="descending" class="inline-flex min-h-11 cursor-pointer items-center justify-end gap-2 text-right hover:text-[var(--color-blue)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-blue)] disabled:cursor-default"><span>Anúncios</span><span data-sort-indicator aria-hidden="true" class="shrink-0 text-xl leading-none text-[var(--color-blue)]">↕</span></button></th>
+          <th scope="col" aria-sort="descending" class="pb-4 pl-3 text-right font-semibold"><button type="button" disabled data-sort-key="estimate" data-sort-label="estabelecimentos estimados" data-initial-direction="descending" class="inline-flex min-h-11 cursor-pointer items-center justify-end gap-2 text-right hover:text-[var(--color-blue)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-blue)] disabled:cursor-default"><span>Estabelecimentos<br>estimados</span><span data-sort-indicator aria-hidden="true" class="shrink-0 text-xl leading-none text-[var(--color-blue)]">↓</span></button></th>
+        </tr></thead>
+        <tbody>{% for district in districts %}<tr class="border-b border-[var(--color-line)]" data-name="{{ district.display_name | escape }}" data-listings="{{ district.listings }}" data-estimate="{{ district.establishments_estimate }}">
+          <th scope="row" class="text-left font-normal"><a class="hover:text-[var(--color-blue)] focus-visible:text-[var(--color-blue)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-blue)]" href="{{ '/freguesias/' | append: district.slug | append: '/' | relative_url }}">{{ district.display_name }}</a></th>
+          <td class="text-right tabular-nums text-[var(--color-ink)]/75">{{ district.listings | pt_number }}</td>
+          <td class="text-right font-semibold tabular-nums">{{ district.establishments_estimate | pt_number }}</td>
+        </tr>{% endfor %}</tbody>
+      </table>
+      <p id="district-sort-status" class="sr-only" role="status" aria-live="polite" aria-atomic="true">Ordenado por estabelecimentos estimados, por ordem decrescente.</p>
+      <p class="mt-6 text-sm text-[var(--color-ink)]/75">A estimativa resulta do agrupamento de anúncios; não é uma contagem oficial de AL ativos. <a class="text-[var(--color-blue)] underline underline-offset-4" href="{{ '/metodologia.html#listagens-airbnb' | relative_url }}">Como calculamos →</a></p>
+    </div>
+  </div>
+</div></section>
+
+<script src="{{ '/assets/js/freguesia-sort.js' | relative_url }}" defer></script>
