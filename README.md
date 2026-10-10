@@ -76,7 +76,7 @@ estilos existentes. Prefira classes Tailwind e os tokens do projeto nas alteraç
 ao site. O CSS gerado fica em `_site/assets/story.css`; `_site/` não é fonte
 editável, e Jekyll não publica os ficheiros CSS de origem.
 
-O resultado fica em `_site/` e inclui apenas a página inicial, relatórios HTML,
+O resultado fica em `_site/` e inclui as páginas editoriais e de freguesias, relatórios HTML,
 CSVs agregados, metadata, licença e avisos de atribuição. Datasets brutos,
 resultados locais e caches não são copiados. O diretório `_site/` pode ser usado
 como artefacto de um deployment estático. O workflow trimestral constrói e
@@ -108,6 +108,22 @@ capturas a 1440, 768 e 390 px em `tmp/screenshots/`. Defina `CHROME_BIN` se
 precisar de outro executável Chromium. O comando falha se houver deslocamento
 horizontal. Verifique também o foco por teclado, os links e as restantes páginas
 num browser local.
+
+O mesmo script aceita outras páginas, depois de construir o site:
+
+```bash
+npm run site:build
+node scripts/capture_homepage.mjs freguesias/arroios/index.html
+node scripts/capture_homepage.mjs metodologia.html
+```
+
+As capturas recebem o nome da página, por exemplo
+`tmp/screenshots/freguesias-arroios-390.png`.
+
+Os diagramas de sobreposição e o número RNAL nas páginas de freguesia ainda usam
+valores de exemplo para o tratamento visual. Não são estatísticas calculadas.
+O trabalho pendente está documentado em `AGENTS.md`, na secção
+“Statistics to complete after the UX treatment”.
 
 O workflow de GitHub Pages define automaticamente a base `/alojamento-local-em-analise`.
 
@@ -156,6 +172,11 @@ As licenças são normalizadas de forma conservadora. O analisador distingue, en
 - valor de licença não identificável como AL.
 
 `host_id` pode ser usado apenas durante a análise local como metadado, nunca como critério de agrupamento; não é escrito nos outputs públicos. A estimativa de estabelecimentos colapsa apenas categorias de menor risco e mantém casos de possível reutilização separados para verificação.
+
+O campo `identifiable_licences` dos CSVs conta anúncios com um número AL
+identificável, não números distintos nem correspondências confirmadas no RNAL.
+A categoria “licença única em Lisboa” indica um número presente num único anúncio
+do conjunto analisado; por si só, não confirma um registo oficial em Lisboa.
 
 ### Exemplos de sinais
 

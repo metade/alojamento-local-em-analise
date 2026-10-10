@@ -108,10 +108,13 @@ The homepage overlap diagram, `site/_includes/district-overlap.html`, and the RN
 
 ### General guidance
 
+- Follow the homepage and freguesia pages for site UX: Tailwind utilities, existing design tokens, concise Portuguese copy, and qualified estimates. Keep the grouping explanation with the Airbnb figures; RNAL registrations are a separate source, not the input to that estimate.
+- The district locator uses CML administrative boundaries from `site/_data/freguesia_map.json`. It highlights the selected freguesia within Lisbon; it does not show announcement locations or density.
+- Preserve methodology anchors linked from other pages when simplifying `site/metodologia.html`.
 - Preserve `licensa_raw` in internal analysis rows when changing licence parsing so the source value remains auditable; never write it to public outputs.
 - Add regression tests for new licence formats and spatial rules.
 - Do not describe unmatched or geographically inconsistent listings as illegal without official validation.
 - Do not commit raw downloaded datasets unless explicitly requested.
 - Treat `report.html` as the canonical self-contained report and `report.pdf` as a derivative.
 - Do not recreate or maintain the removed legacy `relatorio_anomalias_al.*` files; new reports belong inside their versioned run directory.
-- For homepage layout changes, run `npm run site:screenshots` and inspect the 1440, 768, and 390 px images in `tmp/screenshots/`.
+- For homepage layout changes, run `npm run site:screenshots`. For other page layouts, build with `npm run site:build`, then run `node scripts/capture_homepage.mjs <page-path>` (for example, `freguesias/arroios/index.html` or `metodologia.html`). Inspect the 1440, 768, and 390 px images in `tmp/screenshots/`; the script checks for horizontal overflow.
