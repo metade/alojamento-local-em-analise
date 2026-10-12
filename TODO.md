@@ -6,7 +6,7 @@ Prioridade: publicar uma primeira análise com o par de fontes atual. Guardar as
 fontes agora; adiar comparações e integração do arquivo. Manter a identificação
 da metodologia e a explicação do método atual, mesmo ao simplificar o sistema.
 
-1. [ ] Fazer backup no Google Drive das fontes datadas Airbnb e RNAL existentes.
+1. [x] Fazer backup no Google Drive das fontes datadas Airbnb e RNAL existentes.
    Preservar os bytes originais em ficheiros comprimidos, nomes/datas e um
    manifesto com SHA-256, tamanhos, contagens e URLs das fontes. Verificar os
    hashes após restaurar o backup. Registar a localização no Drive e confirmar
@@ -14,7 +14,7 @@ da metodologia e a explicação do método atual, mesmo ao simplificar o sistema
    ZIPs preparados em `tmp/source-backup-2026-10-12/`: `q4-2025.zip` (Airbnb
    setembro + RNAL novembro) e `q3-2026.zip` (Airbnb junho + três dumps RNAL
    setembro), com manifestos e hashes de restauro verificados. Upload manual
-   pelo utilizador pendente; os rótulos trimestrais não alteram datas das fontes.
+   confirmado pelo utilizador; os rótulos trimestrais não alteram datas das fontes.
 2. [ ] Simplificar o sistema para o primeiro lançamento com dados atuais:
    remover comparações históricas, seleção/fallback de metodologias antigas e
    infraestrutura de histórico do pipeline, site, workflows e testes. Rever os
@@ -35,10 +35,6 @@ da metodologia e a explicação do método atual, mesmo ao simplificar o sistema
    cache local e verificação SHA-256 antes da análise. O build normal do site
    continua a consumir outputs sanitizados; só o fluxo explícito de reanálise
    histórica deve precisar do arquivo e das credenciais.
-5. [x] Identificar cada execução com a versão da metodologia: já consta de
-   metadata público/local, resumo, métricas e relatório, juntamente com versões
-   de análise/schema, fontes e proveniência Git. Manter esta identificação no
-   primeiro lançamento; o ID público continua a ser o par de datas.
 
 - [ ] Antes do primeiro lançamento, estabelecer o baseline de metodologia e
   manter notas curtas por versão: o que mudou, porquê e efeito nos números
@@ -54,24 +50,6 @@ da metodologia e a explicação do método atual, mesmo ao simplificar o sistema
   do site, atualizando os imports e mantendo os testes de proporções e casos
   limite. Manter a implementação atual por agora; não está prevista a troca
   por uma biblioteca de gráficos.
-
-- [x] Consolidar a preparação dos dados usada pela análise e por
-  `RegistrationMetrics`. Fontes preparadas uma vez por execução, entradas RNAL
-  preservadas e lookup de classificação derivado separadamente. Contagens de
-  anúncios e aliases partilhados; agregados reutilizados pelos CSV e relatórios.
-  Equivalência verificada com as fontes datadas de setembro, incluindo outputs
-  locais, métricas, histórico e dados do site. Regras de manutenção em AGENTS.md;
-  regressão completa em `test/pipeline_regression_test.rb`.
-
-- [x] Unificar o filtro de município Airbnb: Lisboa normalizada alimenta a
-  classificação, as métricas e as contagens de reutilização da mesma população.
-  Análise 3.2.0 e metodologia 2.1.0, com testes de variantes, exclusões e impacto
-  espacial. Fontes locais de junho/setembro sem alterações numéricas; avaliação
-  e comparação sintética documentadas nas notas de metodologia do README.
-
-- [x] Rever `scripts/regenerate_public_report.rb`: recuperar as métricas
-  validadas do snapshot e verificar a proveniência antes de regenerar. Montagem
-  do relatório partilhada com o pipeline e testes de regressão da regeneração.
 
 - [ ] Introduzir um loader partilhado de snapshots públicos para a regeneração
   do relatório e a construção do site. Ler os ficheiros atuais e devolver uma
