@@ -30,8 +30,8 @@ class PipelineRegressionTest < Minitest::Test
       # Hand-counted from the synthetic sources, not from the calculator.
       fields = %w[rnal airbnb intersection rnal_only airbnb_only another_lisbon_parish another_municipality no_national_match unresolved_official_geography announcements empty_licence unrecognised_licence identifiable_number confirmed_rnal_match official_entries]
       expected = {
-        "Lisboa" => [15, 18, 13, 2, 5, 0, 2, 1, 2, 32, 2, 2, 28, 26, 19],
-        "Arroios" => [12, 15, 8, 4, 7, 1, 2, 1, 3, 28, 2, 2, 24, 22, 14],
+        "Lisboa" => [15, 18, 13, 2, 5, 0, 2, 1, 2, 34, 2, 2, 30, 28, 19],
+        "Arroios" => [12, 15, 8, 4, 7, 1, 2, 1, 3, 30, 2, 2, 26, 24, 14],
         "Belém" => [2, 2, 0, 2, 2, 1, 0, 0, 1, 2, 0, 0, 2, 2, 2],
         "Ajuda" => [1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1],
         "Geografia não identificada" => [1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 2]
@@ -45,7 +45,11 @@ class PipelineRegressionTest < Minitest::Test
                     "duplicate_number_extra_entries" => 5, "official_entries_unresolved_municipality" => 3,
                     "lisbon_entries_unresolved_parish" => 2}, metrics.fetch("diagnostics"))
       summary = JSON.parse(files.fetch("public/summary.json"))
-      assert_equal [32, 18, 19, 28], summary.values_at("listings", "licence_groups", "official_registers_lisbon", "establishment_estimate")
+      assert_equal [34, 18, 19, 28], summary.values_at("listings", "licence_groups", "official_registers_lisbon", "establishment_estimate")
+      comparisons = summary.fetch("historical_comparisons").to_h { |row| [row.fetch("run_id"), row] }
+      assert_equal "incompatível — metodologia diferente", comparisons.fetch("2024-05-01__2024-06-01").fetch("status")
+      assert_empty comparisons.fetch("2024-05-01__2024-06-01").fetch("metrics")
+      assert_equal "comparável", comparisons.fetch("2024-05-02__2024-06-02").fetch("status")
       assert_equal({"provável estabelecimento com anúncios múltiplos" => 1,
                     "licença repetida na mesma localização" => 2,
                     "licença repetida em várias localizações" => 1,

@@ -130,8 +130,8 @@ As capturas recebem o nome da página, por exemplo
 `tmp/screenshots/freguesias-arroios-390.png`.
 
 Os diagramas de sobreposição e os números RNAL nas páginas de freguesia usam
-métricas agregadas e versionadas. As definições e limitações estão em
-[docs/registration-metrics.md](docs/registration-metrics.md).
+métricas agregadas e versionadas. Ver [métricas de registo](#métricas-de-registo)
+para as definições e limitações.
 O trabalho a retomar em futuras sessões está em [TODO.md](TODO.md).
 
 O workflow de GitHub Pages define automaticamente a base `/alojamento-local-em-analise`.
@@ -192,8 +192,68 @@ As licenças são normalizadas de forma conservadora. O analisador distingue, en
 
 O campo `identifiable_licences` dos CSVs conta anúncios com um número AL
 identificável, não números distintos nem correspondências confirmadas no RNAL.
-Na metodologia 2.0.0, a categoria “licença única em Lisboa” exige um único anúncio
+A categoria “licença única em Lisboa” exige um único anúncio
 e uma correspondência no RNAL com concelho Lisboa; não confirma validade ou atividade do registo.
+
+### Métricas de registo
+
+`registration_metrics.json` (métricas 1.0.0, schema público 4.0.0) contém Lisboa,
+as 24 freguesias e um agregado de geografia não identificada. As definições
+completas também acompanham cada ficheiro no campo `definitions`.
+
+| Campos | O que contam |
+| --- | --- |
+| `rnal`, `airbnb` | Números AL normalizados distintos no conjunto local de cada fonte |
+| `intersection`, `rnal_only`, `airbnb_only` | Interseção e diferenças dos conjuntos locais |
+| `another_lisbon_parish`, `another_municipality`, `no_national_match`, `unresolved_official_geography` | Partição de `airbnb_only`: outra freguesia de Lisboa, outro município, ausência no RNAL nacional ou geografia oficial por resolver |
+| `announcements` | Anúncios observados cujo município normaliza para Lisboa |
+| `empty_licence`, `unrecognised_licence`, `identifiable_number` | Partição dos anúncios: campo vazio, preenchido não reconhecido ou número AL identificável |
+| `confirmed_rnal_match` | Anúncios com número encontrado no RNAL nacional datado; subconjunto de `identifiable_number` |
+| `official_entries` | Linhas oficiais de Lisboa, incluindo duplicados |
+
+O RNAL usa concelho/freguesia oficiais; o Airbnb usa a geografia observada.
+Normalizam-se espaços, maiúsculas e acentos, com aliases explícitos para as
+grafias Airbnb de freguesias que perderam letras acentuadas. Freguesias
+desconhecidas entram no total municipal e num agregado próprio, cuja interseção
+é zero. O total de números distintos de Lisboa é calculado diretamente; nunca
+se obtém somando freguesias.
+
+“Só RNAL” significa ausência no Airbnb da mesma geografia; “só Airbnb” não
+significa ausência no RNAL nacional. Registos oficiais com geografia ausente ou
+conflituante ficam por resolver. Uma correspondência não confirma validade,
+atividade ou localização real. As áreas dos círculos e a interseção usam os
+conjuntos medidos; a bolha de anúncios sem número identificável usa uma escala
+separada. Diagramas diferentes não têm uma escala comum.
+
+Os agrupamentos espaciais são componentes conexas de ligações até 500 m:
+extremos ligados por uma cadeia podem estar mais afastados. Coordenadas ausentes
+permanecem em grupos individuais. A estimativa colapsa apenas grupos na mesma
+localização com correspondência oficial Lisboa, classificados como provável
+estabelecimento múltiplo ou repetição na mesma localização. Mantém os restantes
+anúncios separados e calcula cada geografia independentemente; estimativas de
+freguesias também não devem ser somadas para obter Lisboa.
+
+Para recalcular um par de fontes já guardado, verificando os hashes originais:
+
+```bash
+bundle exec ruby scripts/reanalyse_public_run.rb <run_id>
+```
+
+### Versão da metodologia
+
+Cada run regista `methodology_version`, versões de análise/schema, datas e hashes
+das fontes e proveniência Git. O relatório identifica a metodologia. O sistema
+atual compara apenas runs com metodologia idêntica; a simplificação para o
+primeiro lançamento e o arquivo de fontes estão planeados em [TODO.md](TODO.md).
+
+**2.1.0 (análise 3.2.0):** um único filtro normalizado de município Airbnb
+alimenta classificação, métricas e reutilização. Antes, variantes como ` Lisboa `
+e `lisboa` contavam para reutilização mas eram excluídas dos resultados. Na
+fixture sintética, os anúncios passam de 32 para 34 e a estimativa mantém-se em
+28. Com as mesmas fontes de `2026-06-23__2026-09-26`, grupos e métricas completos
+mantêm-se iguais: 17 064 anúncios e estimativa de 14 600. Outros arquivos podem
+ter impacto diferente. Os snapshots guardados não foram substituídos nesta
+correção; cada um mantém as suas versões e fontes no metadata.
 
 ### Exemplos de sinais
 

@@ -35,7 +35,7 @@ The empty fixture-owned quotes file keeps editorial changes out of this test.
 | `17` | Legacy year format; officially registered in another Lisbon parish |
 | `21` | Chain endpoints exceed 500 m but form one connected component |
 | Empty, whitespace, `Exempt`, `/UT/` | Disjoint empty and filled-unrecognized announcement counts |
-| ` Lisboa `, `lisboa`, `Porto` | Preserved exact-name filter; aliases still contribute to reuse counts, Porto does not |
+| ` Lisboa `, `lisboa`, `Porto` | Normalized Lisbon variants enter classification, metrics and reuse counts; Porto is excluded |
 
 ## Independent accounting
 
@@ -44,18 +44,18 @@ parseable AL number; those rows produce 15 distinct Lisbon numbers. Five extra
 entries repeat numbers, three entries have unresolved municipalities, and two
 Lisbon entries have unknown parishes.
 
-The source has 36 announcements. Four are excluded (two municipality variants
-and two Porto rows). The 32 included announcements contain 28 identifiable
+The source has 36 announcements. Two Porto rows are excluded. The 34 included
+announcements contain 30 identifiable
 numbers, two empty licences and two filled-unrecognized licences. Two
-identifiable announcements use `6`, absent from RNAL, so 26 match nationally.
+identifiable announcements use `6`, absent from RNAL, so 28 match nationally.
 
 Lisbon RNAL numbers are `1,2,3,8,9,10,11,12,13,16,17,18,20,21,22`.
 Observed numbers are `1,2,3,4,5,6,7,8,9,10,11,12,15,16,17,18,20,21`.
 Their intersection has 13 numbers. RNAL-only is `13,22`; Airbnb-only is
 `4,5` (other municipality), `6` (no national match), and `7,15` (unresolved).
 
-The estimate collapses one announcement for `1`, one for `2`, and two for `21`:
-`32 - 1 - 1 - 2 = 28`. It leaves all suspicious, unmatched, outside and unresolved
+The estimate collapses three announcements for `1`, one for `2`, and two for `21`:
+`34 - 3 - 1 - 2 = 28`. It leaves all suspicious, unmatched, outside and unresolved
 cases separate. The independent test pins these totals, all difference
 categories, every geography, diagnostics, classifications and source dates.
 

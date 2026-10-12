@@ -12,9 +12,9 @@ require "time"
 require "tmpdir"
 
 module AlojamentoLocal
-  ANALYSIS_VERSION = "3.1.1"
+  ANALYSIS_VERSION = "3.2.0"
   OUTPUT_SCHEMA_VERSION = "4.0.0"
-  METHODOLOGY_VERSION = "2.0.0"
+  METHODOLOGY_VERSION = "2.1.0"
   PUBLIC_CSV_SCHEMAS = {
     "listings.csv" => %w[freguesia classification listings identifiable_licences establishments_estimate],
     "licence_groups.csv" => %w[classification official_municipality official_type licence_groups listings spatial_locations establishments_estimate],

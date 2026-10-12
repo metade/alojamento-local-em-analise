@@ -13,7 +13,9 @@ module AlojamentoLocal
   # in the main analysis.
   module RegistrationMetrics
     VERSION = "1.0.0"
-    SUPPORTED_METHODOLOGY_VERSION = "2.0.0"
+    # Both methods use metric schema 1.0.0; historical comparisons still require
+    # identical methodology versions because the Airbnb population changed.
+    SUPPORTED_METHODOLOGY_VERSIONS = %w[2.0.0 2.1.0].freeze
     COUNTS = %w[rnal airbnb intersection rnal_only airbnb_only another_lisbon_parish another_municipality no_national_match unresolved_official_geography announcements empty_licence unrecognised_licence identifiable_number confirmed_rnal_match official_entries].freeze
     DEFINITIONS = {
       sets: "Distinct normalized AL numbers. RNAL: official Concelho=Lisboa and official Freguesia. Airbnb: observed municipality=Lisboa and observed parish. City sets are computed independently, never summed from parishes.",
@@ -84,7 +86,7 @@ module AlojamentoLocal
       raise "Invalid diagnostics" unless data[:diagnostics].keys == diagnostic_keys && data[:diagnostics].values.all? { |count| count.is_a?(Integer) && count >= 0 }
       if data[:run_id]
         raise "Invalid metric run" unless data[:run_id].match?(/\A\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}(?:__m[\d.]+(?:__a[\d.]+)?)?(?:__rerun-\d{8}T\d{12}(?:-\d+)?)?\z/)
-        raise "Incompatible metric method" unless data[:methodology_version] == SUPPORTED_METHODOLOGY_VERSION
+        raise "Incompatible metric method" unless SUPPORTED_METHODOLOGY_VERSIONS.include?(data[:methodology_version])
         raise "Invalid metric dates" unless data[:source_dates].keys == %i[airbnb_snapshot_date official_register_date official_register_download_date] && data[:source_dates].values.all? { |date| date.nil? || date.match?(/\A\d{4}-\d{2}-\d{2}\z/) }
       end
       if data[:source_files]

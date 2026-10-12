@@ -46,7 +46,7 @@ class VersionedAnalysisTest < Minitest::Test
       assert_raises(RuntimeError) { AlojamentoLocal::Analysis.existing_public_run(airbnb_path: airbnb, official_path: official, output_root: output_root) }
       assert_equal "2026-06-23__2026-09-19", run_id
       File.write(official, "fixture")
-      meta[:methodology_version] = "1.1.0"
+      meta[:methodology_version] = "2.0.0"
       File.write(File.join(path, "metadata.json"), JSON.generate(meta))
       assert_nil AlojamentoLocal::Analysis.existing_public_run(airbnb_path: airbnb, official_path: official, output_root: output_root)
     end
@@ -75,7 +75,7 @@ class VersionedAnalysisTest < Minitest::Test
       assert_equal 1, public_listings.find { |row| row["classification"] == "sem licença identificável" }["listings"].to_i
       summary = JSON.parse(File.read(File.join(run_dir, "summary.json")))
       assert_equal 1, summary.fetch("official_registers_lisbon")
-      assert_equal "2.0.0", summary.fetch("methodology_version")
+      assert_equal "2.1.0", summary.fetch("methodology_version")
       assert_equal AlojamentoLocal::PUBLIC_CSV_SCHEMAS["listings.csv"], public_listings.headers
       refute_includes public_listings.headers, "host_id"
       refute public_listings.to_csv.match?(%r{https?://|/rooms/})

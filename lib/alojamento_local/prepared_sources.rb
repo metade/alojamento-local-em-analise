@@ -43,12 +43,11 @@ module AlojamentoLocal
           municipality = Geography.municipality(raw["neighbourhood_group_cleansed"])
           next unless municipality == "Lisboa"
           number = AlojamentoLocal.parse_al_license(raw["license"])
-          licence_counts[number] += 1
-          # Preserve the second, exact-name filter and its reuse-count population.
-          next if raw["neighbourhood_group_cleansed"] != "Lisboa"
           Entry.new(raw: raw.freeze, number: number, municipality: municipality,
             parish: Geography.parish(raw["neighbourhood_cleansed"])).freeze
         end.freeze
+        # Reuse and classification must describe the same retained population.
+        entries.each { |entry| licence_counts[entry.number] += 1 }
         @licence_counts.freeze
       end
     end

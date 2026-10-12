@@ -12,11 +12,11 @@
     "another_municipality": 2,
     "no_national_match": 1,
     "unresolved_official_geography": 2,
-    "announcements": 32,
+    "announcements": 34,
     "empty_licence": 2,
     "unrecognised_licence": 2,
-    "identifiable_number": 28,
-    "confirmed_rnal_match": 26,
+    "identifiable_number": 30,
+    "confirmed_rnal_match": 28,
     "official_entries": 19,
     "geometry": {
       "r": 155.188058,
@@ -26,7 +26,7 @@
       "distance": 52.380807
     },
     "unresolved": 4,
-    "bubble_radius": 30.052,
+    "bubble_radius": 29.155,
     "observed_unknown_parish": 1,
     "official_unknown_parish": 2
   },
@@ -37,8 +37,8 @@
       "official_register_date": "2020-01-01",
       "official_register_download_date": "2024-07-01"
     },
-    "methodology_version": "2.0.0",
-    "listings": 32,
+    "methodology_version": "2.1.0",
+    "listings": 34,
     "licence_groups": 18,
     "official_registers_lisbon": 19,
     "establishment_estimate": 28,
@@ -57,17 +57,22 @@
     "historical_comparisons": [
       {
         "run_id": "2024-05-01__2024-06-01",
+        "status": "incompatível — metodologia diferente",
+        "metrics": {}
+      },
+      {
+        "run_id": "2023-05-01__2023-06-01",
+        "status": "incompatível — metodologia diferente",
+        "metrics": {}
+      },
+      {
+        "run_id": "2024-05-02__2024-06-02",
         "status": "comparável",
         "metrics": {
           "listings": 10,
           "licence_groups": 7,
           "establishment_estimate": 8
         }
-      },
-      {
-        "run_id": "2023-05-01__2023-06-01",
-        "status": "incompatível — metodologia diferente",
-        "metrics": {}
       }
     ]
   },
@@ -92,8 +97,8 @@
     },
     "git_commit": "<git_commit>",
     "git_worktree_dirty": "<git_worktree_dirty>",
-    "analysis_version": "3.1.1",
-    "methodology_version": "2.0.0",
+    "analysis_version": "3.2.0",
+    "methodology_version": "2.1.0",
     "output_schema_version": "4.0.0",
     "mode": "public"
   },
@@ -158,8 +163,8 @@
     {
       "freguesia": "Arroios",
       "classification": "provável estabelecimento com anúncios múltiplos",
-      "listings": "1",
-      "identifiable_licences": "1",
+      "listings": "3",
+      "identifiable_licences": "3",
       "establishments_estimate": "1"
     },
     {
@@ -408,11 +413,11 @@
         "another_municipality": 2,
         "no_national_match": 1,
         "unresolved_official_geography": 3,
-        "announcements": 28,
+        "announcements": 30,
         "empty_licence": 2,
         "unrecognised_licence": 2,
-        "identifiable_number": 24,
-        "confirmed_rnal_match": 22,
+        "identifiable_number": 26,
+        "confirmed_rnal_match": 24,
         "official_entries": 14,
         "geometry": {
           "r": 152.052622,
@@ -422,13 +427,13 @@
           "distance": 103.542117
         },
         "unresolved": 4,
-        "bubble_radius": 32.127
+        "bubble_radius": 31.038
       },
       "name": "Arroios",
       "display_name": "Arroios",
       "slug": "arroios",
-      "listings": 28,
-      "listings_with_identifiable_licence": 24,
+      "listings": 30,
+      "listings_with_identifiable_licence": 26,
       "establishments_estimate": 25,
       "categories": [
         {
@@ -490,8 +495,8 @@
         {
           "key": "provável estabelecimento com anúncios múltiplos",
           "label": "Provável estabelecimento com anúncios múltiplos",
-          "listings": 1,
-          "licences": 1,
+          "listings": 3,
+          "licences": 3,
           "estimate": 1
         },
         {

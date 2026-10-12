@@ -124,7 +124,7 @@ module AlojamentoLocal
         next false unless File.file?(metrics)
         data = load_json(metrics)
         data["metric_version"] == AlojamentoLocal::RegistrationMetrics::VERSION &&
-          data["methodology_version"] == AlojamentoLocal::RegistrationMetrics::SUPPORTED_METHODOLOGY_VERSION
+          AlojamentoLocal::RegistrationMetrics::SUPPORTED_METHODOLOGY_VERSIONS.include?(data["methodology_version"])
       end || raise("No snapshot has supported measured registration metrics")
     end
 

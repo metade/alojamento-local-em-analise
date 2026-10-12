@@ -23,11 +23,11 @@
       "another_municipality": 2,
       "no_national_match": 1,
       "unresolved_official_geography": 2,
-      "announcements": 32,
+      "announcements": 34,
       "empty_licence": 2,
       "unrecognised_licence": 2,
-      "identifiable_number": 28,
-      "confirmed_rnal_match": 26,
+      "identifiable_number": 30,
+      "confirmed_rnal_match": 28,
       "official_entries": 19
     },
     {
@@ -113,11 +113,11 @@
       "another_municipality": 2,
       "no_national_match": 1,
       "unresolved_official_geography": 3,
-      "announcements": 28,
+      "announcements": 30,
       "empty_licence": 2,
       "unrecognised_licence": 2,
-      "identifiable_number": 24,
-      "confirmed_rnal_match": 22,
+      "identifiable_number": 26,
+      "confirmed_rnal_match": 24,
       "official_entries": 14
     },
     {
@@ -497,7 +497,7 @@
       "sha256": "2bb9c11d6f9c3c19f717387e1d43100c231dfcd831ab6d8413de9b4c8dcca13b"
     }
   },
-  "methodology_version": "2.0.0",
+  "methodology_version": "2.1.0",
   "source_dates": {
     "airbnb_snapshot_date": "2024-06-01",
     "official_register_date": "2020-01-01",

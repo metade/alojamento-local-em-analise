@@ -19,8 +19,8 @@
   },
   "git_commit": "<git_commit>",
   "git_worktree_dirty": "<git_worktree_dirty>",
-  "analysis_version": "3.1.1",
-  "methodology_version": "2.0.0",
+  "analysis_version": "3.2.0",
+  "methodology_version": "2.1.0",
   "output_schema_version": "4.0.0",
   "mode": "public"
 }

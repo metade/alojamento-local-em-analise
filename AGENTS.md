@@ -98,7 +98,7 @@ Track deferred work in [TODO.md](TODO.md).
 
 ### Registration statistics
 
-Measured overlap metrics now live in versioned `registration_metrics.json` (metric version 1.0.0). See `docs/registration-metrics.md` for definitions, verification, and limitations. Preserve the homepage and district layout and keep each district RNAL headline consistent with its overlap total.
+Measured overlap metrics live in versioned `registration_metrics.json` (metric version 1.0.0). See [README.md — Métricas de registo](README.md#métricas-de-registo) and each output's `definitions` for units and limitations. Preserve the homepage and district layout and keep each district RNAL headline consistent with its overlap total.
 
 - RNAL and Airbnb sets count distinct normalized AL numbers; announcement counts and official entry counts have separate fields. Never sum parish distinct counts to obtain Lisbon.
 - Use official Concelho/Freguesia for RNAL and observed geography for Airbnb. Retain unknown geography explicitly and qualify local set differences.
@@ -106,6 +106,13 @@ Measured overlap metrics now live in versioned `registration_metrics.json` (metr
 - To reproduce a prior run with a new methodology from verified local dated sources: `bundle exec ruby scripts/reanalyse_public_run.rb <prior-public-run-id>`. Never relabel an old source as a fresh download.
 - Circle areas and overlap use measured sets, including empty, disjoint, identical and contained sets. Announcement bubbles use a separate fractional scale.
 - Regression metric/geometry tests in `test/registration_metrics_test.rb` also run through `test/versioned_analysis_test.rb`.
+
+### Source preparation and methodology changes
+
+- Prepare sources once per run with `PreparedSources::Pair`; no cache by filename. Preserve every official entry and its raw fields. Derive the classification lookup separately so resolving official conflicts never changes the entries used by metrics.
+- Retain Airbnb rows whose municipality normalizes to Lisboa. Derive reuse counts from those same retained entries; classification, spatial grouping and metrics must use the same population. Preserve original source values internally.
+- Use the synthetic pipeline fixture for full public/local output regression. Update its expected files only for an intentional change, review the diffs and independently check the accounting described in [test/fixtures/pipeline/README.md](test/fixtures/pipeline/README.md).
+- Record the methodology version on every run and explain changes and measured impact on identical source bytes in README's methodology notes. Keep implementation details that do not change results under the analysis version. Deferred simplification and archive work belongs in TODO.md.
 
 ### General guidance
 

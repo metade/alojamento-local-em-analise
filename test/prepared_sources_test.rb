@@ -69,15 +69,45 @@ class PreparedSourcesTest < Minitest::Test
     end
   end
 
-  def test_preserves_exact_municipality_filter_and_pre_filter_reuse_counts
+  def test_normalized_municipality_filter_keeps_reuse_and_classification_in_sync
     with_sources do |_dir, airbnb, official|
       sources = AlojamentoLocal::PreparedSources::Pair.new(airbnb_path: airbnb, official_path: official)
       listings, = AlojamentoLocal::Analysis.classify(sources)
-      assert_equal 8, listings.size
+      assert_equal 10, listings.size
       assert_equal 4, sources.airbnb.licence_counts["1"]
+      assert_equal sources.airbnb.entries.group_by(&:number).transform_values(&:size), sources.airbnb.licence_counts
+      assert_equal ["Lisboa"], sources.airbnb.entries.map(&:municipality).uniq
+      assert_equal ["Lisboa", " Lisboa ", "lisboa", "Lisboa"], sources.airbnb.entries.select { |entry| entry.number == "1" }.map { |entry| entry.raw["neighbourhood_group_cleansed"] }
       assert_equal ["licença reutilizada 4"], listings.select { |row| row[:licensa] == "1" }.map { |row| row[:license_status] }.uniq
-      assert_equal ["Arroios", "Belém"], listings.select { |row| row[:licensa] == "1" }.map { |row| row[:bairro] }
-      assert_equal ["001/AL", "1"], listings.select { |row| row[:licensa] == "1" }.map { |row| row[:licensa_raw] }
+      assert_equal ["Arroios", "Arroios", "Arroios", "Belém"], listings.select { |row| row[:licensa] == "1" }.map { |row| row[:bairro] }
+      assert_equal ["001/AL", "1", "1", "1"], listings.select { |row| row[:licensa] == "1" }.map { |row| row[:licensa_raw] }
+    end
+  end
+
+  def test_municipality_variants_contribute_to_spatial_rules_and_announcement_metrics
+    with_sources do |_dir, airbnb, official|
+      CSV.open(airbnb, "w", write_headers: true, headers: %w[neighbourhood_group_cleansed license neighbourhood_cleansed latitude longitude]) do |csv|
+        ["Lisboa", " Lisboa ", "lisboa", "LISBOA", "Lísboa"].each_with_index do |municipality, index|
+          csv << [municipality, "001/AL", "Arroios", index == 4 ? "38.80" : "38.71", "-9.14"]
+        end
+        csv << [" lisboa ", "2", "Arroios", "38.71", "-9.14"]
+        csv << ["LISBOA", nil, "Arroios", "38.71", "-9.14"]
+        csv << [" Lisboa ", "406/UT/2017", "Arroios", "38.71", "-9.14"]
+        ["Porto", "Lisboa Oriente", "", nil, "unknown"].each do |municipality|
+          csv << [municipality, "1", "Arroios", "38.71", "-9.14"]
+        end
+      end
+      sources = AlojamentoLocal::PreparedSources::Pair.new(airbnb_path: airbnb, official_path: official)
+      listings, = AlojamentoLocal::Analysis.classify(sources)
+      assert_equal 8, listings.size
+      assert_equal({"1" => 5, "2" => 1, nil => 2}, sources.airbnb.licence_counts)
+      repeated = listings.select { |row| row[:licensa] == "1" }
+      assert_equal [2], repeated.map { |row| row[:spatial_cluster_count] }.uniq
+      assert_equal ["licença repetida em várias localizações"], repeated.map { |row| row[:license_group_assessment] }.uniq
+      assert repeated.all? { |row| row[:license_status].include?("licença reutilizada 5") }
+      assert_equal 8, AlojamentoLocal.establishment_estimate(listings)
+      city = AlojamentoLocal::RegistrationMetrics.calculate(listings, sources.official)[:rows].first
+      assert_equal [8, 1, 1, 6, 6, 2], city.values_at(:announcements, :empty_licence, :unrecognised_licence, :identifiable_number, :confirmed_rnal_match, :airbnb)
     end
   end
 
@@ -98,7 +128,7 @@ class PreparedSourcesTest < Minitest::Test
           result = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "public",
             output_root: File.join(dir, "snapshots"), history_path: File.join(dir, "history", "summary.csv"))
           assert_equal 8, result[:summary][:official_registers_lisbon]
-          assert_equal 8, result[:summary][:listings]
+          assert_equal 10, result[:summary][:listings]
         end
       end
       assert_equal 1, reads[airbnb]
@@ -134,7 +164,7 @@ class PreparedSourcesTest < Minitest::Test
         assert_equal result[:path], builder.measured_run(runs)
         data = builder.site_data(runs)
         assert_equal 24, data["districts"].size
-        assert_equal 8, data["metrics"]["announcements"]
+        assert_equal 10, data["metrics"]["announcements"]
         assert_equal 8, data["official_count"]
         assert_equal "belm", data["districts"].find { |row| row["name"] == "Belém" }["slug"]
         %w[metadata.json summary.json registration_metrics.json].each do |file|
@@ -144,6 +174,18 @@ class PreparedSourcesTest < Minitest::Test
         refute metrics.fetch("rows").first.key?("geometry")
         AlojamentoLocal::RegistrationMetrics.validate!(JSON.parse(JSON.generate(metrics), symbolize_names: true))
       end
+      # Existing published 2.0.0 snapshots remain readable with metric schema 1.0.0.
+      %w[metadata.json registration_metrics.json].each do |file|
+        path = File.join(result[:path], file)
+        data = JSON.parse(File.read(path))
+        data["methodology_version"] = "2.0.0"
+        File.write(path, JSON.generate(data))
+      end
+      legacy = AlojamentoLocal::SiteData.new(snapshots: File.join(dir, "snapshots"),
+        distance_history: File.join(dir, "history", "distance_ranges.csv"),
+        outside_region_history: File.join(dir, "history", "outside_regions.csv"))
+      assert_equal result[:path], legacy.measured_run(legacy.public_runs)
+      assert_equal 10, legacy.site_data(legacy.public_runs)["metrics"]["announcements"]
     end
   end
 
