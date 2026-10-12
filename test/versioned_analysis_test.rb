@@ -25,29 +25,23 @@ class VersionedAnalysisTest < Minitest::Test
 
   def test_existing_public_run_is_detected_without_mutating_it
     Dir.mktmpdir do |dir|
-      airbnb = File.join(dir, "listings-2026-06-23.csv")
-      official = File.join(dir, "official-2026-09-19.csv")
+      airbnb = File.expand_path("fixtures/pipeline/sources/listings-2024-06-01.csv", __dir__)
+      official = File.join(dir, "official-2024-07-01.csv")
+      FileUtils.cp(File.expand_path("fixtures/pipeline/sources/official-2024-07-01.csv", __dir__), official)
       output_root = File.join(dir, "snapshots")
-      File.write(airbnb, "fixture")
-      File.write(official, "fixture")
-      run_id = AlojamentoLocal::Analysis.run_id_for(airbnb_path: airbnb, official_path: official)
-      path = File.join(output_root, run_id)
-      FileUtils.mkdir_p(path)
-      meta = {methodology_version: AlojamentoLocal::METHODOLOGY_VERSION, analysis_version: AlojamentoLocal::ANALYSIS_VERSION,
-              output_schema_version: AlojamentoLocal::OUTPUT_SCHEMA_VERSION,
-              mode: "public", source_files: {airbnb: {sha256: Digest::SHA256.file(airbnb).hexdigest}, official: {sha256: Digest::SHA256.file(official).hexdigest}}}
-      File.write(File.join(path, "metadata.json"), JSON.generate(meta))
-      (AlojamentoLocal::PUBLIC_CSV_SCHEMAS.keys + %w[summary.json report.html registration_metrics.json]).each { |file| File.write(File.join(path, file), "fixture") }
-      before = File.binread(File.join(path, "metadata.json"))
+      result = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "public",
+        output_root: output_root, history_path: File.join(dir, "history", "summary.csv"))
+      path = result.fetch(:path)
+      before = File.binread(File.join(path, "snapshot.json"))
       existing = AlojamentoLocal::Analysis.existing_public_run(airbnb_path: airbnb, official_path: official, output_root: output_root)
-      assert_equal run_id, existing[:run_id]
-      assert_equal before, File.binread(File.join(path, "metadata.json"))
+      assert_equal "2024-06-01__2024-07-01", existing[:run_id]
+      assert_equal before, File.binread(File.join(path, "snapshot.json"))
       File.write(official, "changed bytes")
       assert_raises(RuntimeError) { AlojamentoLocal::Analysis.existing_public_run(airbnb_path: airbnb, official_path: official, output_root: output_root) }
-      assert_equal "2026-06-23__2026-09-19", run_id
-      File.write(official, "fixture")
-      meta[:methodology_version] = "2.0.0"
-      File.write(File.join(path, "metadata.json"), JSON.generate(meta))
+      FileUtils.cp(File.expand_path("fixtures/pipeline/sources/official-2024-07-01.csv", __dir__), official)
+      data = JSON.parse(before)
+      data["metadata"]["analysis_version"] = "3.2.0"
+      File.write(File.join(path, "snapshot.json"), JSON.generate(data))
       assert_nil AlojamentoLocal::Analysis.existing_public_run(airbnb_path: airbnb, official_path: official, output_root: output_root)
     end
   end
@@ -68,7 +62,7 @@ class VersionedAnalysisTest < Minitest::Test
       result = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "public", output_root: File.join(dir, "snapshots"), history_path: File.join(dir, "history", "summary.csv"))
       run_dir = result[:path]
       assert_equal "2026-06-23__2026-09-17", result[:run_id]
-      assert_equal %w[metadata.json report.html summary.json listings.csv licence_groups.csv freguesias.csv registration_metrics.json].sort, Dir.children(run_dir).sort
+      assert_equal %w[snapshot.json metadata.json report.html summary.json listings.csv licence_groups.csv freguesias.csv registration_metrics.json].sort, Dir.children(run_dir).sort
       public_listings = CSV.read(File.join(run_dir, "listings.csv"), headers: true)
       assert_equal 3, public_listings.length
       assert_equal 1, public_listings.find { |row| row["classification"] == "sem licença" }["listings"].to_i
@@ -88,7 +82,7 @@ class VersionedAnalysisTest < Minitest::Test
       refute metadata.to_s.match?(/host_id|listing_url|licensa_raw|latitude|longitude|official_address/i)
       refute metadata.to_s.include?("path")
       assert_raises(RuntimeError) { AlojamentoLocal::Analysis.append_history(File.join(dir, "history", "summary.csv"), result[:summary]) }
-      assert_equal "4.0.0", JSON.parse(File.read(File.join(run_dir, "metadata.json"))) ["output_schema_version"]
+      assert_equal "5.0.0", JSON.parse(File.read(File.join(run_dir, "metadata.json"))) ["output_schema_version"]
       report = File.read(File.join(run_dir, "report.html"))
       assert_operator report.length, :>, 1_000
       assert_includes report, "Exemplos ilustrativos"
@@ -173,7 +167,7 @@ class VersionedAnalysisTest < Minitest::Test
       assert_equal 1, rows.sum { |row| row["licence_groups"].to_i }
       assert_equal "1", rows.find { |row| row["range"] == "2_5_km" }["licence_groups"]
       assert_equal 2, CSV.read(File.join(result[:path], "listings.csv"), headers: true).sum { |row| row["listings"].to_i }
-      assert_equal %w[metadata.json report.html summary.json listings.csv licence_groups.csv freguesias.csv registration_metrics.json].sort, Dir.children(result[:path]).sort
+      assert_equal %w[snapshot.json metadata.json report.html summary.json listings.csv licence_groups.csv freguesias.csv registration_metrics.json].sort, Dir.children(result[:path]).sort
       assert_raises(RuntimeError) { AlojamentoLocal::Analysis.append_distance_history(File.join(dir, "history", "distance_ranges.csv"), result[:run_id], []) }
     end
   end

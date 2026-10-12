@@ -16,7 +16,7 @@ class PipelineRegressionTest < Minitest::Test
         relative = path.delete_prefix(PipelineFixture::EXPECTED + "/")
         expected[relative] = File.read(path)
       end
-      assert_equal 19, expected.size, "The baseline must contain public, local, history and site outputs"
+      assert_equal 20, expected.size, "The baseline must contain public, local, history and site outputs"
       assert_equal expected.keys.sort, actual.keys.sort, "Output files added or removed"
       expected.each do |path, content|
         assert_equal content, actual.fetch(path), "Pipeline output changed: #{path}"
@@ -70,6 +70,14 @@ class PipelineRegressionTest < Minitest::Test
       FileUtils.cp(File.expand_path("../NOTICE", __dir__), File.join(artifact, "NOTICE"))
       output, status = Open3.capture2e(RbConfig.ruby, File.expand_path("../scripts/audit_publication.rb", __dir__), "--artifact", artifact)
       assert status.success?, output
+
+      document = File.join(artifact, "snapshot.json")
+      data = JSON.parse(File.read(document))
+      data.fetch("parish_totals").first["licensa_raw"] = "123/AL"
+      File.write(document, JSON.pretty_generate(data))
+      output, status = Open3.capture2e(RbConfig.ruby, File.expand_path("../scripts/audit_publication.rb", __dir__), "--artifact", artifact)
+      refute status.success?
+      assert_includes output, "campo proibido em snapshot.json: licensa_raw"
     end
   end
 end

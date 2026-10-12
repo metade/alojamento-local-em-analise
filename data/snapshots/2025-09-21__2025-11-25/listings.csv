@@ -1,0 +1,183 @@
+freguesia,classification,listings,identifiable_licences,establishments_estimate
+Ajuda,licença oficial fora de Lisboa,10,10,10
+Ajuda,licença repetida em várias localizações,9,9,9
+Ajuda,licença repetida na mesma localização,5,5,2
+Ajuda,licença única em Lisboa,113,113,113
+Ajuda,número sem correspondência no RNAL,8,8,8
+Ajuda,provável estabelecimento com anúncios múltiplos,50,50,16
+Ajuda,sem licença,7,0,7
+Ajuda,sem licença identificável,39,0,39
+Alcântara,licença oficial fora de Lisboa,17,17,17
+Alcântara,licença repetida em várias localizações,9,9,9
+Alcântara,licença repetida na mesma localização,6,6,2
+Alcântara,licença única em Lisboa,134,134,134
+Alcântara,número sem correspondência no RNAL,10,10,10
+Alcântara,provável estabelecimento com anúncios múltiplos,49,49,11
+Alcântara,sem licença,12,0,12
+Alcântara,sem licença identificável,83,0,83
+Alvalade,licença oficial fora de Lisboa,24,24,24
+Alvalade,licença repetida em várias localizações,25,25,25
+Alvalade,licença repetida na mesma localização,5,5,2
+Alvalade,licença única em Lisboa,65,65,65
+Alvalade,número sem correspondência no RNAL,24,24,24
+Alvalade,provável estabelecimento com anúncios múltiplos,44,44,17
+Alvalade,sem licença,20,0,20
+Alvalade,sem licença identificável,153,0,153
+Areeiro,licença oficial fora de Lisboa,28,28,28
+Areeiro,licença repetida em várias localizações,69,69,69
+Areeiro,licença única em Lisboa,61,61,61
+Areeiro,número sem correspondência no RNAL,10,10,10
+Areeiro,provável estabelecimento com anúncios múltiplos,118,118,29
+Areeiro,sem licença,8,0,8
+Areeiro,sem licença identificável,153,0,153
+Arroios,licença oficial fora de Lisboa,133,133,133
+Arroios,licença repetida em várias localizações,141,141,141
+Arroios,licença repetida na mesma localização,36,36,15
+Arroios,licença única em Lisboa,624,624,624
+Arroios,número sem correspondência no RNAL,142,142,142
+Arroios,provável estabelecimento com anúncios múltiplos,608,608,140
+Arroios,sem licença,107,0,107
+Arroios,sem licença identificável,443,0,443
+Avenidas Novas,licença oficial fora de Lisboa,36,36,36
+Avenidas Novas,licença repetida em várias localizações,83,83,83
+Avenidas Novas,licença repetida na mesma localização,15,15,4
+Avenidas Novas,licença única em Lisboa,147,147,147
+Avenidas Novas,número sem correspondência no RNAL,32,32,32
+Avenidas Novas,provável estabelecimento com anúncios múltiplos,216,216,45
+Avenidas Novas,sem licença,24,0,24
+Avenidas Novas,sem licença identificável,331,0,331
+Beato,licença oficial fora de Lisboa,6,6,6
+Beato,licença repetida em várias localizações,5,5,5
+Beato,licença repetida na mesma localização,2,2,1
+Beato,licença única em Lisboa,52,52,52
+Beato,número sem correspondência no RNAL,3,3,3
+Beato,provável estabelecimento com anúncios múltiplos,29,29,9
+Beato,sem licença,4,0,4
+Beato,sem licença identificável,33,0,33
+Belém,licença oficial fora de Lisboa,13,13,13
+Belém,licença repetida na mesma localização,20,20,8
+Belém,licença única em Lisboa,118,118,118
+Belém,número sem correspondência no RNAL,13,13,13
+Belém,provável estabelecimento com anúncios múltiplos,45,45,15
+Belém,sem licença,18,0,18
+Belém,sem licença identificável,66,0,66
+Benfica,licença oficial fora de Lisboa,8,8,8
+Benfica,licença repetida em várias localizações,2,2,2
+Benfica,licença única em Lisboa,25,25,25
+Benfica,número sem correspondência no RNAL,7,7,7
+Benfica,provável estabelecimento com anúncios múltiplos,8,8,3
+Benfica,sem licença,2,0,2
+Benfica,sem licença identificável,49,0,49
+Campo de Ourique,licença oficial fora de Lisboa,17,17,17
+Campo de Ourique,licença repetida em várias localizações,30,30,30
+Campo de Ourique,licença repetida na mesma localização,16,16,7
+Campo de Ourique,licença única em Lisboa,161,161,161
+Campo de Ourique,número sem correspondência no RNAL,13,13,13
+Campo de Ourique,provável estabelecimento com anúncios múltiplos,51,51,19
+Campo de Ourique,sem licença,26,0,26
+Campo de Ourique,sem licença identificável,153,0,153
+Campolide,licença oficial fora de Lisboa,13,13,13
+Campolide,licença repetida em várias localizações,24,24,24
+Campolide,licença repetida na mesma localização,4,4,2
+Campolide,licença única em Lisboa,64,64,64
+Campolide,número sem correspondência no RNAL,20,20,20
+Campolide,provável estabelecimento com anúncios múltiplos,100,100,18
+Campolide,sem licença,6,0,6
+Campolide,sem licença identificável,68,0,68
+Carnide,licença oficial fora de Lisboa,1,1,1
+Carnide,licença repetida na mesma localização,2,2,1
+Carnide,licença única em Lisboa,19,19,19
+Carnide,número sem correspondência no RNAL,5,5,5
+Carnide,provável estabelecimento com anúncios múltiplos,2,2,1
+Carnide,sem licença identificável,6,0,6
+Estrela,licença oficial fora de Lisboa,40,40,40
+Estrela,licença repetida em várias localizações,38,38,38
+Estrela,licença repetida na mesma localização,21,21,8
+Estrela,licença única em Lisboa,444,444,444
+Estrela,número sem correspondência no RNAL,88,88,88
+Estrela,provável estabelecimento com anúncios múltiplos,173,173,51
+Estrela,sem licença,29,0,29
+Estrela,sem licença identificável,194,0,194
+Lumiar,licença oficial fora de Lisboa,8,8,8
+Lumiar,licença repetida em várias localizações,4,4,4
+Lumiar,licença única em Lisboa,45,45,45
+Lumiar,número sem correspondência no RNAL,8,8,8
+Lumiar,provável estabelecimento com anúncios múltiplos,10,10,4
+Lumiar,sem licença,8,0,8
+Lumiar,sem licença identificável,57,0,57
+Marvila,licença oficial fora de Lisboa,7,7,7
+Marvila,licença repetida em várias localizações,2,2,2
+Marvila,licença repetida na mesma localização,4,4,2
+Marvila,licença única em Lisboa,44,44,44
+Marvila,número sem correspondência no RNAL,11,11,11
+Marvila,provável estabelecimento com anúncios múltiplos,17,17,8
+Marvila,sem licença,5,0,5
+Marvila,sem licença identificável,50,0,50
+Misericórdia,licença oficial fora de Lisboa,108,108,108
+Misericórdia,licença repetida em várias localizações,99,99,99
+Misericórdia,licença repetida na mesma localização,52,52,25
+Misericórdia,licença única em Lisboa,1251,1251,1251
+Misericórdia,número sem correspondência no RNAL,162,162,162
+Misericórdia,provável estabelecimento com anúncios múltiplos,452,452,141
+Misericórdia,sem licença,125,0,125
+Misericórdia,sem licença identificável,381,0,381
+Olivais,licença oficial fora de Lisboa,1,1,1
+Olivais,licença repetida em várias localizações,5,5,5
+Olivais,licença repetida na mesma localização,2,2,1
+Olivais,licença única em Lisboa,60,60,60
+Olivais,número sem correspondência no RNAL,15,15,15
+Olivais,provável estabelecimento com anúncios múltiplos,36,36,12
+Olivais,sem licença,10,0,10
+Olivais,sem licença identificável,92,0,92
+Parque das Nações,licença oficial fora de Lisboa,26,26,26
+Parque das Nações,licença repetida em várias localizações,13,13,13
+Parque das Nações,licença repetida na mesma localização,2,2,1
+Parque das Nações,licença única em Lisboa,108,108,108
+Parque das Nações,número sem correspondência no RNAL,26,26,26
+Parque das Nações,provável estabelecimento com anúncios múltiplos,17,17,6
+Parque das Nações,sem licença,20,0,20
+Parque das Nações,sem licença identificável,126,0,126
+Penha de França,licença oficial fora de Lisboa,47,47,47
+Penha de França,licença repetida em várias localizações,43,43,43
+Penha de França,licença repetida na mesma localização,13,13,6
+Penha de França,licença única em Lisboa,180,180,180
+Penha de França,número sem correspondência no RNAL,44,44,44
+Penha de França,provável estabelecimento com anúncios múltiplos,111,111,33
+Penha de França,sem licença,20,0,20
+Penha de França,sem licença identificável,160,0,160
+Santa Clara,licença oficial fora de Lisboa,4,4,4
+Santa Clara,licença única em Lisboa,3,3,3
+Santa Clara,número sem correspondência no RNAL,2,2,2
+Santa Clara,sem licença,2,0,2
+Santa Clara,sem licença identificável,26,0,26
+Santa Maria Maior,licença oficial fora de Lisboa,132,132,132
+Santa Maria Maior,licença repetida em várias localizações,97,97,97
+Santa Maria Maior,licença repetida na mesma localização,165,165,70
+Santa Maria Maior,licença única em Lisboa,1847,1847,1847
+Santa Maria Maior,número sem correspondência no RNAL,129,129,129
+Santa Maria Maior,provável estabelecimento com anúncios múltiplos,543,543,159
+Santa Maria Maior,sem licença,118,0,118
+Santa Maria Maior,sem licença identificável,451,0,451
+Santo António,licença oficial fora de Lisboa,85,85,85
+Santo António,licença repetida em várias localizações,66,66,66
+Santo António,licença repetida na mesma localização,29,29,13
+Santo António,licença única em Lisboa,512,512,512
+Santo António,número sem correspondência no RNAL,110,110,110
+Santo António,provável estabelecimento com anúncios múltiplos,262,262,62
+Santo António,sem licença,47,0,47
+Santo António,sem licença identificável,434,0,434
+São Domingos de Benfica,licença oficial fora de Lisboa,12,12,12
+São Domingos de Benfica,licença repetida em várias localizações,13,13,13
+São Domingos de Benfica,licença única em Lisboa,55,55,55
+São Domingos de Benfica,número sem correspondência no RNAL,6,6,6
+São Domingos de Benfica,provável estabelecimento com anúncios múltiplos,16,16,5
+São Domingos de Benfica,sem licença,9,0,9
+São Domingos de Benfica,sem licença identificável,61,0,61
+São Vicente,licença oficial fora de Lisboa,33,33,33
+São Vicente,licença repetida em várias localizações,48,48,48
+São Vicente,licença repetida na mesma localização,32,32,18
+São Vicente,licença única em Lisboa,626,626,626
+São Vicente,número sem correspondência no RNAL,83,83,83
+São Vicente,provável estabelecimento com anúncios múltiplos,171,171,66
+São Vicente,sem licença,42,0,42
+São Vicente,sem licença identificável,228,0,228

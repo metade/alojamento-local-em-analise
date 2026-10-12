@@ -5,26 +5,48 @@ require_relative "public_schema"
 require_relative "registration_metrics"
 
 module AlojamentoLocal
-  # Validated public data, independent of report HTML and Liquid. JSON uses
-  # string keys; aggregate counts are integers. Identifiable counts describe
-  # announcements, not distinct AL numbers (those live in registration_metrics).
+  # Storage-independent, immutable public data. Aggregate counts are integers;
+  # identifiable announcement counts are separate from distinct number sets.
   class PublicSnapshot
+    SCHEMA_VERSION = "5.0.0"
+    LEGACY_SCHEMA_VERSION = "4.0.0"
+    FILE = "snapshot.json"
     COUNT_NAMES = {
       "listings" => "announcements",
       "identifiable_licences" => "announcements_with_identifiable_number",
       "establishments_estimate" => "estimated_establishments"
     }.freeze
-    attr_reader :metadata, :summary, :licence_group_aggregates,
-      :announcements_by_parish_and_classification, :parish_totals, :registration_metrics
+    FIELDS = %w[metadata summary licence_group_aggregates announcements_by_parish_and_classification parish_totals registration_metrics].freeze
+    TABLES = {
+      "licence_groups.csv" => "licence_group_aggregates",
+      "listings.csv" => "announcements_by_parish_and_classification",
+      "freguesias.csv" => "parish_totals"
+    }.freeze
+    EXPORT_FILES = %w[metadata.json summary.json registration_metrics.json listings.csv licence_groups.csv freguesias.csv].freeze
+    REQUIRED_FILES = [FILE, *EXPORT_FILES, "report.html"].freeze
+    attr_reader(*FIELDS.map(&:to_sym))
 
-    def initialize(metadata:, summary:, groups:, announcements:, parishes:, metrics:)
-      @metadata, @summary, @registration_metrics = metadata, summary, metrics
-      @licence_group_aggregates = rename_counts(groups)
-      @announcements_by_parish_and_classification = rename_counts(announcements)
-      @parish_totals = rename_counts(parishes)
-      @published_announcements = announcements
-      @published_groups = groups
-      instance_variables.each { |name| deep_freeze(instance_variable_get(name)) }
+    def self.rename_counts(rows, mapping = COUNT_NAMES)
+      rows.map { |row| row.to_h { |key, value| [mapping.fetch(key, key), value] } }
+    end
+
+    # The legacy reader and the analysis writer adapt into the same interface.
+    def self.from_legacy(metadata:, summary:, groups:, announcements:, parishes:, metrics:)
+      new(metadata: metadata, summary: summary, registration_metrics: metrics,
+        licence_group_aggregates: rename_counts(groups),
+        announcements_by_parish_and_classification: rename_counts(announcements),
+        parish_totals: rename_counts(parishes))
+    end
+
+    def self.from_document(data)
+      raise "Unsupported snapshot schema" unless data.fetch("schema_version") == SCHEMA_VERSION
+      raise "Invalid snapshot fields" unless data.keys.sort == ["schema_version", *FIELDS].sort
+      new(**FIELDS.to_h { |field| [field.to_sym, data.fetch(field)] })
+    end
+
+    def initialize(**data)
+      raise "Invalid snapshot fields" unless data.keys.map(&:to_s).sort == FIELDS.sort
+      data.each { |key, value| instance_variable_set("@#{key}", deep_freeze(value)) }
       freeze
     end
 
@@ -32,16 +54,56 @@ module AlojamentoLocal
       metadata.fetch("run_id")
     end
 
-    # Compatibility at the output boundary preserves the existing CSV/Liquid
-    # field names and string values, without exposing them as analytical units.
+    def to_h
+      {"schema_version" => SCHEMA_VERSION, **FIELDS.to_h { |key| [key, public_send(key)] }}
+    end
+
+    def legacy_rows(field)
+      self.class.rename_counts(public_send(field), COUNT_NAMES.invert)
+    end
+
     def published_announcement_rows
-      @published_announcements.map { |row| row.transform_values { |value| value.to_s } }
+      legacy_rows("announcements_by_parish_and_classification").map { |row| row.transform_values(&:to_s) }
     end
 
     def report_arguments
-      [metadata, summary, @published_groups, @published_announcements, registration_metrics].map do |value|
+      [metadata, summary, legacy_rows("licence_group_aggregates"),
+        legacy_rows("announcements_by_parish_and_classification"), registration_metrics].map do |value|
         JSON.parse(JSON.generate(value), symbolize_names: true)
       end
+    end
+
+    # All download exports come from this object; consumers never read them
+    # when snapshot.json exists. Publication/reuse verifies them independently.
+    def export_contents
+      contents = %w[metadata summary registration_metrics].to_h do |field|
+        ["#{field}.json", JSON.pretty_generate(public_send(field)) + "\n"]
+      end
+      TABLES.each do |filename, field|
+        headers = PUBLIC_CSV_SCHEMAS.fetch(filename)
+        contents[filename] = CSV.generate do |csv|
+          csv << headers
+          legacy_rows(field).each { |row| csv << headers.map { |key| row.fetch(key) } }
+        end
+      end
+      contents
+    end
+
+    def write_exports(path)
+      export_contents.each { |file, contents| File.write(File.join(path, file), contents) }
+    end
+
+    def exports_current?(path)
+      export_contents.all? do |file, contents|
+        File.file?(File.join(path, file)) && File.binread(File.join(path, file)) == contents.b
+      end
+    end
+
+    def validate_exports!(path)
+      export_contents.each do |file, contents|
+        raise "Snapshot export differs: #{file}" unless File.binread(File.join(path, file)) == contents.b
+      end
+      self
     end
 
     private
@@ -56,10 +118,6 @@ module AlojamentoLocal
       value.freeze
     end
 
-    def rename_counts(rows)
-      rows.map { |row| row.to_h { |key, value| [COUNT_NAMES.fetch(key, key), value] } }
-    end
-
     class Loader
       def initialize
         @json_files = {}
@@ -70,13 +128,28 @@ module AlojamentoLocal
         @json_files[path] ||= JSON.parse(File.read(path))
       end
 
-      def metadata(path)
-        load_json(File.join(path, "metadata.json"))
+      def document(path)
+        data = load_json(File.join(path, FILE))
+        raise "Unsupported snapshot schema" unless data.fetch("schema_version") == SCHEMA_VERSION
+        raise "Invalid snapshot fields" unless data.keys.sort == ["schema_version", *FIELDS].sort
+        data
       end
 
-      # Discovery may skip older runs lacking supported measured sets. A run
-      # with supported metrics must pass full validation; errors are not hidden.
+      def metadata(path)
+        if File.exist?(File.join(path, FILE))
+          document(path).fetch("metadata")
+        else
+          data = load_json(File.join(path, "metadata.json"))
+          raise "Missing authoritative snapshot.json" if data["output_schema_version"] == SCHEMA_VERSION
+          data
+        end
+      end
+
+      # Old runs without compatible measured sets remain available in archives.
+      # A consolidated document is always fully validated, never bypassed.
       def supported_metrics?(path)
+        return !!load(path) if File.exist?(File.join(path, FILE))
+        metadata(path)
         file = File.join(path, "registration_metrics.json")
         return false unless File.file?(file)
         data = load_json(file)
@@ -85,16 +158,61 @@ module AlojamentoLocal
       end
 
       def load(path, expected_run_id: File.basename(path))
-        @snapshots[[path, expected_run_id]] ||= read_snapshot(path, expected_run_id)
+        @snapshots[[path, expected_run_id]] ||= begin
+          if File.exist?(File.join(path, FILE))
+            data = document(path)
+            snapshot = PublicSnapshot.from_document(data)
+            schema = SCHEMA_VERSION
+          else
+            snapshot = read_legacy(path)
+            schema = LEGACY_SCHEMA_VERSION
+          end
+          Validator.new.validate!(snapshot, expected_run_id: expected_run_id, schema: schema)
+        end
       end
 
       private
 
-      def read_snapshot(path, expected_run_id)
-        meta = metadata(path)
-        summary = load_json(File.join(path, "summary.json"))
-        metrics = load_json(File.join(path, "registration_metrics.json"))
-        raise "Unsupported public output schema" unless meta.fetch("output_schema_version") == "4.0.0"
+      def read_legacy(path)
+        rows = TABLES.to_h { |file, field| [field, read_csv(File.join(path, file), PUBLIC_CSV_SCHEMAS.fetch(file))] }
+        PublicSnapshot.from_legacy(metadata: metadata(path), summary: load_json(File.join(path, "summary.json")),
+          groups: rows.fetch("licence_group_aggregates"), announcements: rows.fetch("announcements_by_parish_and_classification"),
+          parishes: rows.fetch("parish_totals"), metrics: load_json(File.join(path, "registration_metrics.json")))
+      end
+
+      def read_csv(path, headers)
+        table = CSV.read(path, headers: true)
+        raise "Invalid public schema for #{File.basename(path)}" unless table.headers == headers
+        dimensions = headers - COUNT_NAMES.keys - %w[licence_groups spatial_locations]
+        table.map do |row|
+          raise "Invalid public row for #{File.basename(path)}" unless row.fields.size == headers.size && row.fields.none?(&:nil?)
+          row.to_h.to_h do |field, value|
+            unless dimensions.include?(field)
+              raise "Invalid public count: #{field}" unless value.match?(/\A\d+\z/)
+              value = Integer(value, 10)
+            end
+            [field, value]
+          end
+        end
+      end
+    end
+
+    class Validator
+      def validate!(snapshot, expected_run_id:, schema:)
+        meta, summary, metrics = snapshot.metadata, snapshot.summary, snapshot.registration_metrics
+        metadata_fields = %w[run_id source_urls source_dates source_files git_commit analysis_version methodology_version output_schema_version mode]
+        summary_fields = %w[run_id source_dates methodology_version listings licence_groups official_registers_lisbon establishment_estimate classifications mode generated_at]
+        validate_fields!(meta, metadata_fields, %w[git_worktree_dirty], "metadata")
+        validate_fields!(summary, summary_fields, %w[historical_comparisons], "summary")
+        validate_fields!(meta.fetch("source_urls"), %w[airbnb official], [], "source URLs")
+        raise "Invalid generation timestamp" unless summary.fetch("generated_at").is_a?(String)
+        summary.fetch("historical_comparisons", []).each do |comparison|
+          validate_fields!(comparison, %w[run_id status metrics], [], "historical comparison")
+          values = comparison.fetch("metrics")
+          raise "Invalid historical metrics" unless values.is_a?(Hash) && (values.keys - %w[listings licence_groups establishment_estimate]).empty? &&
+            values.values.all? { |value| value.is_a?(Integer) && value >= 0 }
+        end
+        raise "Unsupported public output schema" unless meta.fetch("output_schema_version") == schema
         raise "Invalid public run" unless meta.fetch("run_id") == expected_run_id && expected_run_id.match?(/\A\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}\z/)
         raise "Invalid public mode" unless meta.fetch("mode") == "public" && summary.fetch("mode") == "public"
         raise "Public metadata contains a local source path" if meta.dig("source_files", "airbnb", "path") || meta.dig("source_files", "official", "path")
@@ -112,54 +230,58 @@ module AlojamentoLocal
         raise "Run dates differ" unless expected_run_id == "#{dates.fetch('airbnb_snapshot_date')}__#{dates.fetch('official_register_download_date')}"
         %w[airbnb official].each { |source| raise "Missing source URL" unless meta.fetch("source_urls").fetch(source).match?(%r{\Ahttps?://}) }
         %w[analysis_version methodology_version].each { |key| Gem::Version.new(meta.fetch(key)) }
-        rows = PUBLIC_CSV_SCHEMAS.to_h { |file, headers| [file, read_csv(File.join(path, file), headers)] }
-        validate_aggregates!(summary, metrics, rows)
-        PublicSnapshot.new(metadata: meta, summary: summary, groups: rows.fetch("licence_groups.csv"),
-          announcements: rows.fetch("listings.csv"), parishes: rows.fetch("freguesias.csv"), metrics: metrics)
+        TABLES.each do |file, field|
+          headers = PUBLIC_CSV_SCHEMAS.fetch(file).map { |key| COUNT_NAMES.fetch(key, key) }
+          validate_rows!(snapshot.public_send(field), headers, field)
+        end
+        validate_aggregates!(snapshot)
+        snapshot
       end
 
-      def read_csv(path, headers)
-        table = CSV.read(path, headers: true)
-        raise "Invalid public schema for #{File.basename(path)}" unless table.headers == headers
-        dimensions = headers - %w[listings identifiable_licences establishments_estimate licence_groups spatial_locations]
-        keys = []
-        table.map do |row|
-          raise "Invalid public row for #{File.basename(path)}" unless row.fields.size == headers.size && row.fields.none?(&:nil?)
-          raise "Forbidden content in public output #{File.basename(path)}" if row.fields.join(" ").match?(%r{https?://|www\.|/rooms/}i)
-          key = dimensions.map { |field| row[field] }
-          raise "Duplicate public aggregate in #{File.basename(path)}" if keys.include?(key)
-          keys << key
-          result = row.to_h.to_h do |field, value|
-            unless dimensions.include?(field)
-              raise "Invalid public count: #{field}" unless value.match?(/\A\d+\z/)
-              value = Integer(value, 10)
-            end
-            [field, value]
+      private
+
+      def validate_fields!(data, required, optional, label)
+        raise "Invalid #{label} schema" unless data.is_a?(Hash) && (required - data.keys).empty? && (data.keys - required - optional).empty?
+      end
+
+      def validate_rows!(rows, headers, field)
+        raise "Invalid aggregate table: #{field}" unless rows.is_a?(Array)
+        dimensions = headers - COUNT_NAMES.values - %w[licence_groups spatial_locations]
+        seen = Set.new
+        rows.each do |row|
+          raise "Invalid aggregate schema: #{field}" unless row.is_a?(Hash) && row.keys.sort == headers.sort
+          raise "Invalid aggregate dimension: #{field}" unless dimensions.all? { |key| row[key].is_a?(String) && !row[key].empty? }
+          raise "Forbidden content in public output #{field}" if dimensions.any? { |key| row[key].match?(%r{https?://|www\.|/rooms/}i) }
+          raise "Duplicate public aggregate in #{field}" unless seen.add?(dimensions.map { |key| row[key] })
+          (headers - dimensions).each do |key|
+            value = row[key]
+            raise "Invalid public count: #{key}" unless value.is_a?(Integer) && value >= 0
           end
-          %w[identifiable_licences establishments_estimate licence_groups spatial_locations].each do |field|
-            raise "Public count exceeds announcements: #{field}" if result.key?(field) && result.fetch(field) > result.fetch("listings")
+          (headers - dimensions).each do |key|
+            raise "Public count exceeds announcements: #{key}" if row.fetch(key) > row.fetch("announcements")
           end
-          result
         end
       end
 
-      def validate_aggregates!(summary, metrics, files)
+      def validate_aggregates!(snapshot)
+        summary = snapshot.summary
+        metrics = snapshot.registration_metrics
         %w[listings licence_groups official_registers_lisbon establishment_estimate].each do |key|
           value = summary.fetch(key)
           raise "Invalid summary count: #{key}" unless value.is_a?(Integer) && value >= 0
         end
-        groups = files.fetch("licence_groups.csv")
-        announcements = files.fetch("listings.csv")
-        parishes = files.fetch("freguesias.csv")
+        groups = snapshot.licence_group_aggregates
+        announcements = snapshot.announcements_by_parish_and_classification
+        parishes = snapshot.parish_totals
         measures = metrics.fetch("rows").to_h { |row| [row.fetch("geography"), row] }
         city = measures.fetch("Lisboa")
         raise "City announcement count differs" unless city.fetch("announcements") == summary.fetch("listings")
         raise "City official entry count differs" unless city.fetch("official_entries") == summary.fetch("official_registers_lisbon")
         raise "Licence group total differs" unless groups.sum { |row| row.fetch("licence_groups") } == summary.fetch("licence_groups")
-        raise "City estimate differs" unless groups.sum { |row| row.fetch("establishments_estimate") } == summary.fetch("establishment_estimate")
+        raise "City estimate differs" unless groups.sum { |row| row.fetch("estimated_establishments") } == summary.fetch("establishment_estimate")
         classifications = groups.group_by { |row| row.fetch("classification") }.transform_values { |rows| rows.sum { |row| row.fetch("licence_groups") } }.reject { |_, count| count.zero? }
         raise "Classification group counts differ" unless classifications == summary.fetch("classifications")
-        by_class = ->(rows) { rows.group_by { |row| row.fetch("classification") }.transform_values { |values| values.sum { |row| row.fetch("listings") } } }
+        by_class = ->(rows) { rows.group_by { |row| row.fetch("classification") }.transform_values { |values| values.sum { |row| row.fetch("announcements") } } }
         raise "Classification announcement counts differ" unless by_class.call(groups) == by_class.call(announcements)
         expected_parishes = Geography::PARISHES + [Geography::UNKNOWN]
         # Older supported snapshots can omit the empty unknown accounting bucket.
@@ -169,13 +291,13 @@ module AlojamentoLocal
         parishes.each do |parish|
           name = parish.fetch("freguesia")
           observed = announcements.select { |row| row.fetch("freguesia") == name }
-          %w[listings identifiable_licences establishments_estimate].each do |key|
+          %w[announcements announcements_with_identifiable_number estimated_establishments].each do |key|
             raise "Parish aggregate differs: #{name} / #{key}" unless observed.sum { |row| row.fetch(key) } == parish.fetch(key)
           end
           measure = measures.fetch(name)
-          raise "District announcement metrics differ: #{name}" unless measure.fetch("announcements") == parish.fetch("listings") && measure.fetch("identifiable_number") == parish.fetch("identifiable_licences")
+          raise "District announcement metrics differ: #{name}" unless measure.fetch("announcements") == parish.fetch("announcements") && measure.fetch("identifiable_number") == parish.fetch("announcements_with_identifiable_number")
         end
-        raise "City aggregate announcements differ" unless parishes.sum { |row| row.fetch("listings") } == city.fetch("announcements") && parishes.sum { |row| row.fetch("identifiable_licences") } == city.fetch("identifiable_number")
+        raise "City aggregate announcements differ" unless parishes.sum { |row| row.fetch("announcements") } == city.fetch("announcements") && parishes.sum { |row| row.fetch("announcements_with_identifiable_number") } == city.fetch("identifiable_number")
         # Only announcements and official entries are additive. Never sum parish
         # distinct numbers or establishment estimates to reconstruct city counts.
         %w[announcements empty_licence unrecognised_licence identifiable_number confirmed_rnal_match official_entries].each do |key|

@@ -12,6 +12,11 @@ class RegeneratePublicReportTest < Minitest::Test
     Dir.mktmpdir("regenerate-report-") do |root|
       run_dir = File.join(root, "2024-06-01__2024-07-01")
       FileUtils.cp_r(FIXTURE, run_dir)
+      FileUtils.rm_f(File.join(run_dir, "snapshot.json"))
+      metadata_path = File.join(run_dir, "metadata.json")
+      metadata = JSON.parse(File.read(metadata_path))
+      metadata["output_schema_version"] = "4.0.0"
+      File.write(metadata_path, JSON.pretty_generate(metadata) + "\n")
       # The reviewed baseline normalizes timestamps to an HTML placeholder.
       %w[summary.json report.html].each do |name|
         path = File.join(run_dir, name)

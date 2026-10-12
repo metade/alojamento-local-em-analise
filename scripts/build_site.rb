@@ -32,7 +32,8 @@ system(*jekyll, chdir: ROOT, exception: true)
 runs.each do |source|
   destination = File.join(SITE, "runs", File.basename(source))
   FileUtils.mkdir_p(destination)
-  (PUBLIC_FILES + (File.file?(File.join(source, "registration_metrics.json")) ? ["registration_metrics.json"] : [])).each { |file| FileUtils.cp(File.join(source, file), File.join(destination, file)) }
+  downloads = PUBLIC_FILES + %w[registration_metrics.json snapshot.json].select { |file| File.file?(File.join(source, file)) }
+  downloads.each { |file| FileUtils.cp(File.join(source, file), File.join(destination, file)) }
 end
 FileUtils.cp(File.join(ROOT, "LICENSE"), File.join(SITE, "LICENSE"))
 FileUtils.cp(File.join(ROOT, "NOTICE"), File.join(SITE, "NOTICE"))

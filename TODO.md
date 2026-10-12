@@ -15,6 +15,9 @@ da metodologia e a explicação do método atual, mesmo ao simplificar o sistema
    setembro + RNAL novembro) e `q3-2026.zip` (Airbnb junho + três dumps RNAL
    setembro), com manifestos e hashes de restauro verificados. Upload manual
    confirmado pelo utilizador; os rótulos trimestrais não alteram datas das fontes.
+   Arquivo público reduzido aos pares `2025-09-21__2025-11-25` (Q4 2025) e
+   `2026-06-23__2026-09-26` (Q3 2026), reanalisados no schema consolidado 5.0.0
+   após verificação dos hashes do manifesto; restantes runs públicos removidos.
 2. [ ] Simplificar o sistema para o primeiro lançamento com dados atuais:
    remover comparações históricas, seleção/fallback de metodologias antigas e
    infraestrutura de histórico do pipeline, site, workflows e testes. Rever os
@@ -73,7 +76,7 @@ da metodologia e a explicação do método atual, mesmo ao simplificar o sistema
   de `Report` em Ruby e testar a equivalência entre os dois modos de build,
   as secções e métricas preservadas e o funcionamento autónomo do relatório.
 
-- [ ] Depois do loader partilhado, consolidar os dados do snapshot num ficheiro
+- [x] Depois do loader partilhado, consolidar os dados do snapshot num ficheiro
   estruturado e versionado que esse loader consuma. Manter a interface do
   loader para que o relatório e o site não dependam do formato de armazenamento.
   Definir a compatibilidade com snapshots anteriores e o papel dos CSV como

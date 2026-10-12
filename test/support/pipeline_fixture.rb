@@ -47,6 +47,9 @@ module PipelineFixture
     if path.end_with?(".json")
       data = JSON.parse(text)
       case File.basename(path)
+      when "snapshot.json"
+        normalize_metadata(data.fetch("metadata"))
+        normalize_summary(data.fetch("summary"))
       when "metadata.json", "metadata_local.json"
         normalize_metadata(data)
       when "summary.json", "summary_local.json"

@@ -62,7 +62,7 @@ module AlojamentoLocal
         path = File.join(@snapshots, name)
         path if File.directory?(path) && name.match?(/\A\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}\z/)
       end.sort_by do |path|
-        metadata = load_json(File.join(path, "metadata.json"))
+        metadata = @snapshot_loader.metadata(path)
         [metadata.fetch("source_dates").fetch("airbnb_snapshot_date"), metadata.fetch("source_dates").fetch("official_register_download_date"), Gem::Version.new(metadata.fetch("methodology_version")), Gem::Version.new(metadata.fetch("analysis_version"))]
       end.reverse
     end
@@ -169,7 +169,7 @@ module AlojamentoLocal
         "run_id" => run_id,
         "newer_snapshot_without_metrics" => run_dir == runs.first ? nil : {
           "run_id" => File.basename(runs.first),
-          "official_date" => load_json(File.join(runs.first, "metadata.json")).fetch("source_dates").fetch("official_register_download_date")
+          "official_date" => @snapshot_loader.metadata(runs.first).fetch("source_dates").fetch("official_register_download_date")
         },
         "metrics" => measures.fetch("Lisboa"),
         "summary" => summary,

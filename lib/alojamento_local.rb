@@ -13,8 +13,8 @@ require "time"
 require "tmpdir"
 
 module AlojamentoLocal
-  ANALYSIS_VERSION = "3.2.0"
-  OUTPUT_SCHEMA_VERSION = "4.0.0"
+  ANALYSIS_VERSION = "3.3.0"
+  OUTPUT_SCHEMA_VERSION = "5.0.0"
   METHODOLOGY_VERSION = "2.1.0"
   COLLAPSIBLE_ASSESSMENTS = [
     "provável estabelecimento com anúncios múltiplos",
@@ -246,14 +246,16 @@ module AlojamentoLocal
     end
 
     def public_run_current?(path, hashes)
-      metadata = JSON.parse(File.read(File.join(path, "metadata.json")))
+      loader = PublicSnapshot::Loader.new
+      metadata = loader.metadata(path)
       expected = {"airbnb" => hashes[0], "official" => hashes[1]}
       unless expected.all? { |key, hash| metadata.dig("source_files", key, "sha256") == hash }
         raise "Source hashes differ for existing dated snapshot: #{path}"
       end
-      metadata["methodology_version"] == METHODOLOGY_VERSION && metadata["output_schema_version"] == OUTPUT_SCHEMA_VERSION &&
+      return false unless metadata["methodology_version"] == METHODOLOGY_VERSION && metadata["output_schema_version"] == OUTPUT_SCHEMA_VERSION &&
         metadata["analysis_version"] == ANALYSIS_VERSION && metadata["mode"] == "public" &&
-        (PUBLIC_CSV_SCHEMAS.keys + %w[summary.json report.html registration_metrics.json]).all? { |file| File.file?(File.join(path, file)) }
+        PublicSnapshot::REQUIRED_FILES.all? { |file| File.file?(File.join(path, file)) }
+      loader.load(path).exports_current?(path)
     end
 
     def run(airbnb_path:, official_path:, output_root: nil, history_path: nil, generate_pdf: false, mode: "local", force: false)
@@ -343,21 +345,24 @@ module AlojamentoLocal
     # Presentation receives already calculated aggregates; publication remains
     # staged and validated by run after all output files have been written.
     def write_outputs(run_dir:, mode:, listings:, groups:, freguesias:, public_listings:, public_groups:, metadata:, summary:, metrics:)
-      File.write(File.join(run_dir, "registration_metrics.json"), JSON.pretty_generate(metrics) + "\n")
       if mode == "public"
-        write_csv(File.join(run_dir, "listings.csv"), public_listings)
-        write_csv(File.join(run_dir, "licence_groups.csv"), public_groups)
-        write_csv(File.join(run_dir, "freguesias.csv"), freguesias)
-        write_json_outputs(run_dir, metadata, summary, "metadata.json", "summary.json")
+        inputs = JSON.parse(JSON.generate({metadata: metadata, summary: summary, groups: public_groups,
+          announcements: public_listings, parishes: freguesias, metrics: metrics}))
+        snapshot = PublicSnapshot.from_legacy(**inputs.transform_keys(&:to_sym))
+        PublicSnapshot::Validator.new.validate!(snapshot, expected_run_id: metadata.fetch(:run_id), schema: PublicSnapshot::SCHEMA_VERSION)
+        File.write(File.join(run_dir, PublicSnapshot::FILE), JSON.pretty_generate(snapshot.to_h) + "\n")
+        snapshot.write_exports(run_dir)
         report_filename = "report.html"
       else
+        File.write(File.join(run_dir, "registration_metrics.json"), JSON.pretty_generate(metrics) + "\n")
         write_csv(File.join(run_dir, "listings_detailed.csv"), detailed_listing_rows(listings))
         write_csv(File.join(run_dir, "licence_groups_detailed.csv"), detailed_group_rows(groups))
         write_csv(File.join(run_dir, "freguesias_summary.csv"), freguesias)
         write_json_outputs(run_dir, metadata, summary, "metadata_local.json", "summary_local.json")
         report_filename = "report_local.html"
       end
-      File.write(File.join(run_dir, report_filename), Report.complete_html(metadata, summary, public_groups, public_listings, metrics))
+      arguments = mode == "public" ? snapshot.report_arguments : [metadata, summary, public_groups, public_listings, metrics]
+      File.write(File.join(run_dir, report_filename), Report.complete_html(*arguments))
     end
 
     # Validate the full result first, then replace the dated snapshot and its
@@ -490,7 +495,7 @@ module AlojamentoLocal
 
     def validate_public_outputs!(run_dir)
       loader = PublicSnapshot::Loader.new
-      loader.load(run_dir, expected_run_id: loader.metadata(run_dir).fetch("run_id"))
+      loader.load(run_dir, expected_run_id: loader.metadata(run_dir).fetch("run_id")).validate_exports!(run_dir)
     end
     def freguesia_rows(listings)
       grouped = listings.group_by { |row| row[:bairro].to_s }

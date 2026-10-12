@@ -1,0 +1,26 @@
+{
+  "run_id": "2025-09-21__2025-11-25",
+  "source_urls": {
+    "airbnb": "https://data.insideairbnb.com/portugal/lisbon/lisbon/2025-09-21/data/listings.csv.gz",
+    "official": "https://hub.arcgis.com/api/download/v1/items/4e62eb1977564991bd01e61d7aa8266f/csv?redirect=false&layers=6"
+  },
+  "source_dates": {
+    "airbnb_snapshot_date": "2025-09-21",
+    "official_register_date": "2025-08-26",
+    "official_register_download_date": "2025-11-25"
+  },
+  "source_files": {
+    "airbnb": {
+      "sha256": "2287b386fcba69e48dd29668deab74c111f32e02a7ca184fd4824cc0be779b56"
+    },
+    "official": {
+      "sha256": "7e5f65f823bc8e4af6bcd9add13e25e01154f63492e927495689398e2b071242"
+    }
+  },
+  "git_commit": "a54c8b2c97ae5faac3d127bcd0c4a788803b1952",
+  "git_worktree_dirty": true,
+  "analysis_version": "3.3.0",
+  "methodology_version": "2.1.0",
+  "output_schema_version": "5.0.0",
+  "mode": "public"
+}
