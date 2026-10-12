@@ -1,7 +1,5 @@
 require "csv"
 require "json"
-require_relative "public_snapshot"
-require_relative "overlap"
 
 module AlojamentoLocal
   class SiteData

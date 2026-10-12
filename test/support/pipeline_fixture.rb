@@ -3,7 +3,6 @@ require "json"
 require "tmpdir"
 require "fileutils"
 require_relative "../../lib/alojamento_local"
-require_relative "../../lib/alojamento_local/site_data"
 
 # Only synthetic sources. No downloader, repository snapshots or private cache.
 module PipelineFixture

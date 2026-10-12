@@ -1,6 +1,6 @@
 require "minitest/autorun"
 require "minitest/mock"
-require_relative "../lib/alojamento_local/analysis/runner"
+require_relative "../lib/alojamento_local"
 
 class AnalysisRunnerTest < Minitest::Test
   def test_invalid_options_fail_before_preparing_sources

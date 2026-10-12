@@ -1,5 +1,3 @@
-require_relative "../analysis"
-
 module AlojamentoLocal
   module Analysis
     module AnnouncementCounts

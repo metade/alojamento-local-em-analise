@@ -5,8 +5,6 @@ require "date"
 require "json"
 require "fileutils"
 
-require_relative "../analysis"
-
 module AlojamentoLocal
   module Analysis
     module Data

@@ -1,7 +1,7 @@
 require "minitest/autorun"
 require "tmpdir"
 require "fileutils"
-require_relative "../lib/alojamento_local/site_checker"
+require_relative "../lib/alojamento_local"
 
 class SiteCheckerTest < Minitest::Test
   def with_site

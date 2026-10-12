@@ -3,7 +3,6 @@ require "tmpdir"
 require "fileutils"
 require "open3"
 require_relative "../lib/alojamento_local"
-require_relative "../lib/alojamento_local/site_data"
 
 class PublicSnapshotTest < Minitest::Test
   FIXTURE = File.expand_path("fixtures/pipeline/legacy_public", __dir__)

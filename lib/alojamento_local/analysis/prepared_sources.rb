@@ -1,6 +1,4 @@
 require "csv"
-require_relative "../geography"
-require_relative "../analysis"
 
 module AlojamentoLocal
   module Analysis

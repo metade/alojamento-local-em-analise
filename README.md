@@ -123,6 +123,11 @@ os testes por defeito. As tarefas carregam apenas o código necessário e chamam
 `Analysis::Runner`, `SiteBuilder` e `SiteChecker` em Ruby. O build do site usa os snapshots
 públicos existentes; não executa a análise nem descarrega fontes.
 
+Scripts e testes carregam `lib/alojamento_local.rb`; o Zeitwerk carrega as
+classes e módulos conforme os caminhos em `lib/alojamento_local/`. O teste
+de carregamento antecipado em `test/alojamento_local_test.rb` verifica essa
+correspondência.
+
 `site:build` prepara os dados do Jekyll, gera as páginas, compila o CSS,
 verifica a estrutura e executa a auditoria de publicação do artefacto. Para
 repetir apenas as etapas de CSS ou verificação:

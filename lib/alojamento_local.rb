@@ -1,12 +1,15 @@
 require_relative "alojamento_local/public_schema"
-require_relative "alojamento_local/geography"
 require "haversine"
 require "set"
 require "erb"
+require "zeitwerk"
 
 module AlojamentoLocal
-  autoload :Analysis, File.expand_path("alojamento_local/analysis", __dir__)
-  autoload :PublicSnapshot, File.expand_path("alojamento_local/public_snapshot", __dir__)
+  LOADER = Zeitwerk::Loader.new
+  LOADER.push_dir(File.join(__dir__, "alojamento_local"), namespace: self)
+  # This file defines shared schema constants rather than PublicSchema.
+  LOADER.ignore(File.join(__dir__, "alojamento_local/public_schema.rb"))
+  LOADER.setup
 
   ANALYSIS_VERSION = "3.4.0"
   OUTPUT_SCHEMA_VERSION = "6.0.0"

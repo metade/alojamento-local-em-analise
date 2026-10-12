@@ -1,9 +1,4 @@
 require "set"
-require_relative "../geography"
-require_relative "prepared_sources"
-require_relative "announcement_counts"
-
-require_relative "../analysis"
 
 module AlojamentoLocal
   module Analysis

@@ -3,7 +3,7 @@
 
 require "open3"
 require "json"
-require_relative "../lib/alojamento_local/public_snapshot"
+require_relative "../lib/alojamento_local"
 
 PUBLIC_ROOTS = ["data/snapshots/", "data/history/"].freeze
 ARTIFACT_ROOTS = ["_site/"].freeze

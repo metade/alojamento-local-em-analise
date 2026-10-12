@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "../alojamento_local"
 require "fileutils"
 require "csv"
 require "date"
@@ -12,12 +11,6 @@ require "tmpdir"
 
 module AlojamentoLocal
   module Analysis
-    autoload :Runner, File.expand_path("analysis/runner", __dir__)
-    autoload :Data, File.expand_path("analysis/data", __dir__)
-    autoload :PreparedSources, File.expand_path("analysis/prepared_sources", __dir__)
-    autoload :RegistrationMetrics, File.expand_path("analysis/registration_metrics", __dir__)
-    autoload :AnnouncementCounts, File.expand_path("analysis/announcement_counts", __dir__)
-
     module_function
 
     def validate_options!(mode:, force: false, reuse_existing: false)

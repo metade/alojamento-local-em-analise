@@ -1,7 +1,6 @@
 require "minitest/autorun"
 require "tmpdir"
 require_relative "../lib/alojamento_local"
-require_relative "../lib/alojamento_local/overlap"
 
 class RegistrationMetricsTest < Minitest::Test
   def observed(number, parish, raw: number)

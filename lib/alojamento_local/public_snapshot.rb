@@ -1,8 +1,6 @@
 require "csv"
 require "json"
 require "date"
-require_relative "public_schema"
-require_relative "analysis"
 
 module AlojamentoLocal
   # Storage-independent, immutable public data. Aggregate counts are integers;

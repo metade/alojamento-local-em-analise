@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 require "fileutils"
-require_relative "site_data"
-require_relative "site_checker"
 
 module AlojamentoLocal
   class SiteBuilder

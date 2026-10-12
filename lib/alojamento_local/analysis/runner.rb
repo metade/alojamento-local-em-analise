@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "../analysis"
-
 module AlojamentoLocal
   module Analysis
     class Runner

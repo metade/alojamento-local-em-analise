@@ -1,7 +1,6 @@
 require "minitest/autorun"
 require "tmpdir"
 require_relative "../lib/alojamento_local"
-require_relative "../lib/alojamento_local/site_data"
 require_relative "support/legacy_snapshot"
 
 class PreparedSourcesTest < Minitest::Test
