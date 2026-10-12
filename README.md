@@ -39,15 +39,15 @@ data/snapshots/<airbnb-snapshot-date>__<official-download-date>/
 
 Existe uma pasta pública por par de datas. Uma reanálise valida os novos outputs antes de substituir essa pasta e as suas linhas históricas. Os outros pares de datas permanecem iguais; o Git conserva as versões anteriormente commitadas. Os runs locais continuam imutáveis.
 
-Cada run contém:
+Cada novo run público contém apenas:
 
-- `metadata.json` — URLs, datas, hashes SHA-256, commit Git e versões;
-- `summary.json` — métricas, classificações e comparações históricas;
-- `listings.csv` — contagens agregadas por freguesia e classificação;
-- `licence_groups.csv` — contagens agregadas por classificação e categorias oficiais;
-- `freguesias.csv` — métricas por freguesia;
-- `registration_metrics.json` — conjuntos de números AL e contagens de anúncios, com definições versionadas;
+- `snapshot.json` — documento agregado autoritativo, com schema 6.0.0;
 - `report.html` — relatório autónomo em português.
+
+O PDF é uma derivação opcional do relatório. CSV e JSON separados não são
+gerados nem publicados nos novos runs. Datas, URLs, hashes e versões ficam no
+campo `metadata` do documento; resumo, grupos, anúncios por freguesia e
+classificação, totais por freguesia e métricas de registo estão no mesmo ficheiro.
 
 Para regenerar apenas o relatório de um snapshot existente, execute
 `bundle exec ruby scripts/regenerate_public_report.rb data/snapshots/<run_id>`.
@@ -56,6 +56,51 @@ proveniência e os totais municipais antes de substituir `report.html`. Não
 descarrega fontes nem recalcula a análise. Snapshots sem métricas compatíveis
 exigem reanálise; a regeneração falha sem alterar o relatório existente. Um PDF
 existente não é atualizado por este comando.
+
+A regeneração e a construção do site usam `PublicSnapshot::Loader`, também
+usado para validar os outputs antes da publicação de uma análise. Nos novos
+runs, `snapshot.json` é a única fonte de verdade. O documento tem
+`schema_version` 6.0.0 e os campos `metadata`, `summary`,
+`licence_group_aggregates`, `announcements_by_parish_and_classification`,
+`parish_totals` e `registration_metrics`. O loader mantém a mesma interface
+imutável, com chaves string, independentemente do armazenamento.
+
+O relatório e o site leem exclusivamente `snapshot.json` nos runs consolidados.
+A publicação valida o documento, a proveniência e a coerência dos agregados.
+A reutilização exige o documento e `report.html`, hashes e versões atuais.
+Um documento inválido ou de versão incompatível faz a leitura falhar; nunca
+se tenta reconstruí-lo de ficheiros separados.
+
+Para compatibilidade, o loader lê documentos do schema 5.0.0 sem depender das
+suas antigas exportações. Também lê os ficheiros separados do schema 4.0.0,
+com métricas 1.0.0 e metodologias 2.0.0/2.1.0, adaptando-os antes da mesma
+validação. Runs antigos sem métricas suportadas podem permanecer no arquivo;
+a seleção do site conserva essa compatibilidade. Uma reanálise com fontes
+datadas e hashes verificados substitui apenas o par escolhido pelo formato
+atual. Formatos anteriores não são reutilizados como runs atuais. O formato
+dos outputs locais mantém-se.
+
+Nos agregados, as contagens são inteiros: `announcements` conta anúncios,
+`announcements_with_identifiable_number` conta anúncios com número identificável
+e `estimated_establishments` é uma estimativa. `licence_groups` conta grupos de
+números identificáveis; `spatial_locations` conta clusters espaciais. Os
+conjuntos de números distintos estão apenas nas métricas de registo. Metadata
+e resumo conservam os campos JSON publicados. As estimativas e os números
+distintos da cidade não são somas de freguesias. A interface do loader
+preserva os resultados analíticos para o site e o relatório.
+
+O arquivo público foi reduzido a dois pares de fontes arquivadas, reanalisados
+com metodologia 2.1.0 e análise 3.4.0, após verificar os SHA-256 contra o manifesto
+do backup. Os rótulos trimestrais são rótulos do arquivo, não datas de recolha:
+
+| Arquivo | Airbnb | Download RNAL | Run |
+| --- | --- | --- | --- |
+| Q4 2025 | 2025-09-21 | 2025-11-25 | `2025-09-21__2025-11-25` |
+| Q3 2026 | 2026-06-23 | 2026-09-26 | `2026-06-23__2026-09-26` |
+
+Os runs de desenvolvimento dos restantes pares e as respetivas linhas de
+histórico foram removidos da árvore atual. As versões commitadas continuam
+recuperáveis pelo Git; as fontes locais e os backups foram preservados.
 
 O histórico público em `data/history/summary.csv` mantém uma linha atual por par de datas. O gráfico de distâncias do site usa `data/history/distance_ranges.csv`: cada run público novo acrescenta quatro contagens agregadas de números de licença, sem coordenadas nem números de licença individuais. Para preencher este agregado num run público anterior sem alterar o snapshot, use `bundle exec ruby scripts/backfill_distance_ranges.rb <run_id>` com os ficheiros fonte originais; o script verifica os hashes do metadata antes de escrever. Uma reanálise substitui apenas as linhas históricas do mesmo par de datas, incluindo os agregados de distâncias e regiões. Para gerar também um PDF derivado, instale `wkhtmltopdf` ou `weasyprint` e execute:
 
@@ -205,7 +250,8 @@ e uma correspondência no RNAL com concelho Lisboa; não confirma validade ou at
 
 ### Métricas de registo
 
-`registration_metrics.json` (métricas 1.0.0, schema público 4.0.0) contém Lisboa,
+`registration_metrics` em `snapshot.json` (métricas 1.0.0, schema público 6.0.0)
+contém Lisboa,
 as 24 freguesias e um agregado de geografia não identificada. As definições
 completas também acompanham cada ficheiro no campo `definitions`.
 
@@ -260,8 +306,23 @@ e `lisboa` contavam para reutilização mas eram excluídas dos resultados. Na
 fixture sintética, os anúncios passam de 32 para 34 e a estimativa mantém-se em
 28. Com as mesmas fontes de `2026-06-23__2026-09-26`, grupos e métricas completos
 mantêm-se iguais: 17 064 anúncios e estimativa de 14 600. Outros arquivos podem
-ter impacto diferente. Os snapshots guardados não foram substituídos nesta
-correção; cada um mantém as suas versões e fontes no metadata.
+ter impacto diferente. Os dois pares do arquivo público foram posteriormente
+reanalisados com esta metodologia; as versões e fontes estão no metadata.
+
+**Análise 3.3.0 / schema público 5.0.0:** consolida os agregados em
+`snapshot.json`, mantendo metodologia 2.1.0 e métricas 1.0.0. Os leitores dos
+formatos anterior e atual produzem os mesmos dados do site e relatórios para
+os mesmos agregados, exceto a identificação das versões. Na fixture sintética,
+conservam-se 34 anúncios, 18 grupos de números, 19 entradas oficiais de Lisboa
+e estimativa de 28 estabelecimentos. A reanálise das mesmas fontes de Q3 2026
+mantém os resultados completos, verificados contra o snapshot anterior.
+
+**Análise 3.4.0 / schema público 6.0.0:** elimina as exportações CSV/JSON dos
+runs públicos. Cada run guarda apenas o documento de dados e o relatório HTML,
+com PDF opcional. Links e referências apontam para `snapshot.json`; a estrutura
+dos agregados, a metodologia e as métricas permanecem iguais. A fixture
+sintética conserva todos os resultados, e os dois runs arquivados foram
+regenerados com as mesmas fontes verificadas, sem mudanças nos agregados.
 
 ### Exemplos de sinais
 

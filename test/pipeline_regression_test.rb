@@ -16,7 +16,7 @@ class PipelineRegressionTest < Minitest::Test
         relative = path.delete_prefix(PipelineFixture::EXPECTED + "/")
         expected[relative] = File.read(path)
       end
-      assert_equal 19, expected.size, "The baseline must contain public, local, history and site outputs"
+      assert_equal 14, expected.size, "The baseline must contain public, local, history and site outputs"
       assert_equal expected.keys.sort, actual.keys.sort, "Output files added or removed"
       expected.each do |path, content|
         assert_equal content, actual.fetch(path), "Pipeline output changed: #{path}"
@@ -26,7 +26,8 @@ class PipelineRegressionTest < Minitest::Test
 
   def test_fixture_totals_match_independent_accounting
     with_outputs do |files, _root|
-      metrics = JSON.parse(files.fetch("public/registration_metrics.json"))
+      document = JSON.parse(files.fetch("public/snapshot.json"))
+      metrics = document.fetch("registration_metrics")
       # Hand-counted from the synthetic sources, not from the calculator.
       fields = %w[rnal airbnb intersection rnal_only airbnb_only another_lisbon_parish another_municipality no_national_match unresolved_official_geography announcements empty_licence unrecognised_licence identifiable_number confirmed_rnal_match official_entries]
       expected = {
@@ -44,7 +45,7 @@ class PipelineRegressionTest < Minitest::Test
       assert_equal({"national_entries" => 25, "unparseable_official_numbers" => 1,
                     "duplicate_number_extra_entries" => 5, "official_entries_unresolved_municipality" => 3,
                     "lisbon_entries_unresolved_parish" => 2}, metrics.fetch("diagnostics"))
-      summary = JSON.parse(files.fetch("public/summary.json"))
+      summary = document.fetch("summary")
       assert_equal [34, 18, 19, 28], summary.values_at("listings", "licence_groups", "official_registers_lisbon", "establishment_estimate")
       comparisons = summary.fetch("historical_comparisons").to_h { |row| [row.fetch("run_id"), row] }
       assert_equal "incompatível — metodologia diferente", comparisons.fetch("2024-05-01__2024-06-01").fetch("status")
@@ -70,6 +71,14 @@ class PipelineRegressionTest < Minitest::Test
       FileUtils.cp(File.expand_path("../NOTICE", __dir__), File.join(artifact, "NOTICE"))
       output, status = Open3.capture2e(RbConfig.ruby, File.expand_path("../scripts/audit_publication.rb", __dir__), "--artifact", artifact)
       assert status.success?, output
+
+      document = File.join(artifact, "snapshot.json")
+      data = JSON.parse(File.read(document))
+      data.fetch("parish_totals").first["licensa_raw"] = "123/AL"
+      File.write(document, JSON.pretty_generate(data))
+      output, status = Open3.capture2e(RbConfig.ruby, File.expand_path("../scripts/audit_publication.rb", __dir__), "--artifact", artifact)
+      refute status.success?
+      assert_includes output, "campo proibido em snapshot.json: licensa_raw"
     end
   end
 end

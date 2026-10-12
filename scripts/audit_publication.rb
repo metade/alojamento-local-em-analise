@@ -3,6 +3,7 @@
 
 require "open3"
 require "json"
+require_relative "../lib/alojamento_local/public_snapshot"
 
 PUBLIC_ROOTS = ["data/snapshots/", "data/history/"].freeze
 ARTIFACT_ROOTS = ["_site/"].freeze
@@ -50,6 +51,31 @@ rescue Errno::ENOENT
   nil
 end
 
+# Parse the nested document: a CSV-header scan cannot detect nested fields.
+def audit_snapshot(text, label)
+  errors = []
+  begin
+    data = JSON.parse(text)
+    inspect_keys = lambda do |value|
+      case value
+      when Hash
+        forbidden = value.keys & (AlojamentoLocal::FORBIDDEN_PUBLIC_FIELDS + %w[listing_id path])
+        errors << "campo proibido em #{label}: #{forbidden.join(', ')}" unless forbidden.empty?
+        value.each_value { |item| inspect_keys.call(item) }
+      when Array
+        value.each { |item| inspect_keys.call(item) }
+      end
+    end
+    inspect_keys.call(data)
+    snapshot = AlojamentoLocal::PublicSnapshot.from_document(data)
+    AlojamentoLocal::PublicSnapshot::Validator.new.validate!(snapshot,
+      expected_run_id: snapshot.run_id, schema: data.fetch("schema_version"))
+  rescue => error
+    errors << "snapshot inválido em #{label}: #{error.message}"
+  end
+  errors
+end
+
 def audit_worktree
   errors = []
 
@@ -70,6 +96,8 @@ def audit_worktree
     errors << "URL de anúncio em #{path}" if text.match?(LISTING_URL)
     errors << "padrão de identificador em #{path}" if text.match?(AIRBNB_IDENTIFIER)
     errors << "referência a fonte local em #{path}" if text.match?(RAW_SOURCE_PATH)
+
+    errors.concat(audit_snapshot(text, path)) if File.basename(path) == "snapshot.json"
 
     if artifact_file?(path) && File.basename(path) == "metadata.json"
       begin
@@ -105,6 +133,8 @@ def audit_history
       text, text_status = Open3.capture2("git", "show", "#{commit}:#{path}")
       next unless text_status.success?
 
+      errors.concat(audit_snapshot(text, "#{commit[0, 12]} #{path}")) if File.basename(path) == "snapshot.json"
+
       header = text.lines.first.to_s.split(",").map { |value| value.strip.downcase }
       fields = FORBIDDEN_PUBLIC_FIELDS & header
       errors << "#{commit[0, 12]} campo proibido em #{path}: #{fields.join(', ')}" unless fields.empty?
@@ -133,6 +163,8 @@ def audit_artifact(root)
     errors << "URL de anúncio em #{relative}" if text.match?(LISTING_URL)
     errors << "padrão de identificador em #{relative}" if text.match?(AIRBNB_IDENTIFIER)
     errors << "referência a fonte local em #{relative}" if text.match?(RAW_SOURCE_PATH)
+
+    errors.concat(audit_snapshot(text, relative)) if File.basename(path) == "snapshot.json"
 
     if File.basename(path) == "metadata.json"
       begin

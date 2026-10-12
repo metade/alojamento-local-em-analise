@@ -6,10 +6,16 @@ The fixture uses known Lisbon geography names to exercise the existing rules.
 
 `PipelineRegressionTest` runs public and local analysis from the dated source
 CSVs, seeds each history with compatible and incompatible runs, and feeds the
-public result and its auxiliary histories into `SiteData`. It compares all 19
+public result and its auxiliary histories into `SiteData`. It compares all 14
 result files against `expected/`, including CSV headers/order, detailed rows,
 metadata, every registration metric/definition/diagnostic, reports, histories,
-and all district data/routes/geometry.
+and all district data/routes/geometry. New public runs include only
+`snapshot.json` and `report.html`. The 3.4.0/6.0.0 baseline removes six exports
+and updates versions and report references; analytical accounting is unchanged.
+`legacy_public/` preserves the reviewed split-file synthetic fixture with schema
+4.0.0 for compatibility tests, independently of the current output inventory.
+Old/new reader tests normalize only version fields and report data references;
+all tables, report sections and site aggregates must remain equal.
 
 The test does not download sources, use repository snapshots or private caches,
 invoke Jekyll, or create a PDF. Site builds and publication audits remain separate
@@ -74,10 +80,12 @@ Do not update the baseline merely to make a failing refactor pass. Version field
 source hashes, dates, definitions, row ordering and unknown/new fields are retained.
 Only these volatile values are replaced with explicit placeholders:
 
-- Top-level `generated_at` in current summaries, including the site summary.
+- Top-level `generated_at` in current summaries, including the site summary
+  and the consolidated document summary.
 - The current run's `generated_at` column in summary histories; seed dates remain.
 - The report header's generation timestamp.
-- `git_commit` and `git_worktree_dirty` in metadata, including site metadata.
+- `git_commit` and `git_worktree_dirty` in metadata, including site metadata
+  and consolidated document metadata.
 
 If files are intentionally removed, delete their obsolete expectations explicitly;
 the updater does not delete files and the test rejects unexpected/missing outputs.

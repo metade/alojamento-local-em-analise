@@ -2,6 +2,7 @@ require "minitest/autorun"
 require "tmpdir"
 require_relative "../lib/alojamento_local"
 require_relative "../lib/alojamento_local/site_data"
+require_relative "support/legacy_snapshot"
 
 class PreparedSourcesTest < Minitest::Test
   def with_method(object, name, replacement)
@@ -167,20 +168,18 @@ class PreparedSourcesTest < Minitest::Test
         assert_equal 10, data["metrics"]["announcements"]
         assert_equal 8, data["official_count"]
         assert_equal "belm", data["districts"].find { |row| row["name"] == "Belém" }["slug"]
+        assert_equal 1, reads[File.join(result[:path], "snapshot.json")]
         %w[metadata.json summary.json registration_metrics.json].each do |file|
-          assert_equal 1, reads[File.join(result[:path], file)]
+          assert_equal 0, reads[File.join(result[:path], file)]
         end
-        metrics = builder.load_json(File.join(result[:path], "registration_metrics.json"))
+        metrics = builder.load_json(File.join(result[:path], "snapshot.json")).fetch("registration_metrics")
         refute metrics.fetch("rows").first.key?("geometry")
         AlojamentoLocal::RegistrationMetrics.validate!(JSON.parse(JSON.generate(metrics), symbolize_names: true))
       end
       # Existing published 2.0.0 snapshots remain readable with metric schema 1.0.0.
-      %w[metadata.json registration_metrics.json].each do |file|
-        path = File.join(result[:path], file)
-        data = JSON.parse(File.read(path))
-        data["methodology_version"] = "2.0.0"
-        File.write(path, JSON.generate(data))
-      end
+      snapshot = AlojamentoLocal::PublicSnapshot::Loader.new.load(result[:path])
+      LegacySnapshot.write(result[:path], snapshot, methodology_version: "2.0.0")
+      FileUtils.rm(File.join(result[:path], "snapshot.json"))
       legacy = AlojamentoLocal::SiteData.new(snapshots: File.join(dir, "snapshots"),
         distance_history: File.join(dir, "history", "distance_ranges.csv"),
         outside_region_history: File.join(dir, "history", "outside_regions.csv"))

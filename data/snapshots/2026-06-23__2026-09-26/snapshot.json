@@ -1,0 +1,2103 @@
+{
+  "schema_version": "6.0.0",
+  "metadata": {
+    "run_id": "2026-06-23__2026-09-26",
+    "source_urls": {
+      "airbnb": "https://data.insideairbnb.com/portugal/lisbon/lisbon/2026-06-23/data/listings.csv.gz",
+      "official": "https://hub.arcgis.com/api/download/v1/items/4e62eb1977564991bd01e61d7aa8266f/csv?redirect=false&layers=6"
+    },
+    "source_dates": {
+      "airbnb_snapshot_date": "2026-06-23",
+      "official_register_date": "2026-07-30",
+      "official_register_download_date": "2026-09-26"
+    },
+    "source_files": {
+      "airbnb": {
+        "sha256": "e7a8d69b67dcef47c7659acd6e268570d1ed9db57ef6ac16bea6259003bbbea8"
+      },
+      "official": {
+        "sha256": "1d15ad8e799ea426f2b5a246db4f6b80544d7dbfc5b2d1d67bc5de06fb023fc8"
+      }
+    },
+    "git_commit": "dd50aab96ce1e30157a205cdb35ddd9f2d5f6c86",
+    "git_worktree_dirty": true,
+    "analysis_version": "3.4.0",
+    "methodology_version": "2.1.0",
+    "output_schema_version": "6.0.0",
+    "mode": "public"
+  },
+  "summary": {
+    "run_id": "2026-06-23__2026-09-26",
+    "source_dates": {
+      "airbnb_snapshot_date": "2026-06-23",
+      "official_register_date": "2026-07-30",
+      "official_register_download_date": "2026-09-26"
+    },
+    "methodology_version": "2.1.0",
+    "listings": 17064,
+    "licence_groups": 8888,
+    "official_registers_lisbon": 11869,
+    "establishment_estimate": 14600,
+    "classifications": {
+      "licença repetida em várias localizações": 141,
+      "número sem correspondência no RNAL": 1194,
+      "licença única em Lisboa": 6246,
+      "licença repetida na mesma localização": 176,
+      "licença oficial fora de Lisboa": 363,
+      "provável estabelecimento com anúncios múltiplos": 768
+    },
+    "mode": "public",
+    "generated_at": "2026-10-12T21:16:59Z",
+    "historical_comparisons": [
+      {
+        "run_id": "2025-09-21__2025-11-25",
+        "status": "comparável",
+        "metrics": {
+          "listings": 17428,
+          "licence_groups": 8950,
+          "establishment_estimate": 14863
+        }
+      }
+    ]
+  },
+  "licence_group_aggregates": [
+    {
+      "classification": "licença oficial fora de Lisboa",
+      "official_municipality": "outro município",
+      "official_type": "apartamento",
+      "licence_groups": 330,
+      "announcements": 520,
+      "spatial_locations": 352,
+      "estimated_establishments": 520
+    },
+    {
+      "classification": "licença oficial fora de Lisboa",
+      "official_municipality": "outro município",
+      "official_type": "hospedagem",
+      "licence_groups": 33,
+      "announcements": 49,
+      "spatial_locations": 33,
+      "estimated_establishments": 49
+    },
+    {
+      "classification": "licença repetida em várias localizações",
+      "official_municipality": "Lisboa",
+      "official_type": "apartamento",
+      "licence_groups": 82,
+      "announcements": 308,
+      "spatial_locations": 169,
+      "estimated_establishments": 308
+    },
+    {
+      "classification": "licença repetida em várias localizações",
+      "official_municipality": "Lisboa",
+      "official_type": "hospedagem",
+      "licence_groups": 15,
+      "announcements": 112,
+      "spatial_locations": 31,
+      "estimated_establishments": 112
+    },
+    {
+      "classification": "licença repetida em várias localizações",
+      "official_municipality": "não identificado",
+      "official_type": "não identificado",
+      "licence_groups": 44,
+      "announcements": 393,
+      "spatial_locations": 148,
+      "estimated_establishments": 393
+    },
+    {
+      "classification": "licença repetida na mesma localização",
+      "official_municipality": "Lisboa",
+      "official_type": "apartamento",
+      "licence_groups": 176,
+      "announcements": 419,
+      "spatial_locations": 176,
+      "estimated_establishments": 176
+    },
+    {
+      "classification": "licença única em Lisboa",
+      "official_municipality": "Lisboa",
+      "official_type": "apartamento",
+      "licence_groups": 6042,
+      "announcements": 6042,
+      "spatial_locations": 6042,
+      "estimated_establishments": 6042
+    },
+    {
+      "classification": "licença única em Lisboa",
+      "official_municipality": "Lisboa",
+      "official_type": "hospedagem",
+      "licence_groups": 204,
+      "announcements": 204,
+      "spatial_locations": 204,
+      "estimated_establishments": 204
+    },
+    {
+      "classification": "número sem correspondência no RNAL",
+      "official_municipality": "não identificado",
+      "official_type": "não identificado",
+      "licence_groups": 1194,
+      "announcements": 1691,
+      "spatial_locations": 1194,
+      "estimated_establishments": 1691
+    },
+    {
+      "classification": "provável estabelecimento com anúncios múltiplos",
+      "official_municipality": "Lisboa",
+      "official_type": "apartamento",
+      "licence_groups": 412,
+      "announcements": 1265,
+      "spatial_locations": 412,
+      "estimated_establishments": 412
+    },
+    {
+      "classification": "provável estabelecimento com anúncios múltiplos",
+      "official_municipality": "Lisboa",
+      "official_type": "hospedagem",
+      "licence_groups": 356,
+      "announcements": 1724,
+      "spatial_locations": 356,
+      "estimated_establishments": 356
+    },
+    {
+      "classification": "sem licença",
+      "official_municipality": "não identificado",
+      "official_type": "não identificado",
+      "licence_groups": 0,
+      "announcements": 633,
+      "spatial_locations": 0,
+      "estimated_establishments": 633
+    },
+    {
+      "classification": "sem licença identificável",
+      "official_municipality": "não identificado",
+      "official_type": "não identificado",
+      "licence_groups": 0,
+      "announcements": 3704,
+      "spatial_locations": 0,
+      "estimated_establishments": 3704
+    }
+  ],
+  "announcements_by_parish_and_classification": [
+    {
+      "freguesia": "Ajuda",
+      "classification": "licença oficial fora de Lisboa",
+      "announcements": 8,
+      "announcements_with_identifiable_number": 8,
+      "estimated_establishments": 8
+    },
+    {
+      "freguesia": "Ajuda",
+      "classification": "licença repetida em várias localizações",
+      "announcements": 7,
+      "announcements_with_identifiable_number": 7,
+      "estimated_establishments": 7
+    },
+    {
+      "freguesia": "Ajuda",
+      "classification": "licença repetida na mesma localização",
+      "announcements": 6,
+      "announcements_with_identifiable_number": 6,
+      "estimated_establishments": 3
+    },
+    {
+      "freguesia": "Ajuda",
+      "classification": "licença única em Lisboa",
+      "announcements": 91,
+      "announcements_with_identifiable_number": 91,
+      "estimated_establishments": 91
+    },
+    {
+      "freguesia": "Ajuda",
+      "classification": "número sem correspondência no RNAL",
+      "announcements": 27,
+      "announcements_with_identifiable_number": 27,
+      "estimated_establishments": 27
+    },
+    {
+      "freguesia": "Ajuda",
+      "classification": "provável estabelecimento com anúncios múltiplos",
+      "announcements": 47,
+      "announcements_with_identifiable_number": 47,
+      "estimated_establishments": 15
+    },
+    {
+      "freguesia": "Ajuda",
+      "classification": "sem licença",
+      "announcements": 8,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 8
+    },
+    {
+      "freguesia": "Ajuda",
+      "classification": "sem licença identificável",
+      "announcements": 50,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 50
+    },
+    {
+      "freguesia": "Alcântara",
+      "classification": "licença oficial fora de Lisboa",
+      "announcements": 7,
+      "announcements_with_identifiable_number": 7,
+      "estimated_establishments": 7
+    },
+    {
+      "freguesia": "Alcântara",
+      "classification": "licença repetida em várias localizações",
+      "announcements": 13,
+      "announcements_with_identifiable_number": 13,
+      "estimated_establishments": 13
+    },
+    {
+      "freguesia": "Alcântara",
+      "classification": "licença repetida na mesma localização",
+      "announcements": 6,
+      "announcements_with_identifiable_number": 6,
+      "estimated_establishments": 2
+    },
+    {
+      "freguesia": "Alcântara",
+      "classification": "licença única em Lisboa",
+      "announcements": 112,
+      "announcements_with_identifiable_number": 112,
+      "estimated_establishments": 112
+    },
+    {
+      "freguesia": "Alcântara",
+      "classification": "número sem correspondência no RNAL",
+      "announcements": 20,
+      "announcements_with_identifiable_number": 20,
+      "estimated_establishments": 20
+    },
+    {
+      "freguesia": "Alcântara",
+      "classification": "provável estabelecimento com anúncios múltiplos",
+      "announcements": 53,
+      "announcements_with_identifiable_number": 53,
+      "estimated_establishments": 14
+    },
+    {
+      "freguesia": "Alcântara",
+      "classification": "sem licença",
+      "announcements": 10,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 10
+    },
+    {
+      "freguesia": "Alcântara",
+      "classification": "sem licença identificável",
+      "announcements": 64,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 64
+    },
+    {
+      "freguesia": "Alvalade",
+      "classification": "licença oficial fora de Lisboa",
+      "announcements": 10,
+      "announcements_with_identifiable_number": 10,
+      "estimated_establishments": 10
+    },
+    {
+      "freguesia": "Alvalade",
+      "classification": "licença repetida em várias localizações",
+      "announcements": 19,
+      "announcements_with_identifiable_number": 19,
+      "estimated_establishments": 19
+    },
+    {
+      "freguesia": "Alvalade",
+      "classification": "licença repetida na mesma localização",
+      "announcements": 2,
+      "announcements_with_identifiable_number": 2,
+      "estimated_establishments": 1
+    },
+    {
+      "freguesia": "Alvalade",
+      "classification": "licença única em Lisboa",
+      "announcements": 69,
+      "announcements_with_identifiable_number": 69,
+      "estimated_establishments": 69
+    },
+    {
+      "freguesia": "Alvalade",
+      "classification": "número sem correspondência no RNAL",
+      "announcements": 35,
+      "announcements_with_identifiable_number": 35,
+      "estimated_establishments": 35
+    },
+    {
+      "freguesia": "Alvalade",
+      "classification": "provável estabelecimento com anúncios múltiplos",
+      "announcements": 33,
+      "announcements_with_identifiable_number": 33,
+      "estimated_establishments": 12
+    },
+    {
+      "freguesia": "Alvalade",
+      "classification": "sem licença",
+      "announcements": 13,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 13
+    },
+    {
+      "freguesia": "Alvalade",
+      "classification": "sem licença identificável",
+      "announcements": 77,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 77
+    },
+    {
+      "freguesia": "Areeiro",
+      "classification": "licença oficial fora de Lisboa",
+      "announcements": 12,
+      "announcements_with_identifiable_number": 12,
+      "estimated_establishments": 12
+    },
+    {
+      "freguesia": "Areeiro",
+      "classification": "licença repetida em várias localizações",
+      "announcements": 63,
+      "announcements_with_identifiable_number": 63,
+      "estimated_establishments": 63
+    },
+    {
+      "freguesia": "Areeiro",
+      "classification": "licença única em Lisboa",
+      "announcements": 55,
+      "announcements_with_identifiable_number": 55,
+      "estimated_establishments": 55
+    },
+    {
+      "freguesia": "Areeiro",
+      "classification": "número sem correspondência no RNAL",
+      "announcements": 27,
+      "announcements_with_identifiable_number": 27,
+      "estimated_establishments": 27
+    },
+    {
+      "freguesia": "Areeiro",
+      "classification": "provável estabelecimento com anúncios múltiplos",
+      "announcements": 115,
+      "announcements_with_identifiable_number": 115,
+      "estimated_establishments": 25
+    },
+    {
+      "freguesia": "Areeiro",
+      "classification": "sem licença",
+      "announcements": 13,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 13
+    },
+    {
+      "freguesia": "Areeiro",
+      "classification": "sem licença identificável",
+      "announcements": 181,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 181
+    },
+    {
+      "freguesia": "Arroios",
+      "classification": "licença oficial fora de Lisboa",
+      "announcements": 84,
+      "announcements_with_identifiable_number": 84,
+      "estimated_establishments": 84
+    },
+    {
+      "freguesia": "Arroios",
+      "classification": "licença repetida em várias localizações",
+      "announcements": 125,
+      "announcements_with_identifiable_number": 125,
+      "estimated_establishments": 125
+    },
+    {
+      "freguesia": "Arroios",
+      "classification": "licença repetida na mesma localização",
+      "announcements": 22,
+      "announcements_with_identifiable_number": 22,
+      "estimated_establishments": 12
+    },
+    {
+      "freguesia": "Arroios",
+      "classification": "licença única em Lisboa",
+      "announcements": 559,
+      "announcements_with_identifiable_number": 559,
+      "estimated_establishments": 559
+    },
+    {
+      "freguesia": "Arroios",
+      "classification": "número sem correspondência no RNAL",
+      "announcements": 220,
+      "announcements_with_identifiable_number": 220,
+      "estimated_establishments": 220
+    },
+    {
+      "freguesia": "Arroios",
+      "classification": "provável estabelecimento com anúncios múltiplos",
+      "announcements": 590,
+      "announcements_with_identifiable_number": 590,
+      "estimated_establishments": 136
+    },
+    {
+      "freguesia": "Arroios",
+      "classification": "sem licença",
+      "announcements": 96,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 96
+    },
+    {
+      "freguesia": "Arroios",
+      "classification": "sem licença identificável",
+      "announcements": 458,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 458
+    },
+    {
+      "freguesia": "Avenidas Novas",
+      "classification": "licença oficial fora de Lisboa",
+      "announcements": 30,
+      "announcements_with_identifiable_number": 30,
+      "estimated_establishments": 30
+    },
+    {
+      "freguesia": "Avenidas Novas",
+      "classification": "licença repetida em várias localizações",
+      "announcements": 82,
+      "announcements_with_identifiable_number": 82,
+      "estimated_establishments": 82
+    },
+    {
+      "freguesia": "Avenidas Novas",
+      "classification": "licença repetida na mesma localização",
+      "announcements": 9,
+      "announcements_with_identifiable_number": 9,
+      "estimated_establishments": 3
+    },
+    {
+      "freguesia": "Avenidas Novas",
+      "classification": "licença única em Lisboa",
+      "announcements": 136,
+      "announcements_with_identifiable_number": 136,
+      "estimated_establishments": 136
+    },
+    {
+      "freguesia": "Avenidas Novas",
+      "classification": "número sem correspondência no RNAL",
+      "announcements": 51,
+      "announcements_with_identifiable_number": 51,
+      "estimated_establishments": 51
+    },
+    {
+      "freguesia": "Avenidas Novas",
+      "classification": "provável estabelecimento com anúncios múltiplos",
+      "announcements": 189,
+      "announcements_with_identifiable_number": 189,
+      "estimated_establishments": 35
+    },
+    {
+      "freguesia": "Avenidas Novas",
+      "classification": "sem licença",
+      "announcements": 18,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 18
+    },
+    {
+      "freguesia": "Avenidas Novas",
+      "classification": "sem licença identificável",
+      "announcements": 348,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 348
+    },
+    {
+      "freguesia": "Beato",
+      "classification": "licença oficial fora de Lisboa",
+      "announcements": 8,
+      "announcements_with_identifiable_number": 8,
+      "estimated_establishments": 8
+    },
+    {
+      "freguesia": "Beato",
+      "classification": "licença repetida em várias localizações",
+      "announcements": 7,
+      "announcements_with_identifiable_number": 7,
+      "estimated_establishments": 7
+    },
+    {
+      "freguesia": "Beato",
+      "classification": "licença repetida na mesma localização",
+      "announcements": 2,
+      "announcements_with_identifiable_number": 2,
+      "estimated_establishments": 1
+    },
+    {
+      "freguesia": "Beato",
+      "classification": "licença única em Lisboa",
+      "announcements": 45,
+      "announcements_with_identifiable_number": 45,
+      "estimated_establishments": 45
+    },
+    {
+      "freguesia": "Beato",
+      "classification": "número sem correspondência no RNAL",
+      "announcements": 8,
+      "announcements_with_identifiable_number": 8,
+      "estimated_establishments": 8
+    },
+    {
+      "freguesia": "Beato",
+      "classification": "provável estabelecimento com anúncios múltiplos",
+      "announcements": 29,
+      "announcements_with_identifiable_number": 29,
+      "estimated_establishments": 8
+    },
+    {
+      "freguesia": "Beato",
+      "classification": "sem licença",
+      "announcements": 3,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 3
+    },
+    {
+      "freguesia": "Beato",
+      "classification": "sem licença identificável",
+      "announcements": 29,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 29
+    },
+    {
+      "freguesia": "Belém",
+      "classification": "licença oficial fora de Lisboa",
+      "announcements": 15,
+      "announcements_with_identifiable_number": 15,
+      "estimated_establishments": 15
+    },
+    {
+      "freguesia": "Belém",
+      "classification": "licença repetida na mesma localização",
+      "announcements": 11,
+      "announcements_with_identifiable_number": 11,
+      "estimated_establishments": 5
+    },
+    {
+      "freguesia": "Belém",
+      "classification": "licença única em Lisboa",
+      "announcements": 100,
+      "announcements_with_identifiable_number": 100,
+      "estimated_establishments": 100
+    },
+    {
+      "freguesia": "Belém",
+      "classification": "número sem correspondência no RNAL",
+      "announcements": 29,
+      "announcements_with_identifiable_number": 29,
+      "estimated_establishments": 29
+    },
+    {
+      "freguesia": "Belém",
+      "classification": "provável estabelecimento com anúncios múltiplos",
+      "announcements": 54,
+      "announcements_with_identifiable_number": 54,
+      "estimated_establishments": 16
+    },
+    {
+      "freguesia": "Belém",
+      "classification": "sem licença",
+      "announcements": 18,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 18
+    },
+    {
+      "freguesia": "Belém",
+      "classification": "sem licença identificável",
+      "announcements": 54,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 54
+    },
+    {
+      "freguesia": "Benfica",
+      "classification": "licença oficial fora de Lisboa",
+      "announcements": 6,
+      "announcements_with_identifiable_number": 6,
+      "estimated_establishments": 6
+    },
+    {
+      "freguesia": "Benfica",
+      "classification": "licença repetida em várias localizações",
+      "announcements": 4,
+      "announcements_with_identifiable_number": 4,
+      "estimated_establishments": 4
+    },
+    {
+      "freguesia": "Benfica",
+      "classification": "licença única em Lisboa",
+      "announcements": 19,
+      "announcements_with_identifiable_number": 19,
+      "estimated_establishments": 19
+    },
+    {
+      "freguesia": "Benfica",
+      "classification": "número sem correspondência no RNAL",
+      "announcements": 13,
+      "announcements_with_identifiable_number": 13,
+      "estimated_establishments": 13
+    },
+    {
+      "freguesia": "Benfica",
+      "classification": "provável estabelecimento com anúncios múltiplos",
+      "announcements": 7,
+      "announcements_with_identifiable_number": 7,
+      "estimated_establishments": 2
+    },
+    {
+      "freguesia": "Benfica",
+      "classification": "sem licença",
+      "announcements": 2,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 2
+    },
+    {
+      "freguesia": "Benfica",
+      "classification": "sem licença identificável",
+      "announcements": 30,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 30
+    },
+    {
+      "freguesia": "Campo de Ourique",
+      "classification": "licença oficial fora de Lisboa",
+      "announcements": 23,
+      "announcements_with_identifiable_number": 23,
+      "estimated_establishments": 23
+    },
+    {
+      "freguesia": "Campo de Ourique",
+      "classification": "licença repetida em várias localizações",
+      "announcements": 11,
+      "announcements_with_identifiable_number": 11,
+      "estimated_establishments": 11
+    },
+    {
+      "freguesia": "Campo de Ourique",
+      "classification": "licença repetida na mesma localização",
+      "announcements": 16,
+      "announcements_with_identifiable_number": 16,
+      "estimated_establishments": 7
+    },
+    {
+      "freguesia": "Campo de Ourique",
+      "classification": "licença única em Lisboa",
+      "announcements": 139,
+      "announcements_with_identifiable_number": 139,
+      "estimated_establishments": 139
+    },
+    {
+      "freguesia": "Campo de Ourique",
+      "classification": "número sem correspondência no RNAL",
+      "announcements": 27,
+      "announcements_with_identifiable_number": 27,
+      "estimated_establishments": 27
+    },
+    {
+      "freguesia": "Campo de Ourique",
+      "classification": "provável estabelecimento com anúncios múltiplos",
+      "announcements": 74,
+      "announcements_with_identifiable_number": 74,
+      "estimated_establishments": 28
+    },
+    {
+      "freguesia": "Campo de Ourique",
+      "classification": "sem licença",
+      "announcements": 26,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 26
+    },
+    {
+      "freguesia": "Campo de Ourique",
+      "classification": "sem licença identificável",
+      "announcements": 157,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 157
+    },
+    {
+      "freguesia": "Campolide",
+      "classification": "licença oficial fora de Lisboa",
+      "announcements": 13,
+      "announcements_with_identifiable_number": 13,
+      "estimated_establishments": 13
+    },
+    {
+      "freguesia": "Campolide",
+      "classification": "licença repetida em várias localizações",
+      "announcements": 17,
+      "announcements_with_identifiable_number": 17,
+      "estimated_establishments": 17
+    },
+    {
+      "freguesia": "Campolide",
+      "classification": "licença repetida na mesma localização",
+      "announcements": 4,
+      "announcements_with_identifiable_number": 4,
+      "estimated_establishments": 2
+    },
+    {
+      "freguesia": "Campolide",
+      "classification": "licença única em Lisboa",
+      "announcements": 71,
+      "announcements_with_identifiable_number": 71,
+      "estimated_establishments": 71
+    },
+    {
+      "freguesia": "Campolide",
+      "classification": "número sem correspondência no RNAL",
+      "announcements": 31,
+      "announcements_with_identifiable_number": 31,
+      "estimated_establishments": 31
+    },
+    {
+      "freguesia": "Campolide",
+      "classification": "provável estabelecimento com anúncios múltiplos",
+      "announcements": 103,
+      "announcements_with_identifiable_number": 103,
+      "estimated_establishments": 16
+    },
+    {
+      "freguesia": "Campolide",
+      "classification": "sem licença",
+      "announcements": 9,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 9
+    },
+    {
+      "freguesia": "Campolide",
+      "classification": "sem licença identificável",
+      "announcements": 65,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 65
+    },
+    {
+      "freguesia": "Carnide",
+      "classification": "licença única em Lisboa",
+      "announcements": 17,
+      "announcements_with_identifiable_number": 17,
+      "estimated_establishments": 17
+    },
+    {
+      "freguesia": "Carnide",
+      "classification": "número sem correspondência no RNAL",
+      "announcements": 7,
+      "announcements_with_identifiable_number": 7,
+      "estimated_establishments": 7
+    },
+    {
+      "freguesia": "Carnide",
+      "classification": "provável estabelecimento com anúncios múltiplos",
+      "announcements": 2,
+      "announcements_with_identifiable_number": 2,
+      "estimated_establishments": 1
+    },
+    {
+      "freguesia": "Carnide",
+      "classification": "sem licença",
+      "announcements": 2,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 2
+    },
+    {
+      "freguesia": "Carnide",
+      "classification": "sem licença identificável",
+      "announcements": 5,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 5
+    },
+    {
+      "freguesia": "Estrela",
+      "classification": "licença oficial fora de Lisboa",
+      "announcements": 29,
+      "announcements_with_identifiable_number": 29,
+      "estimated_establishments": 29
+    },
+    {
+      "freguesia": "Estrela",
+      "classification": "licença repetida em várias localizações",
+      "announcements": 36,
+      "announcements_with_identifiable_number": 36,
+      "estimated_establishments": 36
+    },
+    {
+      "freguesia": "Estrela",
+      "classification": "licença repetida na mesma localização",
+      "announcements": 25,
+      "announcements_with_identifiable_number": 25,
+      "estimated_establishments": 10
+    },
+    {
+      "freguesia": "Estrela",
+      "classification": "licença única em Lisboa",
+      "announcements": 380,
+      "announcements_with_identifiable_number": 380,
+      "estimated_establishments": 380
+    },
+    {
+      "freguesia": "Estrela",
+      "classification": "número sem correspondência no RNAL",
+      "announcements": 100,
+      "announcements_with_identifiable_number": 100,
+      "estimated_establishments": 100
+    },
+    {
+      "freguesia": "Estrela",
+      "classification": "provável estabelecimento com anúncios múltiplos",
+      "announcements": 147,
+      "announcements_with_identifiable_number": 147,
+      "estimated_establishments": 46
+    },
+    {
+      "freguesia": "Estrela",
+      "classification": "sem licença",
+      "announcements": 33,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 33
+    },
+    {
+      "freguesia": "Estrela",
+      "classification": "sem licença identificável",
+      "announcements": 224,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 224
+    },
+    {
+      "freguesia": "Lumiar",
+      "classification": "licença oficial fora de Lisboa",
+      "announcements": 1,
+      "announcements_with_identifiable_number": 1,
+      "estimated_establishments": 1
+    },
+    {
+      "freguesia": "Lumiar",
+      "classification": "licença repetida em várias localizações",
+      "announcements": 4,
+      "announcements_with_identifiable_number": 4,
+      "estimated_establishments": 4
+    },
+    {
+      "freguesia": "Lumiar",
+      "classification": "licença única em Lisboa",
+      "announcements": 42,
+      "announcements_with_identifiable_number": 42,
+      "estimated_establishments": 42
+    },
+    {
+      "freguesia": "Lumiar",
+      "classification": "número sem correspondência no RNAL",
+      "announcements": 18,
+      "announcements_with_identifiable_number": 18,
+      "estimated_establishments": 18
+    },
+    {
+      "freguesia": "Lumiar",
+      "classification": "provável estabelecimento com anúncios múltiplos",
+      "announcements": 7,
+      "announcements_with_identifiable_number": 7,
+      "estimated_establishments": 3
+    },
+    {
+      "freguesia": "Lumiar",
+      "classification": "sem licença",
+      "announcements": 8,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 8
+    },
+    {
+      "freguesia": "Lumiar",
+      "classification": "sem licença identificável",
+      "announcements": 58,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 58
+    },
+    {
+      "freguesia": "Marvila",
+      "classification": "licença oficial fora de Lisboa",
+      "announcements": 5,
+      "announcements_with_identifiable_number": 5,
+      "estimated_establishments": 5
+    },
+    {
+      "freguesia": "Marvila",
+      "classification": "licença repetida em várias localizações",
+      "announcements": 2,
+      "announcements_with_identifiable_number": 2,
+      "estimated_establishments": 2
+    },
+    {
+      "freguesia": "Marvila",
+      "classification": "licença única em Lisboa",
+      "announcements": 31,
+      "announcements_with_identifiable_number": 31,
+      "estimated_establishments": 31
+    },
+    {
+      "freguesia": "Marvila",
+      "classification": "número sem correspondência no RNAL",
+      "announcements": 17,
+      "announcements_with_identifiable_number": 17,
+      "estimated_establishments": 17
+    },
+    {
+      "freguesia": "Marvila",
+      "classification": "provável estabelecimento com anúncios múltiplos",
+      "announcements": 13,
+      "announcements_with_identifiable_number": 13,
+      "estimated_establishments": 7
+    },
+    {
+      "freguesia": "Marvila",
+      "classification": "sem licença",
+      "announcements": 3,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 3
+    },
+    {
+      "freguesia": "Marvila",
+      "classification": "sem licença identificável",
+      "announcements": 35,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 35
+    },
+    {
+      "freguesia": "Misericórdia",
+      "classification": "licença oficial fora de Lisboa",
+      "announcements": 72,
+      "announcements_with_identifiable_number": 72,
+      "estimated_establishments": 72
+    },
+    {
+      "freguesia": "Misericórdia",
+      "classification": "licença repetida em várias localizações",
+      "announcements": 97,
+      "announcements_with_identifiable_number": 97,
+      "estimated_establishments": 97
+    },
+    {
+      "freguesia": "Misericórdia",
+      "classification": "licença repetida na mesma localização",
+      "announcements": 69,
+      "announcements_with_identifiable_number": 69,
+      "estimated_establishments": 32
+    },
+    {
+      "freguesia": "Misericórdia",
+      "classification": "licença única em Lisboa",
+      "announcements": 1193,
+      "announcements_with_identifiable_number": 1193,
+      "estimated_establishments": 1193
+    },
+    {
+      "freguesia": "Misericórdia",
+      "classification": "número sem correspondência no RNAL",
+      "announcements": 268,
+      "announcements_with_identifiable_number": 268,
+      "estimated_establishments": 268
+    },
+    {
+      "freguesia": "Misericórdia",
+      "classification": "provável estabelecimento com anúncios múltiplos",
+      "announcements": 394,
+      "announcements_with_identifiable_number": 394,
+      "estimated_establishments": 123
+    },
+    {
+      "freguesia": "Misericórdia",
+      "classification": "sem licença",
+      "announcements": 110,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 110
+    },
+    {
+      "freguesia": "Misericórdia",
+      "classification": "sem licença identificável",
+      "announcements": 385,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 385
+    },
+    {
+      "freguesia": "Olivais",
+      "classification": "licença oficial fora de Lisboa",
+      "announcements": 2,
+      "announcements_with_identifiable_number": 2,
+      "estimated_establishments": 2
+    },
+    {
+      "freguesia": "Olivais",
+      "classification": "licença repetida em várias localizações",
+      "announcements": 2,
+      "announcements_with_identifiable_number": 2,
+      "estimated_establishments": 2
+    },
+    {
+      "freguesia": "Olivais",
+      "classification": "licença única em Lisboa",
+      "announcements": 47,
+      "announcements_with_identifiable_number": 47,
+      "estimated_establishments": 47
+    },
+    {
+      "freguesia": "Olivais",
+      "classification": "número sem correspondência no RNAL",
+      "announcements": 21,
+      "announcements_with_identifiable_number": 21,
+      "estimated_establishments": 21
+    },
+    {
+      "freguesia": "Olivais",
+      "classification": "provável estabelecimento com anúncios múltiplos",
+      "announcements": 32,
+      "announcements_with_identifiable_number": 32,
+      "estimated_establishments": 10
+    },
+    {
+      "freguesia": "Olivais",
+      "classification": "sem licença",
+      "announcements": 8,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 8
+    },
+    {
+      "freguesia": "Olivais",
+      "classification": "sem licença identificável",
+      "announcements": 85,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 85
+    },
+    {
+      "freguesia": "Parque das Nações",
+      "classification": "licença oficial fora de Lisboa",
+      "announcements": 23,
+      "announcements_with_identifiable_number": 23,
+      "estimated_establishments": 23
+    },
+    {
+      "freguesia": "Parque das Nações",
+      "classification": "licença repetida em várias localizações",
+      "announcements": 12,
+      "announcements_with_identifiable_number": 12,
+      "estimated_establishments": 12
+    },
+    {
+      "freguesia": "Parque das Nações",
+      "classification": "licença repetida na mesma localização",
+      "announcements": 2,
+      "announcements_with_identifiable_number": 2,
+      "estimated_establishments": 1
+    },
+    {
+      "freguesia": "Parque das Nações",
+      "classification": "licença única em Lisboa",
+      "announcements": 93,
+      "announcements_with_identifiable_number": 93,
+      "estimated_establishments": 93
+    },
+    {
+      "freguesia": "Parque das Nações",
+      "classification": "número sem correspondência no RNAL",
+      "announcements": 45,
+      "announcements_with_identifiable_number": 45,
+      "estimated_establishments": 45
+    },
+    {
+      "freguesia": "Parque das Nações",
+      "classification": "provável estabelecimento com anúncios múltiplos",
+      "announcements": 19,
+      "announcements_with_identifiable_number": 19,
+      "estimated_establishments": 6
+    },
+    {
+      "freguesia": "Parque das Nações",
+      "classification": "sem licença",
+      "announcements": 24,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 24
+    },
+    {
+      "freguesia": "Parque das Nações",
+      "classification": "sem licença identificável",
+      "announcements": 117,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 117
+    },
+    {
+      "freguesia": "Penha de França",
+      "classification": "licença oficial fora de Lisboa",
+      "announcements": 26,
+      "announcements_with_identifiable_number": 26,
+      "estimated_establishments": 26
+    },
+    {
+      "freguesia": "Penha de França",
+      "classification": "licença repetida em várias localizações",
+      "announcements": 49,
+      "announcements_with_identifiable_number": 49,
+      "estimated_establishments": 49
+    },
+    {
+      "freguesia": "Penha de França",
+      "classification": "licença repetida na mesma localização",
+      "announcements": 14,
+      "announcements_with_identifiable_number": 14,
+      "estimated_establishments": 6
+    },
+    {
+      "freguesia": "Penha de França",
+      "classification": "licença única em Lisboa",
+      "announcements": 162,
+      "announcements_with_identifiable_number": 162,
+      "estimated_establishments": 162
+    },
+    {
+      "freguesia": "Penha de França",
+      "classification": "número sem correspondência no RNAL",
+      "announcements": 109,
+      "announcements_with_identifiable_number": 109,
+      "estimated_establishments": 109
+    },
+    {
+      "freguesia": "Penha de França",
+      "classification": "provável estabelecimento com anúncios múltiplos",
+      "announcements": 111,
+      "announcements_with_identifiable_number": 111,
+      "estimated_establishments": 34
+    },
+    {
+      "freguesia": "Penha de França",
+      "classification": "sem licença",
+      "announcements": 21,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 21
+    },
+    {
+      "freguesia": "Penha de França",
+      "classification": "sem licença identificável",
+      "announcements": 148,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 148
+    },
+    {
+      "freguesia": "Santa Clara",
+      "classification": "licença oficial fora de Lisboa",
+      "announcements": 3,
+      "announcements_with_identifiable_number": 3,
+      "estimated_establishments": 3
+    },
+    {
+      "freguesia": "Santa Clara",
+      "classification": "licença repetida em várias localizações",
+      "announcements": 1,
+      "announcements_with_identifiable_number": 1,
+      "estimated_establishments": 1
+    },
+    {
+      "freguesia": "Santa Clara",
+      "classification": "licença única em Lisboa",
+      "announcements": 3,
+      "announcements_with_identifiable_number": 3,
+      "estimated_establishments": 3
+    },
+    {
+      "freguesia": "Santa Clara",
+      "classification": "número sem correspondência no RNAL",
+      "announcements": 4,
+      "announcements_with_identifiable_number": 4,
+      "estimated_establishments": 4
+    },
+    {
+      "freguesia": "Santa Clara",
+      "classification": "sem licença",
+      "announcements": 2,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 2
+    },
+    {
+      "freguesia": "Santa Clara",
+      "classification": "sem licença identificável",
+      "announcements": 24,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 24
+    },
+    {
+      "freguesia": "Santa Maria Maior",
+      "classification": "licença oficial fora de Lisboa",
+      "announcements": 98,
+      "announcements_with_identifiable_number": 98,
+      "estimated_establishments": 98
+    },
+    {
+      "freguesia": "Santa Maria Maior",
+      "classification": "licença repetida em várias localizações",
+      "announcements": 102,
+      "announcements_with_identifiable_number": 102,
+      "estimated_establishments": 102
+    },
+    {
+      "freguesia": "Santa Maria Maior",
+      "classification": "licença repetida na mesma localização",
+      "announcements": 163,
+      "announcements_with_identifiable_number": 163,
+      "estimated_establishments": 68
+    },
+    {
+      "freguesia": "Santa Maria Maior",
+      "classification": "licença única em Lisboa",
+      "announcements": 1795,
+      "announcements_with_identifiable_number": 1795,
+      "estimated_establishments": 1795
+    },
+    {
+      "freguesia": "Santa Maria Maior",
+      "classification": "número sem correspondência no RNAL",
+      "announcements": 284,
+      "announcements_with_identifiable_number": 284,
+      "estimated_establishments": 284
+    },
+    {
+      "freguesia": "Santa Maria Maior",
+      "classification": "provável estabelecimento com anúncios múltiplos",
+      "announcements": 550,
+      "announcements_with_identifiable_number": 550,
+      "estimated_establishments": 158
+    },
+    {
+      "freguesia": "Santa Maria Maior",
+      "classification": "sem licença",
+      "announcements": 119,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 119
+    },
+    {
+      "freguesia": "Santa Maria Maior",
+      "classification": "sem licença identificável",
+      "announcements": 461,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 461
+    },
+    {
+      "freguesia": "Santo António",
+      "classification": "licença oficial fora de Lisboa",
+      "announcements": 53,
+      "announcements_with_identifiable_number": 53,
+      "estimated_establishments": 53
+    },
+    {
+      "freguesia": "Santo António",
+      "classification": "licença repetida em várias localizações",
+      "announcements": 102,
+      "announcements_with_identifiable_number": 102,
+      "estimated_establishments": 102
+    },
+    {
+      "freguesia": "Santo António",
+      "classification": "licença repetida na mesma localização",
+      "announcements": 34,
+      "announcements_with_identifiable_number": 34,
+      "estimated_establishments": 16
+    },
+    {
+      "freguesia": "Santo António",
+      "classification": "licença única em Lisboa",
+      "announcements": 465,
+      "announcements_with_identifiable_number": 465,
+      "estimated_establishments": 465
+    },
+    {
+      "freguesia": "Santo António",
+      "classification": "número sem correspondência no RNAL",
+      "announcements": 178,
+      "announcements_with_identifiable_number": 178,
+      "estimated_establishments": 178
+    },
+    {
+      "freguesia": "Santo António",
+      "classification": "provável estabelecimento com anúncios múltiplos",
+      "announcements": 244,
+      "announcements_with_identifiable_number": 244,
+      "estimated_establishments": 63
+    },
+    {
+      "freguesia": "Santo António",
+      "classification": "sem licença",
+      "announcements": 43,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 43
+    },
+    {
+      "freguesia": "Santo António",
+      "classification": "sem licença identificável",
+      "announcements": 367,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 367
+    },
+    {
+      "freguesia": "São Domingos de Benfica",
+      "classification": "licença oficial fora de Lisboa",
+      "announcements": 10,
+      "announcements_with_identifiable_number": 10,
+      "estimated_establishments": 10
+    },
+    {
+      "freguesia": "São Domingos de Benfica",
+      "classification": "licença repetida em várias localizações",
+      "announcements": 9,
+      "announcements_with_identifiable_number": 9,
+      "estimated_establishments": 9
+    },
+    {
+      "freguesia": "São Domingos de Benfica",
+      "classification": "licença repetida na mesma localização",
+      "announcements": 2,
+      "announcements_with_identifiable_number": 2,
+      "estimated_establishments": 1
+    },
+    {
+      "freguesia": "São Domingos de Benfica",
+      "classification": "licença única em Lisboa",
+      "announcements": 54,
+      "announcements_with_identifiable_number": 54,
+      "estimated_establishments": 54
+    },
+    {
+      "freguesia": "São Domingos de Benfica",
+      "classification": "número sem correspondência no RNAL",
+      "announcements": 11,
+      "announcements_with_identifiable_number": 11,
+      "estimated_establishments": 11
+    },
+    {
+      "freguesia": "São Domingos de Benfica",
+      "classification": "provável estabelecimento com anúncios múltiplos",
+      "announcements": 14,
+      "announcements_with_identifiable_number": 14,
+      "estimated_establishments": 5
+    },
+    {
+      "freguesia": "São Domingos de Benfica",
+      "classification": "sem licença",
+      "announcements": 6,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 6
+    },
+    {
+      "freguesia": "São Domingos de Benfica",
+      "classification": "sem licença identificável",
+      "announcements": 53,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 53
+    },
+    {
+      "freguesia": "São Vicente",
+      "classification": "licença oficial fora de Lisboa",
+      "announcements": 31,
+      "announcements_with_identifiable_number": 31,
+      "estimated_establishments": 31
+    },
+    {
+      "freguesia": "São Vicente",
+      "classification": "licença repetida em várias localizações",
+      "announcements": 49,
+      "announcements_with_identifiable_number": 49,
+      "estimated_establishments": 49
+    },
+    {
+      "freguesia": "São Vicente",
+      "classification": "licença repetida na mesma localização",
+      "announcements": 32,
+      "announcements_with_identifiable_number": 32,
+      "estimated_establishments": 18
+    },
+    {
+      "freguesia": "São Vicente",
+      "classification": "licença única em Lisboa",
+      "announcements": 568,
+      "announcements_with_identifiable_number": 568,
+      "estimated_establishments": 568
+    },
+    {
+      "freguesia": "São Vicente",
+      "classification": "número sem correspondência no RNAL",
+      "announcements": 141,
+      "announcements_with_identifiable_number": 141,
+      "estimated_establishments": 141
+    },
+    {
+      "freguesia": "São Vicente",
+      "classification": "provável estabelecimento com anúncios múltiplos",
+      "announcements": 162,
+      "announcements_with_identifiable_number": 162,
+      "estimated_establishments": 59
+    },
+    {
+      "freguesia": "São Vicente",
+      "classification": "sem licença",
+      "announcements": 38,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 38
+    },
+    {
+      "freguesia": "São Vicente",
+      "classification": "sem licença identificável",
+      "announcements": 229,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 229
+    }
+  ],
+  "parish_totals": [
+    {
+      "freguesia": "Ajuda",
+      "announcements": 244,
+      "announcements_with_identifiable_number": 186,
+      "estimated_establishments": 209
+    },
+    {
+      "freguesia": "Alcântara",
+      "announcements": 285,
+      "announcements_with_identifiable_number": 211,
+      "estimated_establishments": 242
+    },
+    {
+      "freguesia": "Alvalade",
+      "announcements": 258,
+      "announcements_with_identifiable_number": 168,
+      "estimated_establishments": 236
+    },
+    {
+      "freguesia": "Areeiro",
+      "announcements": 466,
+      "announcements_with_identifiable_number": 272,
+      "estimated_establishments": 376
+    },
+    {
+      "freguesia": "Arroios",
+      "announcements": 2154,
+      "announcements_with_identifiable_number": 1600,
+      "estimated_establishments": 1690
+    },
+    {
+      "freguesia": "Avenidas Novas",
+      "announcements": 863,
+      "announcements_with_identifiable_number": 497,
+      "estimated_establishments": 703
+    },
+    {
+      "freguesia": "Beato",
+      "announcements": 131,
+      "announcements_with_identifiable_number": 99,
+      "estimated_establishments": 109
+    },
+    {
+      "freguesia": "Belém",
+      "announcements": 281,
+      "announcements_with_identifiable_number": 209,
+      "estimated_establishments": 237
+    },
+    {
+      "freguesia": "Benfica",
+      "announcements": 81,
+      "announcements_with_identifiable_number": 49,
+      "estimated_establishments": 76
+    },
+    {
+      "freguesia": "Campo de Ourique",
+      "announcements": 473,
+      "announcements_with_identifiable_number": 290,
+      "estimated_establishments": 418
+    },
+    {
+      "freguesia": "Campolide",
+      "announcements": 313,
+      "announcements_with_identifiable_number": 239,
+      "estimated_establishments": 224
+    },
+    {
+      "freguesia": "Carnide",
+      "announcements": 33,
+      "announcements_with_identifiable_number": 26,
+      "estimated_establishments": 32
+    },
+    {
+      "freguesia": "Estrela",
+      "announcements": 974,
+      "announcements_with_identifiable_number": 717,
+      "estimated_establishments": 858
+    },
+    {
+      "freguesia": "Lumiar",
+      "announcements": 138,
+      "announcements_with_identifiable_number": 72,
+      "estimated_establishments": 134
+    },
+    {
+      "freguesia": "Marvila",
+      "announcements": 106,
+      "announcements_with_identifiable_number": 68,
+      "estimated_establishments": 100
+    },
+    {
+      "freguesia": "Misericórdia",
+      "announcements": 2588,
+      "announcements_with_identifiable_number": 2093,
+      "estimated_establishments": 2280
+    },
+    {
+      "freguesia": "Olivais",
+      "announcements": 197,
+      "announcements_with_identifiable_number": 104,
+      "estimated_establishments": 175
+    },
+    {
+      "freguesia": "Parque das Nações",
+      "announcements": 335,
+      "announcements_with_identifiable_number": 194,
+      "estimated_establishments": 321
+    },
+    {
+      "freguesia": "Penha de França",
+      "announcements": 640,
+      "announcements_with_identifiable_number": 471,
+      "estimated_establishments": 555
+    },
+    {
+      "freguesia": "Santa Clara",
+      "announcements": 37,
+      "announcements_with_identifiable_number": 11,
+      "estimated_establishments": 37
+    },
+    {
+      "freguesia": "Santa Maria Maior",
+      "announcements": 3572,
+      "announcements_with_identifiable_number": 2992,
+      "estimated_establishments": 3085
+    },
+    {
+      "freguesia": "Santo António",
+      "announcements": 1486,
+      "announcements_with_identifiable_number": 1076,
+      "estimated_establishments": 1287
+    },
+    {
+      "freguesia": "São Domingos de Benfica",
+      "announcements": 159,
+      "announcements_with_identifiable_number": 100,
+      "estimated_establishments": 149
+    },
+    {
+      "freguesia": "São Vicente",
+      "announcements": 1250,
+      "announcements_with_identifiable_number": 983,
+      "estimated_establishments": 1133
+    }
+  ],
+  "registration_metrics": {
+    "metric_version": "1.0.0",
+    "definitions": {
+      "sets": "Distinct normalized AL numbers. RNAL: official Concelho=Lisboa and official Freguesia. Airbnb: observed municipality=Lisboa and observed parish. City sets are computed independently, never summed from parishes.",
+      "differences": "RNAL-only means absent from Airbnb in the same geography, not absent elsewhere. Airbnb-only does not imply absence from national RNAL.",
+      "difference_priority": "Among Airbnb-only numbers: no national record; unresolved if any matching official record has missing/unknown municipality, unknown Lisbon parish (district scope), or conflicting municipality/parish; otherwise another Lisbon parish or another municipality. Multiple identical entries count once in sets.",
+      "announcements": "Empty (nil or whitespace), filled unrecognised, identifiable are disjoint and sum to all observed Lisbon announcements. Confirmed match is a subset of identifiable: number present in dated national RNAL, without asserting validity, activity or geography.",
+      "entries": "Official CSV rows with declared Concelho=Lisboa; duplicates retained in entry counts, deduplicated in number sets. Unparseable official numbers excluded from sets and diagnosed.",
+      "geography": "Trim, case and accent normalization; explicit aliases for Inside Airbnb's missing accented letters; 24 Lisbon parishes. Missing/unrecognized parishes pooled in Geografia não identificada and excluded from known parish sets; included in city totals. Nonempty nonsentinel national municipality names are accepted as declared, not independently validated.",
+      "denominators": "Set differences use distinct numbers in the local Airbnb or RNAL set. Announcement counts use observed Lisbon rows. No implicit percentages. Parish totals and establishment estimates are not additive across the city.",
+      "classification": "Priority: empty/unrecognized; known outside municipality; unresolved observed coordinates; multiple spatial clusters; no national match; unresolved official municipality; single Lisbon match; probable multiple units; repeated same location. Metadados de anfitrião nunca agrupam anúncios. Clusters are connected components of edges <=500m, so chain endpoints may exceed 500m; missing coordinates remain singleton clusters.",
+      "estimate": "One per matched Lisbon number in either lower-risk same-location category, plus every announcement in all other categories. Calculated independently in each geography; no collapsing unmatched, outside or unresolved cases. Indicator, not legal finding."
+    },
+    "rows": [
+      {
+        "geography": "Lisboa",
+        "rnal": 11869,
+        "airbnb": 8888,
+        "intersection": 7287,
+        "rnal_only": 4582,
+        "airbnb_only": 1601,
+        "another_lisbon_parish": 0,
+        "another_municipality": 363,
+        "no_national_match": 1238,
+        "unresolved_official_geography": 0,
+        "announcements": 17064,
+        "empty_licence": 633,
+        "unrecognised_licence": 3704,
+        "identifiable_number": 12727,
+        "confirmed_rnal_match": 10643,
+        "official_entries": 11869
+      },
+      {
+        "geography": "Ajuda",
+        "rnal": 185,
+        "airbnb": 146,
+        "intersection": 109,
+        "rnal_only": 76,
+        "airbnb_only": 37,
+        "another_lisbon_parish": 2,
+        "another_municipality": 8,
+        "no_national_match": 27,
+        "unresolved_official_geography": 0,
+        "announcements": 244,
+        "empty_licence": 8,
+        "unrecognised_licence": 50,
+        "identifiable_number": 186,
+        "confirmed_rnal_match": 154,
+        "official_entries": 185
+      },
+      {
+        "geography": "Alcântara",
+        "rnal": 233,
+        "airbnb": 164,
+        "intersection": 127,
+        "rnal_only": 106,
+        "airbnb_only": 37,
+        "another_lisbon_parish": 7,
+        "another_municipality": 6,
+        "no_national_match": 24,
+        "unresolved_official_geography": 0,
+        "announcements": 285,
+        "empty_licence": 10,
+        "unrecognised_licence": 64,
+        "identifiable_number": 211,
+        "confirmed_rnal_match": 185,
+        "official_entries": 233
+      },
+      {
+        "geography": "Alvalade",
+        "rnal": 153,
+        "airbnb": 112,
+        "intersection": 81,
+        "rnal_only": 72,
+        "airbnb_only": 31,
+        "another_lisbon_parish": 3,
+        "another_municipality": 6,
+        "no_national_match": 22,
+        "unresolved_official_geography": 0,
+        "announcements": 258,
+        "empty_licence": 13,
+        "unrecognised_licence": 77,
+        "identifiable_number": 168,
+        "confirmed_rnal_match": 120,
+        "official_entries": 153
+      },
+      {
+        "geography": "Areeiro",
+        "rnal": 147,
+        "airbnb": 115,
+        "intersection": 69,
+        "rnal_only": 78,
+        "airbnb_only": 46,
+        "another_lisbon_parish": 15,
+        "another_municipality": 9,
+        "no_national_match": 22,
+        "unresolved_official_geography": 0,
+        "announcements": 466,
+        "empty_licence": 13,
+        "unrecognised_licence": 181,
+        "identifiable_number": 272,
+        "confirmed_rnal_match": 214,
+        "official_entries": 147
+      },
+      {
+        "geography": "Arroios",
+        "rnal": 1194,
+        "airbnb": 949,
+        "intersection": 659,
+        "rnal_only": 535,
+        "airbnb_only": 290,
+        "another_lisbon_parish": 76,
+        "another_municipality": 53,
+        "no_national_match": 161,
+        "unresolved_official_geography": 0,
+        "announcements": 2154,
+        "empty_licence": 96,
+        "unrecognised_licence": 458,
+        "identifiable_number": 1600,
+        "confirmed_rnal_match": 1347,
+        "official_entries": 1194
+      },
+      {
+        "geography": "Avenidas Novas",
+        "rnal": 344,
+        "airbnb": 239,
+        "intersection": 170,
+        "rnal_only": 174,
+        "airbnb_only": 69,
+        "another_lisbon_parish": 12,
+        "another_municipality": 15,
+        "no_national_match": 42,
+        "unresolved_official_geography": 0,
+        "announcements": 863,
+        "empty_licence": 18,
+        "unrecognised_licence": 348,
+        "identifiable_number": 497,
+        "confirmed_rnal_match": 401,
+        "official_entries": 344
+      },
+      {
+        "geography": "Beato",
+        "rnal": 95,
+        "airbnb": 71,
+        "intersection": 51,
+        "rnal_only": 44,
+        "airbnb_only": 20,
+        "another_lisbon_parish": 6,
+        "another_municipality": 8,
+        "no_national_match": 6,
+        "unresolved_official_geography": 0,
+        "announcements": 131,
+        "empty_licence": 3,
+        "unrecognised_licence": 29,
+        "identifiable_number": 99,
+        "confirmed_rnal_match": 89,
+        "official_entries": 95
+      },
+      {
+        "geography": "Belém",
+        "rnal": 199,
+        "airbnb": 158,
+        "intersection": 116,
+        "rnal_only": 83,
+        "airbnb_only": 42,
+        "another_lisbon_parish": 5,
+        "another_municipality": 13,
+        "no_national_match": 24,
+        "unresolved_official_geography": 0,
+        "announcements": 281,
+        "empty_licence": 18,
+        "unrecognised_licence": 54,
+        "identifiable_number": 209,
+        "confirmed_rnal_match": 180,
+        "official_entries": 199
+      },
+      {
+        "geography": "Benfica",
+        "rnal": 50,
+        "airbnb": 43,
+        "intersection": 20,
+        "rnal_only": 30,
+        "airbnb_only": 23,
+        "another_lisbon_parish": 3,
+        "another_municipality": 5,
+        "no_national_match": 15,
+        "unresolved_official_geography": 0,
+        "announcements": 81,
+        "empty_licence": 2,
+        "unrecognised_licence": 30,
+        "identifiable_number": 49,
+        "confirmed_rnal_match": 34,
+        "official_entries": 50
+      },
+      {
+        "geography": "Campo de Ourique",
+        "rnal": 280,
+        "airbnb": 212,
+        "intersection": 163,
+        "rnal_only": 117,
+        "airbnb_only": 49,
+        "another_lisbon_parish": 12,
+        "another_municipality": 9,
+        "no_national_match": 28,
+        "unresolved_official_geography": 0,
+        "announcements": 473,
+        "empty_licence": 26,
+        "unrecognised_licence": 157,
+        "identifiable_number": 290,
+        "confirmed_rnal_match": 256,
+        "official_entries": 280
+      },
+      {
+        "geography": "Campolide",
+        "rnal": 125,
+        "airbnb": 124,
+        "intersection": 86,
+        "rnal_only": 39,
+        "airbnb_only": 38,
+        "another_lisbon_parish": 4,
+        "another_municipality": 10,
+        "no_national_match": 24,
+        "unresolved_official_geography": 0,
+        "announcements": 313,
+        "empty_licence": 9,
+        "unrecognised_licence": 65,
+        "identifiable_number": 239,
+        "confirmed_rnal_match": 196,
+        "official_entries": 125
+      },
+      {
+        "geography": "Carnide",
+        "rnal": 34,
+        "airbnb": 24,
+        "intersection": 18,
+        "rnal_only": 16,
+        "airbnb_only": 6,
+        "another_lisbon_parish": 0,
+        "another_municipality": 0,
+        "no_national_match": 6,
+        "unresolved_official_geography": 0,
+        "announcements": 33,
+        "empty_licence": 2,
+        "unrecognised_licence": 5,
+        "identifiable_number": 26,
+        "confirmed_rnal_match": 19,
+        "official_entries": 34
+      },
+      {
+        "geography": "Estrela",
+        "rnal": 717,
+        "airbnb": 552,
+        "intersection": 413,
+        "rnal_only": 304,
+        "airbnb_only": 139,
+        "another_lisbon_parish": 36,
+        "another_municipality": 22,
+        "no_national_match": 81,
+        "unresolved_official_geography": 0,
+        "announcements": 974,
+        "empty_licence": 33,
+        "unrecognised_licence": 224,
+        "identifiable_number": 717,
+        "confirmed_rnal_match": 597,
+        "official_entries": 717
+      },
+      {
+        "geography": "Lumiar",
+        "rnal": 86,
+        "airbnb": 63,
+        "intersection": 45,
+        "rnal_only": 41,
+        "airbnb_only": 18,
+        "another_lisbon_parish": 3,
+        "another_municipality": 1,
+        "no_national_match": 14,
+        "unresolved_official_geography": 0,
+        "announcements": 138,
+        "empty_licence": 8,
+        "unrecognised_licence": 58,
+        "identifiable_number": 72,
+        "confirmed_rnal_match": 53,
+        "official_entries": 86
+      },
+      {
+        "geography": "Marvila",
+        "rnal": 75,
+        "airbnb": 58,
+        "intersection": 30,
+        "rnal_only": 45,
+        "airbnb_only": 28,
+        "another_lisbon_parish": 10,
+        "another_municipality": 5,
+        "no_national_match": 13,
+        "unresolved_official_geography": 0,
+        "announcements": 106,
+        "empty_licence": 3,
+        "unrecognised_licence": 35,
+        "identifiable_number": 68,
+        "confirmed_rnal_match": 51,
+        "official_entries": 75
+      },
+      {
+        "geography": "Misericórdia",
+        "rnal": 2185,
+        "airbnb": 1624,
+        "intersection": 1313,
+        "rnal_only": 872,
+        "airbnb_only": 311,
+        "another_lisbon_parish": 62,
+        "another_municipality": 40,
+        "no_national_match": 209,
+        "unresolved_official_geography": 0,
+        "announcements": 2588,
+        "empty_licence": 110,
+        "unrecognised_licence": 385,
+        "identifiable_number": 2093,
+        "confirmed_rnal_match": 1772,
+        "official_entries": 2185
+      },
+      {
+        "geography": "Olivais",
+        "rnal": 110,
+        "airbnb": 77,
+        "intersection": 57,
+        "rnal_only": 53,
+        "airbnb_only": 20,
+        "another_lisbon_parish": 0,
+        "another_municipality": 2,
+        "no_national_match": 18,
+        "unresolved_official_geography": 0,
+        "announcements": 197,
+        "empty_licence": 8,
+        "unrecognised_licence": 85,
+        "identifiable_number": 104,
+        "confirmed_rnal_match": 81,
+        "official_entries": 110
+      },
+      {
+        "geography": "Parque das Nações",
+        "rnal": 199,
+        "airbnb": 167,
+        "intersection": 97,
+        "rnal_only": 102,
+        "airbnb_only": 70,
+        "another_lisbon_parish": 8,
+        "another_municipality": 19,
+        "no_national_match": 43,
+        "unresolved_official_geography": 0,
+        "announcements": 335,
+        "empty_licence": 24,
+        "unrecognised_licence": 117,
+        "identifiable_number": 194,
+        "confirmed_rnal_match": 143,
+        "official_entries": 199
+      },
+      {
+        "geography": "Penha de França",
+        "rnal": 323,
+        "airbnb": 288,
+        "intersection": 187,
+        "rnal_only": 136,
+        "airbnb_only": 101,
+        "another_lisbon_parish": 22,
+        "another_municipality": 16,
+        "no_national_match": 63,
+        "unresolved_official_geography": 0,
+        "announcements": 640,
+        "empty_licence": 21,
+        "unrecognised_licence": 148,
+        "identifiable_number": 471,
+        "confirmed_rnal_match": 339,
+        "official_entries": 323
+      },
+      {
+        "geography": "Santa Clara",
+        "rnal": 11,
+        "airbnb": 11,
+        "intersection": 3,
+        "rnal_only": 8,
+        "airbnb_only": 8,
+        "another_lisbon_parish": 0,
+        "another_municipality": 3,
+        "no_national_match": 5,
+        "unresolved_official_geography": 0,
+        "announcements": 37,
+        "empty_licence": 2,
+        "unrecognised_licence": 24,
+        "identifiable_number": 11,
+        "confirmed_rnal_match": 6,
+        "official_entries": 11
+      },
+      {
+        "geography": "Santa Maria Maior",
+        "rnal": 3157,
+        "airbnb": 2355,
+        "intersection": 1958,
+        "rnal_only": 1199,
+        "airbnb_only": 397,
+        "another_lisbon_parish": 97,
+        "another_municipality": 67,
+        "no_national_match": 233,
+        "unresolved_official_geography": 0,
+        "announcements": 3572,
+        "empty_licence": 119,
+        "unrecognised_licence": 461,
+        "identifiable_number": 2992,
+        "confirmed_rnal_match": 2659,
+        "official_entries": 3157
+      },
+      {
+        "geography": "Santo António",
+        "rnal": 936,
+        "airbnb": 729,
+        "intersection": 532,
+        "rnal_only": 404,
+        "airbnb_only": 197,
+        "another_lisbon_parish": 38,
+        "another_municipality": 30,
+        "no_national_match": 129,
+        "unresolved_official_geography": 0,
+        "announcements": 1486,
+        "empty_licence": 43,
+        "unrecognised_licence": 367,
+        "identifiable_number": 1076,
+        "confirmed_rnal_match": 850,
+        "official_entries": 936
+      },
+      {
+        "geography": "São Domingos de Benfica",
+        "rnal": 94,
+        "airbnb": 80,
+        "intersection": 58,
+        "rnal_only": 36,
+        "airbnb_only": 22,
+        "another_lisbon_parish": 2,
+        "another_municipality": 6,
+        "no_national_match": 14,
+        "unresolved_official_geography": 0,
+        "announcements": 159,
+        "empty_licence": 6,
+        "unrecognised_licence": 53,
+        "identifiable_number": 100,
+        "confirmed_rnal_match": 80,
+        "official_entries": 94
+      },
+      {
+        "geography": "São Vicente",
+        "rnal": 937,
+        "airbnb": 804,
+        "intersection": 597,
+        "rnal_only": 340,
+        "airbnb_only": 207,
+        "another_lisbon_parish": 59,
+        "another_municipality": 30,
+        "no_national_match": 118,
+        "unresolved_official_geography": 0,
+        "announcements": 1250,
+        "empty_licence": 38,
+        "unrecognised_licence": 229,
+        "identifiable_number": 983,
+        "confirmed_rnal_match": 817,
+        "official_entries": 937
+      },
+      {
+        "geography": "Geografia não identificada",
+        "rnal": 0,
+        "airbnb": 0,
+        "intersection": 0,
+        "rnal_only": 0,
+        "airbnb_only": 0,
+        "another_lisbon_parish": 0,
+        "another_municipality": 0,
+        "no_national_match": 0,
+        "unresolved_official_geography": 0,
+        "announcements": 0,
+        "empty_licence": 0,
+        "unrecognised_licence": 0,
+        "identifiable_number": 0,
+        "confirmed_rnal_match": 0,
+        "official_entries": 0
+      }
+    ],
+    "diagnostics": {
+      "national_entries": 111776,
+      "unparseable_official_numbers": 0,
+      "duplicate_number_extra_entries": 0,
+      "official_entries_unresolved_municipality": 0,
+      "lisbon_entries_unresolved_parish": 0
+    },
+    "run_id": "2026-06-23__2026-09-26",
+    "source_files": {
+      "airbnb": {
+        "sha256": "e7a8d69b67dcef47c7659acd6e268570d1ed9db57ef6ac16bea6259003bbbea8"
+      },
+      "official": {
+        "sha256": "1d15ad8e799ea426f2b5a246db4f6b80544d7dbfc5b2d1d67bc5de06fb023fc8"
+      }
+    },
+    "methodology_version": "2.1.0",
+    "source_dates": {
+      "airbnb_snapshot_date": "2026-06-23",
+      "official_register_date": "2026-07-30",
+      "official_register_download_date": "2026-09-26"
+    }
+  }
+}

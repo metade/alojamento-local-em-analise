@@ -8,7 +8,8 @@ module AlojamentoLocal
 
   # Calculates distinct RNAL/Airbnb registration sets, their geographic
   # differences, and separate announcement/official-entry counts for Lisbon
-  # and its parishes. These aggregates are saved in registration_metrics.json
+  # and its parishes. Public aggregates live in snapshot.json; local runs keep
+  # registration_metrics.json
   # for the report and site; classification and establishment estimates live
   # in the main analysis.
   module RegistrationMetrics

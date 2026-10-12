@@ -62,6 +62,8 @@ layout: default
 </div></section>
 
 <section class="border-t border-[var(--color-line)] py-8"><div class="wrap flex flex-wrap items-center gap-x-8 gap-y-4 text-sm">
-  <a class="font-semibold text-[var(--color-blue)] underline underline-offset-4" href="{{ '/runs/' | append: site.data.site.run_id | append: '/' | relative_url }}">Consultar os dados agregados deste snapshot →</a>
+  {% assign public_data_file = "snapshot.json" %}
+  {% if site.data.site.metadata.output_schema_version == "4.0.0" %}{% assign public_data_file = "metadata.json" %}{% endif %}
+  <a class="font-semibold text-[var(--color-blue)] underline underline-offset-4" href="{{ '/runs/' | append: site.data.site.run_id | append: '/' | append: public_data_file | relative_url }}">Consultar os dados agregados deste snapshot →</a>
   <a class="text-[var(--color-blue)] underline underline-offset-4" href="{{ '/freguesias/' | relative_url }}">Comparar freguesias →</a>
 </div></section>
