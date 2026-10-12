@@ -6,7 +6,7 @@ require_relative "../lib/alojamento_local"
 require_relative "../lib/alojamento_local/site_data"
 
 class PublicSnapshotTest < Minitest::Test
-  FIXTURE = File.expand_path("fixtures/pipeline/expected/public", __dir__)
+  FIXTURE = File.expand_path("fixtures/pipeline/legacy_public", __dir__)
   RUN_ID = "2024-06-01__2024-07-01"
 
   def with_snapshot
@@ -106,10 +106,11 @@ class PublicSnapshotTest < Minitest::Test
   def consolidate(path)
     legacy = AlojamentoLocal::PublicSnapshot::Loader.new.load(path)
     data = JSON.parse(JSON.generate(legacy.to_h))
-    data["metadata"]["output_schema_version"] = "5.0.0"
+    data["metadata"]["output_schema_version"] = "6.0.0"
+    data["metadata"]["analysis_version"] = AlojamentoLocal::ANALYSIS_VERSION
     snapshot = AlojamentoLocal::PublicSnapshot.from_document(data)
     File.write(File.join(path, "snapshot.json"), JSON.pretty_generate(data) + "\n")
-    snapshot.write_exports(path)
+    File.write(File.join(path, "metadata.json"), JSON.pretty_generate(data.fetch("metadata")) + "\n")
     snapshot
   end
 
@@ -120,7 +121,7 @@ class PublicSnapshotTest < Minitest::Test
       quotes: File.expand_path("fixtures/pipeline/sources/quotes.json", __dir__))
   end
 
-  def test_old_and_new_formats_have_equivalent_reports_site_data_and_exports
+  def test_old_and_new_formats_have_equivalent_report_contents_and_site_data
     with_snapshot do |root, path|
       old = AlojamentoLocal::PublicSnapshot::Loader.new.load(path)
       old_site = builder(root).site_data([path])
@@ -128,7 +129,12 @@ class PublicSnapshotTest < Minitest::Test
       new_snapshot = consolidate(path)
       new_site = builder(root).site_data([path])
       old_site = JSON.parse(JSON.generate(old_site))
-      old_site["metadata"]["output_schema_version"] = "5.0.0" # Normalize only the intentional schema bump.
+      old_site["metadata"]["output_schema_version"] = "6.0.0"
+      old_site["metadata"]["analysis_version"] = AlojamentoLocal::ANALYSIS_VERSION
+      # Normalize the intentional version/reference changes, preserving tables.
+      original_report = original_report.sub("análise 3.3.0", "análise #{AlojamentoLocal::ANALYSIS_VERSION}")
+        .sub("<code>metadata.json</code>", "<a href='snapshot.json'>snapshot.json</a>")
+        .sub("unidades e definições em registration_metrics.json", "unidades e definições em snapshot.json")
       assert_equal old_site, new_site
       assert_equal original_report, AlojamentoLocal::Report.complete_html(*new_snapshot.report_arguments)
       File.write(File.join(path, "report.html"), "Incomplete report")
@@ -138,26 +144,21 @@ class PublicSnapshotTest < Minitest::Test
       (AlojamentoLocal::PublicSnapshot::FIELDS - ["metadata"]).each do |field|
         assert_equal old.public_send(field), new_snapshot.public_send(field), field
       end
-      new_snapshot.validate_exports!(path)
-      assert_same new_snapshot, new_snapshot.validate_exports!(path)
     end
   end
 
-  def test_consolidated_data_is_authoritative_and_exports_are_checked_at_publication
+  def test_consolidated_document_and_report_are_sufficient_for_publication
     with_snapshot do |root, path|
       snapshot = consolidate(path)
       expected = builder(root).site_data([path])
-      File.write(File.join(path, "listings.csv"), "corrupt export")
+      %w[metadata.json summary.json registration_metrics.json listings.csv licence_groups.csv freguesias.csv].each { |file| FileUtils.rm(File.join(path, file)) }
+      assert_equal %w[report.html snapshot.json], Dir.children(path).sort
       assert_equal expected, builder(root).site_data([path])
       assert_equal snapshot.to_h, AlojamentoLocal::PublicSnapshot::Loader.new.load(path).to_h
-      assert_raises(RuntimeError) { snapshot.validate_exports!(path) }
-      assert_raises(RuntimeError) { AlojamentoLocal::Analysis.validate_public_outputs!(path) }
+      AlojamentoLocal::Analysis.validate_public_outputs!(path)
       FileUtils.cp(File.expand_path("../NOTICE", __dir__), File.join(path, "NOTICE"))
       output, status = Open3.capture2e(RbConfig.ruby, File.expand_path("../scripts/audit_publication.rb", __dir__), "--artifact", path)
-      refute status.success?
-      assert_includes output, "Snapshot export differs: listings.csv"
-      AlojamentoLocal::PublicSnapshot::EXPORT_FILES.each { |file| FileUtils.rm(File.join(path, file)) }
-      assert_equal expected, builder(root).site_data([path])
+      assert status.success?, output
     end
   end
 
@@ -192,23 +193,33 @@ class PublicSnapshotTest < Minitest::Test
     end
   end
 
-  def test_reuse_requires_valid_authoritative_data_and_complete_matching_exports
+  def test_reuse_requires_current_document_and_report_without_exports
     with_snapshot do |_, path|
       snapshot = consolidate(path)
       hashes = %w[airbnb official].map { |source| snapshot.metadata.fetch("source_files").fetch(source).fetch("sha256") }
+      %w[metadata.json summary.json registration_metrics.json listings.csv licence_groups.csv freguesias.csv].each { |file| FileUtils.rm(File.join(path, file)) }
       assert AlojamentoLocal::Analysis.public_run_current?(path, hashes)
-      File.write(File.join(path, "summary.json"), "stale export")
+      FileUtils.rm(File.join(path, "report.html"))
       refute AlojamentoLocal::Analysis.public_run_current?(path, hashes)
-      snapshot.write_exports(path)
-      FileUtils.rm(File.join(path, "freguesias.csv"))
-      refute AlojamentoLocal::Analysis.public_run_current?(path, hashes)
-      snapshot.write_exports(path)
+      File.write(File.join(path, "report.html"), AlojamentoLocal::Report.complete_html(*snapshot.report_arguments))
       mutate_json(path, "snapshot.json") { |data| data["summary"]["listings"] += 1 }
       assert_raises(RuntimeError) { AlojamentoLocal::Analysis.public_run_current?(path, hashes) }
-      FileUtils.rm(File.join(path, "snapshot.json"))
-      mutate_json(path, "metadata.json") { |data| data["output_schema_version"] = "4.0.0" }
-      refute AlojamentoLocal::Analysis.public_run_current?(path, hashes)
       assert_raises(RuntimeError) { AlojamentoLocal::Analysis.public_run_current?(path, ["0" * 64, hashes.last]) }
+    end
+  end
+
+  def test_previous_consolidated_schema_loads_without_its_exports_but_is_not_reused
+    with_snapshot do |_, path|
+      snapshot = consolidate(path)
+      data = JSON.parse(JSON.generate(snapshot.to_h))
+      data["schema_version"] = data["metadata"]["output_schema_version"] = "5.0.0"
+      File.write(File.join(path, "snapshot.json"), JSON.generate(data))
+      %w[metadata.json summary.json registration_metrics.json listings.csv licence_groups.csv freguesias.csv].each { |file| FileUtils.rm(File.join(path, file)) }
+      loaded = AlojamentoLocal::PublicSnapshot::Loader.new.load(path)
+      assert_equal data, loaded.to_h
+      assert_equal snapshot.registration_metrics, loaded.registration_metrics
+      hashes = %w[airbnb official].map { |source| loaded.metadata.fetch("source_files").fetch(source).fetch("sha256") }
+      refute AlojamentoLocal::Analysis.public_run_current?(path, hashes)
     end
   end
 

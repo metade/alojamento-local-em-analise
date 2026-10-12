@@ -5,7 +5,7 @@ require "fileutils"
 require "json"
 
 class RegeneratePublicReportTest < Minitest::Test
-  FIXTURE = File.expand_path("fixtures/pipeline/expected/public", __dir__)
+  FIXTURE = File.expand_path("fixtures/pipeline/legacy_public", __dir__)
   SCRIPT = File.expand_path("../scripts/regenerate_public_report.rb", __dir__)
 
   def with_snapshot

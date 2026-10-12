@@ -1,5 +1,5 @@
 {
-  "schema_version": "5.0.0",
+  "schema_version": "6.0.0",
   "metadata": {
     "run_id": "2024-06-01__2024-07-01",
     "source_urls": {
@@ -21,9 +21,9 @@
     },
     "git_commit": "<git_commit>",
     "git_worktree_dirty": "<git_worktree_dirty>",
-    "analysis_version": "3.3.0",
+    "analysis_version": "3.4.0",
     "methodology_version": "2.1.0",
-    "output_schema_version": "5.0.0",
+    "output_schema_version": "6.0.0",
     "mode": "public"
   },
   "summary": {

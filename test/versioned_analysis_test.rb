@@ -62,27 +62,17 @@ class VersionedAnalysisTest < Minitest::Test
       result = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "public", output_root: File.join(dir, "snapshots"), history_path: File.join(dir, "history", "summary.csv"))
       run_dir = result[:path]
       assert_equal "2026-06-23__2026-09-17", result[:run_id]
-      assert_equal %w[snapshot.json metadata.json report.html summary.json listings.csv licence_groups.csv freguesias.csv registration_metrics.json].sort, Dir.children(run_dir).sort
-      public_listings = CSV.read(File.join(run_dir, "listings.csv"), headers: true)
+      assert_equal %w[snapshot.json report.html].sort, Dir.children(run_dir).sort
+      snapshot = AlojamentoLocal::PublicSnapshot::Loader.new.load(run_dir)
+      public_listings = snapshot.published_announcement_rows
       assert_equal 3, public_listings.length
       assert_equal 1, public_listings.find { |row| row["classification"] == "sem licença" }["listings"].to_i
       assert_equal 1, public_listings.find { |row| row["classification"] == "sem licença identificável" }["listings"].to_i
-      summary = JSON.parse(File.read(File.join(run_dir, "summary.json")))
-      assert_equal 1, summary.fetch("official_registers_lisbon")
-      assert_equal "2.1.0", summary.fetch("methodology_version")
-      assert_equal AlojamentoLocal::PUBLIC_CSV_SCHEMAS["listings.csv"], public_listings.headers
-      refute_includes public_listings.headers, "host_id"
-      refute public_listings.to_csv.match?(%r{https?://|/rooms/})
-      AlojamentoLocal::PUBLIC_CSV_SCHEMAS.each do |filename, headers|
-        public_csv = CSV.read(File.join(run_dir, filename), headers: true)
-        assert_equal headers, public_csv.headers
-        refute public_csv.to_csv.match?(%r{https?://|/rooms/})
-      end
-      metadata = JSON.parse(File.read(File.join(run_dir, "metadata.json")))
-      refute metadata.to_s.match?(/host_id|listing_url|licensa_raw|latitude|longitude|official_address/i)
-      refute metadata.to_s.include?("path")
+      assert_equal 1, snapshot.summary.fetch("official_registers_lisbon")
+      assert_equal "2.1.0", snapshot.summary.fetch("methodology_version")
+      assert_equal "6.0.0", snapshot.metadata.fetch("output_schema_version")
+      refute JSON.generate(snapshot.to_h).match?(/host_id|listing_url|licensa_raw|latitude|longitude|official_address/i)
       assert_raises(RuntimeError) { AlojamentoLocal::Analysis.append_history(File.join(dir, "history", "summary.csv"), result[:summary]) }
-      assert_equal "5.0.0", JSON.parse(File.read(File.join(run_dir, "metadata.json"))) ["output_schema_version"]
       report = File.read(File.join(run_dir, "report.html"))
       assert_operator report.length, :>, 1_000
       assert_includes report, "Exemplos ilustrativos"
@@ -166,8 +156,8 @@ class VersionedAnalysisTest < Minitest::Test
       assert_equal 4, rows.size
       assert_equal 1, rows.sum { |row| row["licence_groups"].to_i }
       assert_equal "1", rows.find { |row| row["range"] == "2_5_km" }["licence_groups"]
-      assert_equal 2, CSV.read(File.join(result[:path], "listings.csv"), headers: true).sum { |row| row["listings"].to_i }
-      assert_equal %w[snapshot.json metadata.json report.html summary.json listings.csv licence_groups.csv freguesias.csv registration_metrics.json].sort, Dir.children(result[:path]).sort
+      assert_equal 2, AlojamentoLocal::PublicSnapshot::Loader.new.load(result[:path]).published_announcement_rows.sum { |row| row["listings"].to_i }
+      assert_equal %w[snapshot.json report.html].sort, Dir.children(result[:path]).sort
       assert_raises(RuntimeError) { AlojamentoLocal::Analysis.append_distance_history(File.join(dir, "history", "distance_ranges.csv"), result[:run_id], []) }
     end
   end
@@ -195,7 +185,7 @@ class VersionedAnalysisTest < Minitest::Test
       assert_equal({["resolved", "Norte"] => 2}, counts)
       assert_equal 2, counts.values.sum
       assert rows.all? { |row| row["region_method"] == "official_register_nutsii_v1" }
-      assert_equal 2, CSV.read(File.join(result[:path], "listings.csv"), headers: true).select { |row| row["classification"] == "licença oficial fora de Lisboa" }.sum { |row| row["listings"].to_i }
+      assert_equal 2, AlojamentoLocal::PublicSnapshot::Loader.new.load(result[:path]).published_announcement_rows.select { |row| row["classification"] == "licença oficial fora de Lisboa" }.sum { |row| row["listings"].to_i }
       assert_raises(RuntimeError) { AlojamentoLocal::Analysis.append_outside_region_history(File.join(dir, "history", "outside_regions.csv"), result[:run_id], []) }
     end
   end

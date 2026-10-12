@@ -52,7 +52,7 @@ rescue Errno::ENOENT
 end
 
 # Parse the nested document: a CSV-header scan cannot detect nested fields.
-def audit_snapshot(text, label, directory: nil)
+def audit_snapshot(text, label)
   errors = []
   begin
     data = JSON.parse(text)
@@ -69,8 +69,7 @@ def audit_snapshot(text, label, directory: nil)
     inspect_keys.call(data)
     snapshot = AlojamentoLocal::PublicSnapshot.from_document(data)
     AlojamentoLocal::PublicSnapshot::Validator.new.validate!(snapshot,
-      expected_run_id: snapshot.run_id, schema: AlojamentoLocal::PublicSnapshot::SCHEMA_VERSION)
-    snapshot.validate_exports!(directory) if directory
+      expected_run_id: snapshot.run_id, schema: data.fetch("schema_version"))
   rescue => error
     errors << "snapshot inválido em #{label}: #{error.message}"
   end
@@ -98,7 +97,7 @@ def audit_worktree
     errors << "padrão de identificador em #{path}" if text.match?(AIRBNB_IDENTIFIER)
     errors << "referência a fonte local em #{path}" if text.match?(RAW_SOURCE_PATH)
 
-    errors.concat(audit_snapshot(text, path, directory: File.dirname(path))) if File.basename(path) == "snapshot.json"
+    errors.concat(audit_snapshot(text, path)) if File.basename(path) == "snapshot.json"
 
     if artifact_file?(path) && File.basename(path) == "metadata.json"
       begin
@@ -165,7 +164,7 @@ def audit_artifact(root)
     errors << "padrão de identificador em #{relative}" if text.match?(AIRBNB_IDENTIFIER)
     errors << "referência a fonte local em #{relative}" if text.match?(RAW_SOURCE_PATH)
 
-    errors.concat(audit_snapshot(text, relative, directory: File.dirname(path))) if File.basename(path) == "snapshot.json"
+    errors.concat(audit_snapshot(text, relative)) if File.basename(path) == "snapshot.json"
 
     if File.basename(path) == "metadata.json"
       begin

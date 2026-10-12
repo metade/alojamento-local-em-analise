@@ -122,11 +122,12 @@ title: Metodologia e proveniência
         <div><dt class="font-semibold">RNAL</dt><dd class="mt-1">Descarregado em {{ d.metadata.source_dates.official_register_download_date }} · <a class="text-[var(--color-blue)] underline underline-offset-4" href="{{ d.metadata.source_urls.official }}">Turismo de Portugal ↗</a></dd></div>
         <div><dt class="font-semibold">Versões</dt><dd class="mt-1">Metodologia {{ s.methodology_version }} · análise {{ d.metadata.analysis_version }}</dd></div>
       </dl>
-      <p>Cada par de datas tem uma análise pública atual; o Git conserva as versões anteriores. As comparações históricas só são feitas entre métricas com a mesma versão da metodologia. O ficheiro de metadados regista URLs, datas, hashes SHA-256 das fontes, commit e versões da análise, metodologia e esquema de saída.</p>
+      <p>Cada par de datas tem uma análise pública atual; o Git conserva as versões anteriores. As comparações históricas só são feitas entre métricas com a mesma versão da metodologia. O documento de dados regista URLs, datas, hashes SHA-256 das fontes, commit e versões da análise, metodologia e esquema de saída.</p>
       <p>Os ficheiros públicos contêm apenas dados agregados. Não incluem identificadores de anúncios ou anfitriões, URLs de anúncios, nomes, endereços, coordenadas exatas ou valores originais de licença.</p>
+      {% assign public_data_file = "snapshot.json" %}
+      {% if d.metadata.output_schema_version == "4.0.0" %}{% assign public_data_file = "metadata.json" %}{% endif %}
       <div class="mt-6 flex flex-wrap gap-x-6 gap-y-4 text-sm text-[var(--color-blue)] [&_a]:underline [&_a]:underline-offset-4">
-        <a href="{{ '/runs/' | append: d.run_id | append: '/' | relative_url }}">Dados agregados →</a>
-        <a href="{{ '/runs/' | append: d.run_id | append: '/metadata.json' | relative_url }}">Metadados e hashes →</a>
+        <a href="{{ '/runs/' | append: d.run_id | append: '/' | append: public_data_file | relative_url }}">Dados, metadados e hashes →</a>
         <a href="{{ '/runs/' | append: d.run_id | append: '/report.html' | relative_url }}">Relatório técnico ↗</a>
       </div>
     </section>

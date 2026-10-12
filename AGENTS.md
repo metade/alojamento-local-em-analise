@@ -42,7 +42,7 @@ data/snapshots/<airbnb-snapshot-date>__<official-download-date>/
 
 Public outputs use one folder per dated source pair. Reanalysis validates new outputs before replacing that folder and its history rows; Git retains previously committed versions. Other date pairs remain unchanged. Local runs remain immutable. Automated workflows may use `bundle exec ruby run_me.rb --mode public --reuse-existing`: reuse requires matching source hashes, analysis/methodology/schema versions and all required files. Outdated outputs are recalculated in the same folder; changed source hashes for an existing date pair are rejected.
 
-Local runs use distinct names such as `listings_detailed.csv`, `licence_groups_detailed.csv`, `metadata_local.json`, `summary_local.json`, and `report_local.html`; they may contain diagnostic fields and are ignored by Git. Public runs use authoritative `snapshot.json` (schema 5.0.0), with derived download exports `metadata.json`, `summary.json`, `listings.csv`, `licence_groups.csv`, `freguesias.csv`, `registration_metrics.json`, and `report.html`. The loader also reads legacy split-file schema 4.0.0 with supported registration metrics; it never falls back to exports when a consolidated document is present or required by metadata. Publication and reuse validate the document and byte equivalence of all exports. Set `GENERATE_PDF=1` to create the optional PDF derivative when `wkhtmltopdf` or `weasyprint` is installed. Public history in `data/history/` keeps the current summary and auxiliary rows for each dated source pair, replacing only that pair on reanalysis. Local history in `data/private/history/` is append-only.
+Local runs use distinct names such as `listings_detailed.csv`, `licence_groups_detailed.csv`, `metadata_local.json`, `summary_local.json`, and `report_local.html`; they may contain diagnostic fields and are ignored by Git. Public runs contain only authoritative `snapshot.json` (schema 6.0.0) and `report.html`. No separate CSV/JSON downloads are generated. The loader also reads consolidated schema 5.0.0 without its former exports and legacy split-file schema 4.0.0 with supported registration metrics; a present consolidated document is always authoritative. Publication validates its schema, provenance and aggregates; reuse requires current hashes/versions, the document and the HTML report. Set `GENERATE_PDF=1` to create the optional PDF derivative when `wkhtmltopdf` or `weasyprint` is installed. Public history in `data/history/` keeps the current summary and auxiliary rows for each dated source pair, replacing only that pair on reanalysis. Local history in `data/private/history/` is append-only.
 
 Run the full test suite (`bundle exec rake` also runs it by default):
 
@@ -60,7 +60,7 @@ ruby -c lib/alojamento_local/data.rb
 
 ## Data and reproducibility
 
-Raw data under `data_sources/**/*.csv`, detailed local results under `data/private/`, and cached files under `tmp/` are intentionally ignored by Git. Transformed, versioned outputs under `data/snapshots/` and `data/history/` are publishable project outputs and may be committed. Snapshot documents and CSV exports are aggregate-only and must not contain listing/host identifiers, listing URLs, names, addresses, exact coordinates, or raw licence strings. Do not commit large raw upstream datasets.
+Raw data under `data_sources/**/*.csv`, detailed local results under `data/private/`, and cached files under `tmp/` are intentionally ignored by Git. Transformed, versioned outputs under `data/snapshots/` and `data/history/` are publishable project outputs and may be committed. Snapshot documents and legacy CSVs are aggregate-only and must not contain listing/host identifiers, listing URLs, names, addresses, exact coordinates, or raw licence strings. Do not commit large raw upstream datasets.
 
 The GitHub Actions workflow in `.github/workflows/quarterly-analysis.yml` runs quarterly or through `workflow_dispatch`, tests before analysis, explicitly selects `--mode public --reuse-existing`, stages and audits only the sanitised `data/snapshots/` and `data/history/` outputs before committing them, builds the site from public snapshots, and publishes the site as a GitHub Pages artifact. Reusing an up-to-date run skips analysis; outdated versions are recalculated for the same dated source pair. It must never commit local/detailed outputs or the generated site.
 
@@ -70,7 +70,7 @@ Before committing changes to `data/snapshots/`, `data/history/`, or publication 
 
 The Airbnb snapshot is discovered from the public Inside Airbnb data page at runtime. `latest_airbnb_snapshot` must select the latest Lisbon `listings.csv.gz` entry and fail clearly if the page format changes. The run ID uses the date in the source filename, rather than assuming that the maximum listing-level `last_scraped` date is the archive date.
 
-The official register is downloaded with the current date in its filename. The analysis uses the dated file returned by the downloader, not an older undated copy. `metadata.json` records source URLs, source dates, SHA-256 hashes, Git commit, analysis version, methodology version, and output schema version.
+The official register is downloaded with the current date in its filename. The analysis uses the dated file returned by the downloader, not an older undated copy. The `metadata` section of `snapshot.json` records source URLs, source dates, SHA-256 hashes, Git commit, analysis version, methodology version, and output schema version.
 
 Airbnb `last_scraped` values are listing-level collection dates and may span several days. They are not necessarily the same as the archive snapshot date.
 
@@ -98,7 +98,7 @@ Track deferred work in [TODO.md](TODO.md).
 
 ### Registration statistics
 
-Measured overlap metrics live in versioned `registration_metrics.json` (metric version 1.0.0). See [README.md — Métricas de registo](README.md#métricas-de-registo) and each output's `definitions` for units and limitations. Preserve the homepage and district layout and keep each district RNAL headline consistent with its overlap total.
+Measured overlap metrics live in the `registration_metrics` section of versioned `snapshot.json` (metric version 1.0.0). See [README.md — Métricas de registo](README.md#métricas-de-registo) and each output's `definitions` for units and limitations. Preserve the homepage and district layout and keep each district RNAL headline consistent with its overlap total.
 
 - RNAL and Airbnb sets count distinct normalized AL numbers; announcement counts and official entry counts have separate fields. Never sum parish distinct counts to obtain Lisbon.
 - Use official Concelho/Freguesia for RNAL and observed geography for Airbnb. Retain unknown geography explicitly and qualify local set differences.

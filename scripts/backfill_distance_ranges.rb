@@ -13,7 +13,7 @@ run_id = ARGV.fetch(0)
 run_dir = File.join(root, "data", "snapshots", run_id)
 loader = AlojamentoLocal::PublicSnapshot::Loader.new
 metadata = loader.metadata(run_dir)
-snapshot = loader.load(run_dir) if %w[4.0.0 5.0.0].include?(metadata.fetch("output_schema_version"))
+snapshot = loader.load(run_dir) if %w[4.0.0 5.0.0 6.0.0].include?(metadata.fetch("output_schema_version"))
 # Unmeasured historical schemas predate the shared loader; keep this archive
 # utility available for them without consulting exports of consolidated runs.
 summary = snapshot ? snapshot.summary : JSON.parse(File.read(File.join(run_dir, "summary.json")))

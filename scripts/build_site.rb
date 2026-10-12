@@ -32,7 +32,13 @@ system(*jekyll, chdir: ROOT, exception: true)
 runs.each do |source|
   destination = File.join(SITE, "runs", File.basename(source))
   FileUtils.mkdir_p(destination)
-  downloads = PUBLIC_FILES + %w[registration_metrics.json snapshot.json].select { |file| File.file?(File.join(source, file)) }
+  downloads = if File.file?(File.join(source, "snapshot.json"))
+                PUBLIC_FILES.dup
+              else
+                # Archived split-file runs retain their original download paths.
+                %w[metadata.json summary.json listings.csv licence_groups.csv freguesias.csv report.html registration_metrics.json].select { |file| File.file?(File.join(source, file)) }
+              end
+  downloads << "report.pdf" if File.file?(File.join(source, "report.pdf"))
   downloads.each { |file| FileUtils.cp(File.join(source, file), File.join(destination, file)) }
 end
 FileUtils.cp(File.join(ROOT, "LICENSE"), File.join(SITE, "LICENSE"))

@@ -8,7 +8,8 @@ module AlojamentoLocal
   # Storage-independent, immutable public data. Aggregate counts are integers;
   # identifiable announcement counts are separate from distinct number sets.
   class PublicSnapshot
-    SCHEMA_VERSION = "5.0.0"
+    SCHEMA_VERSION = "6.0.0"
+    DOCUMENT_SCHEMAS = %w[5.0.0 6.0.0].freeze
     LEGACY_SCHEMA_VERSION = "4.0.0"
     FILE = "snapshot.json"
     COUNT_NAMES = {
@@ -22,8 +23,7 @@ module AlojamentoLocal
       "listings.csv" => "announcements_by_parish_and_classification",
       "freguesias.csv" => "parish_totals"
     }.freeze
-    EXPORT_FILES = %w[metadata.json summary.json registration_metrics.json listings.csv licence_groups.csv freguesias.csv].freeze
-    REQUIRED_FILES = [FILE, *EXPORT_FILES, "report.html"].freeze
+    REQUIRED_FILES = [FILE, "report.html"].freeze
     attr_reader(*FIELDS.map(&:to_sym))
 
     def self.rename_counts(rows, mapping = COUNT_NAMES)
@@ -39,7 +39,7 @@ module AlojamentoLocal
     end
 
     def self.from_document(data)
-      raise "Unsupported snapshot schema" unless data.fetch("schema_version") == SCHEMA_VERSION
+      raise "Unsupported snapshot schema" unless DOCUMENT_SCHEMAS.include?(data.fetch("schema_version"))
       raise "Invalid snapshot fields" unless data.keys.sort == ["schema_version", *FIELDS].sort
       new(**FIELDS.to_h { |field| [field.to_sym, data.fetch(field)] })
     end
@@ -55,7 +55,9 @@ module AlojamentoLocal
     end
 
     def to_h
-      {"schema_version" => SCHEMA_VERSION, **FIELDS.to_h { |key| [key, public_send(key)] }}
+      version = metadata.fetch("output_schema_version")
+      version = SCHEMA_VERSION unless DOCUMENT_SCHEMAS.include?(version)
+      {"schema_version" => version, **FIELDS.to_h { |key| [key, public_send(key)] }}
     end
 
     def legacy_rows(field)
@@ -71,39 +73,6 @@ module AlojamentoLocal
         legacy_rows("announcements_by_parish_and_classification"), registration_metrics].map do |value|
         JSON.parse(JSON.generate(value), symbolize_names: true)
       end
-    end
-
-    # All download exports come from this object; consumers never read them
-    # when snapshot.json exists. Publication/reuse verifies them independently.
-    def export_contents
-      contents = %w[metadata summary registration_metrics].to_h do |field|
-        ["#{field}.json", JSON.pretty_generate(public_send(field)) + "\n"]
-      end
-      TABLES.each do |filename, field|
-        headers = PUBLIC_CSV_SCHEMAS.fetch(filename)
-        contents[filename] = CSV.generate do |csv|
-          csv << headers
-          legacy_rows(field).each { |row| csv << headers.map { |key| row.fetch(key) } }
-        end
-      end
-      contents
-    end
-
-    def write_exports(path)
-      export_contents.each { |file, contents| File.write(File.join(path, file), contents) }
-    end
-
-    def exports_current?(path)
-      export_contents.all? do |file, contents|
-        File.file?(File.join(path, file)) && File.binread(File.join(path, file)) == contents.b
-      end
-    end
-
-    def validate_exports!(path)
-      export_contents.each do |file, contents|
-        raise "Snapshot export differs: #{file}" unless File.binread(File.join(path, file)) == contents.b
-      end
-      self
     end
 
     private
@@ -130,7 +99,7 @@ module AlojamentoLocal
 
       def document(path)
         data = load_json(File.join(path, FILE))
-        raise "Unsupported snapshot schema" unless data.fetch("schema_version") == SCHEMA_VERSION
+        raise "Unsupported snapshot schema" unless DOCUMENT_SCHEMAS.include?(data.fetch("schema_version"))
         raise "Invalid snapshot fields" unless data.keys.sort == ["schema_version", *FIELDS].sort
         data
       end
@@ -140,7 +109,7 @@ module AlojamentoLocal
           document(path).fetch("metadata")
         else
           data = load_json(File.join(path, "metadata.json"))
-          raise "Missing authoritative snapshot.json" if data["output_schema_version"] == SCHEMA_VERSION
+          raise "Missing authoritative snapshot.json" if DOCUMENT_SCHEMAS.include?(data["output_schema_version"])
           data
         end
       end
@@ -162,7 +131,7 @@ module AlojamentoLocal
           if File.exist?(File.join(path, FILE))
             data = document(path)
             snapshot = PublicSnapshot.from_document(data)
-            schema = SCHEMA_VERSION
+            schema = data.fetch("schema_version")
           else
             snapshot = read_legacy(path)
             schema = LEGACY_SCHEMA_VERSION

@@ -1,5 +1,5 @@
 {
-  "schema_version": "5.0.0",
+  "schema_version": "6.0.0",
   "metadata": {
     "run_id": "2025-09-21__2025-11-25",
     "source_urls": {
@@ -19,11 +19,11 @@
         "sha256": "7e5f65f823bc8e4af6bcd9add13e25e01154f63492e927495689398e2b071242"
       }
     },
-    "git_commit": "a54c8b2c97ae5faac3d127bcd0c4a788803b1952",
+    "git_commit": "dd50aab96ce1e30157a205cdb35ddd9f2d5f6c86",
     "git_worktree_dirty": true,
-    "analysis_version": "3.3.0",
+    "analysis_version": "3.4.0",
     "methodology_version": "2.1.0",
-    "output_schema_version": "5.0.0",
+    "output_schema_version": "6.0.0",
     "mode": "public"
   },
   "summary": {
@@ -47,7 +47,7 @@
       "provável estabelecimento com anúncios múltiplos": 815
     },
     "mode": "public",
-    "generated_at": "2026-10-12T21:04:55Z",
+    "generated_at": "2026-10-12T21:16:50Z",
     "historical_comparisons": []
   },
   "licence_group_aggregates": [
