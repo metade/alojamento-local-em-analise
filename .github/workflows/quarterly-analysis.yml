@@ -28,7 +28,9 @@ jobs:
       - name: Testes
         run: bundle exec rake test
       - name: Executar análise pública
-        run: bundle exec ruby run_me.rb --mode public --reuse-existing
+        env:
+          REUSE_EXISTING: '1'
+        run: bundle exec rake analysis:public
       - name: Preparar e validar outputs públicos
         run: |
           git config user.name github-actions[bot]
@@ -44,9 +46,9 @@ jobs:
           JEKYLL_BASEURL: /alojamento-local-em-analise
         run: |
           npm ci
-          bundle exec ruby scripts/build_site.rb
+          bundle exec rake site:build
       - name: Verificar estrutura do site
-        run: bundle exec ruby scripts/check_site.rb _site
+        run: bundle exec rake site:check
       - name: Gate do artefacto de publicação
         run: bundle exec ruby scripts/audit_publication.rb --artifact _site
       - name: Upload do site sanitizado

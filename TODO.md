@@ -84,8 +84,8 @@ da metodologia e a explicação do método atual, mesmo ao simplificar o sistema
   público, as verificações de reutilização, a auditoria de publicação e a
   documentação; testar os formatos antigo e novo e a equivalência dos resultados.
 
-- [ ] Considerar integrar `scripts/reanalyse_public_run.rb` numa opção de
-  `run_me.rb` para analisar as fontes de um run público anterior. Preservar a
+- [ ] Considerar integrar `scripts/reanalyse_public_run.rb` numa tarefa Rake
+  de análise de fontes de um run público anterior. Preservar a
   seleção das fontes datadas através do metadata, a verificação dos hashes
   SHA-256, a validação antes da substituição e a preservação dos outros pares de datas; usar o pipeline existente com as
   versões atuais, sem descarregar fontes novas. Atualizar documentação e testes

@@ -6,7 +6,7 @@ Análise investigativa de snapshots de anúncios Airbnb em Lisboa comparados com
 
 ```bash
 bundle install
-bundle exec ruby run_me.rb
+bundle exec rake analysis:local
 ```
 
 Por defeito, a execução é local e cria um run imutável detalhado em:
@@ -15,10 +15,10 @@ Por defeito, a execução é local e cria um run imutável detalhado em:
 data/private/<airbnb-snapshot-date>__<official-download-date>/
 ```
 
-Runs locais são imutáveis. Durante o desenvolvimento, `--force` preserva o run existente e cria um novo diretório local com sufixo `__rerun-<timestamp>`:
+Runs locais são imutáveis. Durante o desenvolvimento, `FORCE=1` preserva o run existente e cria um novo diretório local com sufixo `__rerun-<timestamp>`:
 
 ```bash
-bundle exec ruby run_me.rb --force
+FORCE=1 bundle exec rake analysis:local
 ```
 
 Esta opção só está disponível no modo local e não substitui nem remove resultados anteriores.
@@ -26,10 +26,10 @@ Esta opção só está disponível no modo local e não substitui nem remove res
 Os resultados locais incluem diagnósticos como `host_id`, coordenadas e valores de licença originais e permanecem fora do Git. Para gerar os outputs agregados publicáveis, selecione explicitamente o modo público:
 
 ```bash
-bundle exec ruby run_me.rb --mode public
+bundle exec rake analysis:public
 ```
 
-Para uma execução automatizada repetida, `bundle exec ruby run_me.rb --mode public --reuse-existing` reutiliza resultados com hashes e versões de análise/metodologia/schema atuais e todos os ficheiros exigidos. Versões anteriores são recalculadas na mesma pasta; hashes diferentes para as mesmas datas são rejeitados.
+Para uma execução automatizada repetida, `REUSE_EXISTING=1 bundle exec rake analysis:public` reutiliza resultados com hashes e versões de análise/metodologia/schema atuais e todos os ficheiros exigidos. Versões anteriores são recalculadas na mesma pasta; hashes diferentes para as mesmas datas são rejeitados.
 
 O modo público cria o run em:
 
@@ -105,7 +105,7 @@ recuperáveis pelo Git; as fontes locais e os backups foram preservados.
 O histórico público em `data/history/summary.csv` mantém uma linha atual por par de datas. O gráfico de distâncias do site usa `data/history/distance_ranges.csv`: cada run público novo acrescenta quatro contagens agregadas de números de licença, sem coordenadas nem números de licença individuais. Para preencher este agregado num run público anterior sem alterar o snapshot, use `bundle exec ruby scripts/backfill_distance_ranges.rb <run_id>` com os ficheiros fonte originais; o script verifica os hashes do metadata antes de escrever. Uma reanálise substitui apenas as linhas históricas do mesmo par de datas, incluindo os agregados de distâncias e regiões. Para gerar também um PDF derivado, instale `wkhtmltopdf` ou `weasyprint` e execute:
 
 ```bash
-GENERATE_PDF=1 bundle exec ruby run_me.rb --mode public
+GENERATE_PDF=1 bundle exec rake analysis:public
 ```
 
 ## Site público
@@ -114,8 +114,14 @@ O site estático publicável é montado a partir dos snapshots e do histórico a
 
 ```bash
 npm ci
-npm run site:build
+bundle exec rake site:build
 ```
+
+As tarefas do projeto são executadas pelo Rake; npm fornece as ferramentas
+frontend, incluindo a compilação de CSS. `bundle exec rake` continua a executar
+os testes por defeito. As tarefas carregam apenas o código necessário e chamam
+`AnalysisRunner`, `SiteBuilder` e `SiteChecker` em Ruby. O build do site usa os snapshots
+públicos existentes; não executa a análise nem descarrega fontes.
 
 `site:build` prepara os dados do Jekyll, gera as páginas, compila o CSS,
 verifica a estrutura e executa a auditoria de publicação do artefacto. Para
@@ -123,7 +129,7 @@ repetir apenas as etapas de CSS ou verificação:
 
 ```bash
 npm run site:css
-npm run site:check
+bundle exec rake site:check
 ruby scripts/audit_publication.rb --artifact _site
 ```
 
@@ -146,23 +152,24 @@ valida esse diretório antes de o publicar no GitHub Pages.
 
 O site é mantido como um projeto Jekyll em `site/`: layouts e includes
 partilham a estrutura HTML, as páginas Liquid tratam a narrativa editorial e
-`scripts/build_site.rb` prepara os dados públicos e chama Jekyll.
+`AlojamentoLocal::SiteBuilder` prepara os dados públicos e chama Jekyll através
+da tarefa `site:build`.
 
 Para rever alterações localmente, construa o artefacto e sirva `_site/`:
 
 ```bash
-npm run site:build
+bundle exec rake site:build
 python3 -m http.server 4000 --directory _site
 ```
 
 Abra `http://localhost:4000`. Depois de editar apenas CSS, execute
 `npm run site:css` e atualize a página. Depois de editar templates ou dados,
-execute `npm run site:build` e atualize a página.
+execute `bundle exec rake site:build` e atualize a página.
 
 Para rever a homepage em desktop, tablet e telemóvel:
 
 ```bash
-npm run site:screenshots
+bundle exec rake site:screenshots
 ```
 
 O comando constrói o site e usa Playwright com o Chrome instalado para guardar
@@ -171,12 +178,12 @@ precisar de outro executável Chromium. O comando falha se houver deslocamento
 horizontal. Verifique também o foco por teclado, os links e as restantes páginas
 num browser local.
 
-O mesmo script aceita outras páginas, depois de construir o site:
+Para capturar outras páginas, passe o caminho à tarefa (as aspas protegem os
+parênteses retos na shell):
 
 ```bash
-npm run site:build
-node scripts/capture_homepage.mjs freguesias/arroios/index.html
-node scripts/capture_homepage.mjs metodologia.html
+bundle exec rake 'site:screenshots[freguesias/arroios/index.html]'
+bundle exec rake 'site:screenshots[metodologia.html]'
 ```
 
 As capturas recebem o nome da página, por exemplo
@@ -216,7 +223,7 @@ O primeiro comando verifica os ficheiros publicáveis na árvore atual; o segund
 
 ## GitHub Actions
 
-`.github/workflows/quarterly-analysis.yml` permite execução trimestral e manual. O workflow executa os testes, descarrega as fontes, chama explicitamente `run_me.rb --mode public`, publica os outputs versionados no repositório e guarda artefactos temporários para debugging.
+`.github/workflows/quarterly-analysis.yml` permite execução trimestral e manual. O workflow executa os testes e chama `bundle exec rake analysis:public` com `REUSE_EXISTING=1` para preparar as fontes e reutilizar os outputs atuais ou executar a análise pública. Regista os outputs públicos versionados no repositório e constrói o site com `bundle exec rake site:build` antes de o publicar.
 
 `.github/workflows/publication-audit.yml` executa automaticamente a verificação de segurança dos outputs em pushes e pull requests.
 

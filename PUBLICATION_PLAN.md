@@ -84,17 +84,17 @@ Critério de conclusão local: cumprido. `ruby scripts/audit_publication.rb --hi
 
 Objetivo: permitir relatórios anónimos no GitHub Actions e investigação detalhada local.
 
-Interface proposta:
+Interface atual (as entradas por scripts desta sessão foram substituídas por Rake):
 
 ```bash
-bundle exec ruby run_me.rb --mode public
-bundle exec ruby run_me.rb --mode local
+bundle exec rake analysis:public
+bundle exec rake analysis:local
 ```
 
 Regras:
 
 - `local` é o modo predefinido; `public` requer seleção explícita.
-- GitHub Actions chama explicitamente `--mode public`.
+- GitHub Actions chama explicitamente `analysis:public`.
 - `local` escreve resultados detalhados apenas numa área ignorada.
 - O modo local pode incluir campos diagnósticos adicionais, mas nunca deve ser publicado automaticamente.
 - Os dois modos usam schemas, nomes e diretórios distintos.
@@ -112,13 +112,13 @@ Critério de conclusão: o CI não consegue publicar o modo local por engano.
 
 Implementação concluída:
 
-- [x] `run_me.rb` aceita `--mode public` e `--mode local`; `local` é o predefinido.
+- [x] As tarefas `analysis:public` e `analysis:local` chamam o runner Ruby com o modo explícito; o runner usa `local` por defeito.
 - [x] O modo público mantém os schemas agregados em `data/snapshots/` e regista `mode: public` nos outputs.
 - [x] O modo local escreve ficheiros com nomes/schema distintos em `data/private/`, incluindo os campos diagnósticos necessários.
 - [x] Os outputs locais e o histórico local permanecem ignorados pelo Git.
-- [x] O workflow chama explicitamente `run_me.rb --mode public`.
+- [x] O workflow chama explicitamente `bundle exec rake analysis:public`.
 - [x] O relatório identifica o modo e a data de geração.
-- [x] Testes cobrem o modo público predefinido, a rejeição de uma opção pública de detalhes e a presença de diagnósticos no modo local.
+- [x] Testes cobrem o modo local predefinido, a rejeição de opções incompatíveis, a reutilização pública e a presença de diagnósticos no modo local.
 
 Critério de conclusão: cumprido. O caminho executado pelo CI só seleciona o modo público; o modo local requer uma escolha explícita e escreve numa área ignorada, com nomes diferentes dos outputs publicáveis.
 
@@ -175,7 +175,7 @@ Tarefas:
 
 Implementação concluída:
 
-- [x] `scripts/build_site.rb` monta um site estático a partir dos snapshots públicos versionados.
+- [x] `bundle exec rake site:build` chama `SiteBuilder` para montar um site estático a partir dos snapshots públicos versionados.
 - [x] A página inicial documenta objetivo, fontes e atribuição, metodologia, limitações, aviso não jurídico, correções e datas dos snapshots.
 - [x] Cada run publicado inclui apenas HTML, CSVs agregados e metadata; `LICENSE` e `NOTICE` acompanham o site.
 - [x] O construtor não copia `data_sources/`, `data/private/` ou caches para o artefacto.

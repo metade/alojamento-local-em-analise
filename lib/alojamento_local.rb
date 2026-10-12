@@ -22,45 +22,6 @@ module AlojamentoLocal
   ].freeze
   DISTANCE_RANGE_KEYS = %w[500_m_1_km 1_2_km 2_5_km over_5_km].freeze
 
-  module CLI
-    module_function
-
-    def mode!(arguments)
-      mode = "local"
-      remaining = arguments.dup
-
-      while (argument = remaining.shift)
-        case argument
-        when "--mode"
-          mode = remaining.shift
-        when /\A--mode=(.+)\z/
-          mode = Regexp.last_match(1)
-        when "--force"
-          # Parsed separately by force?; accept it here so option validation succeeds.
-        when "--reuse-existing"
-          # Parsed separately by reuse_existing?; accept it here so option validation succeeds.
-        when "-h", "--help"
-          puts "Usage: bundle exec ruby run_me.rb [--mode public|local] [--force] [--reuse-existing]"
-          exit 0
-        else
-          raise ArgumentError, "Unknown option: #{argument}"
-        end
-      end
-
-      raise ArgumentError, "Mode must be public or local" unless %w[public local].include?(mode)
-
-      mode
-    end
-
-    def force?(arguments)
-      arguments.include?("--force")
-    end
-
-    def reuse_existing?(arguments)
-      arguments.include?("--reuse-existing")
-    end
-  end
-
   def self.parse_al_license(string)
     value = string.to_s.strip
     if value =~ /\ARegistration Number:\s*0*(\d+)\s*\/AL\z/i
@@ -261,7 +222,7 @@ module AlojamentoLocal
 
     def run(airbnb_path:, official_path:, output_root: nil, history_path: nil, generate_pdf: false, mode: "local", force: false)
       raise ArgumentError, "Mode must be public or local" unless %w[public local].include?(mode)
-      raise ArgumentError, "--force is only supported in local mode" if force && mode == "public"
+      raise ArgumentError, "Force is only supported in local mode" if force && mode == "public"
 
       output_root ||= mode == "public" ? "data/snapshots" : "data/private"
       history_path ||= mode == "public" ? "data/history/summary.csv" : "data/private/history/summary.csv"
@@ -278,7 +239,7 @@ module AlojamentoLocal
       run_dir = File.join(output_root, run_id)
       public_run_current?(run_dir, source_hashes) if mode == "public" && Dir.exist?(run_dir)
       if mode == "local" && Dir.exist?(run_dir)
-        raise "Run already exists and is immutable: #{run_dir}; use --force for a preserved local rerun" unless force
+        raise "Run already exists and is immutable: #{run_dir}; use FORCE=1 for a preserved local rerun" unless force
 
         suffix = Time.now.utc.strftime("%Y%m%dT%H%M%S%6N")
         run_id = "#{base_run_id}__rerun-#{suffix}"

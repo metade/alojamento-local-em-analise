@@ -17,7 +17,7 @@ bundle install
 Run the analysis:
 
 ```bash
-bundle exec ruby run_me.rb
+bundle exec rake analysis:local
 ```
 
 The default mode is `local`. It downloads missing public source snapshots and creates an immutable detailed run under:
@@ -26,12 +26,12 @@ The default mode is `local`. It downloads missing public source snapshots and cr
 data/private/<airbnb-snapshot-date>__<official-download-date>/
 ```
 
-Local runs are immutable. For development reruns, `bundle exec ruby run_me.rb --force` preserves the existing run and writes a timestamped sibling rerun; `--force` is not supported for public runs.
+Local runs are immutable. For development reruns, `FORCE=1 bundle exec rake analysis:local` preserves the existing run and writes a timestamped sibling rerun; force is not supported for public runs.
 
 Use the explicit public mode to create sanitised, publishable outputs:
 
 ```bash
-bundle exec ruby run_me.rb --mode public
+bundle exec rake analysis:public
 ```
 
 Public runs are created under:
@@ -40,7 +40,7 @@ Public runs are created under:
 data/snapshots/<airbnb-snapshot-date>__<official-download-date>/
 ```
 
-Public outputs use one folder per dated source pair. Reanalysis validates new outputs before replacing that folder and its history rows; Git retains previously committed versions. Other date pairs remain unchanged. Local runs remain immutable. Automated workflows may use `bundle exec ruby run_me.rb --mode public --reuse-existing`: reuse requires matching source hashes, analysis/methodology/schema versions and all required files. Outdated outputs are recalculated in the same folder; changed source hashes for an existing date pair are rejected.
+Public outputs use one folder per dated source pair. Reanalysis validates new outputs before replacing that folder and its history rows; Git retains previously committed versions. Other date pairs remain unchanged. Local runs remain immutable. Automated workflows may use `REUSE_EXISTING=1 bundle exec rake analysis:public`: reuse requires matching source hashes, analysis/methodology/schema versions and all required files. Outdated outputs are recalculated in the same folder; changed source hashes for an existing date pair are rejected.
 
 Local runs use distinct names such as `listings_detailed.csv`, `licence_groups_detailed.csv`, `metadata_local.json`, `summary_local.json`, and `report_local.html`; they may contain diagnostic fields and are ignored by Git. Public runs contain only authoritative `snapshot.json` (schema 6.0.0) and `report.html`. No separate CSV/JSON downloads are generated. The loader also reads consolidated schema 5.0.0 without its former exports and legacy split-file schema 4.0.0 with supported registration metrics; a present consolidated document is always authoritative. Publication validates its schema, provenance and aggregates; reuse requires current hashes/versions, the document and the HTML report. Set `GENERATE_PDF=1` to create the optional PDF derivative when `wkhtmltopdf` or `weasyprint` is installed. Public history in `data/history/` keeps the current summary and auxiliary rows for each dated source pair, replacing only that pair on reanalysis. Local history in `data/private/history/` is append-only.
 
@@ -53,7 +53,10 @@ bundle exec rake test
 Ruby syntax checks:
 
 ```bash
-ruby -c run_me.rb
+ruby -c Rakefile
+ruby -c lib/alojamento_local/analysis_runner.rb
+ruby -c lib/alojamento_local/site_builder.rb
+ruby -c lib/alojamento_local/site_checker.rb
 ruby -c lib/alojamento_local.rb
 ruby -c lib/alojamento_local/data.rb
 ```
@@ -62,9 +65,11 @@ ruby -c lib/alojamento_local/data.rb
 
 Raw data under `data_sources/**/*.csv`, detailed local results under `data/private/`, and cached files under `tmp/` are intentionally ignored by Git. Transformed, versioned outputs under `data/snapshots/` and `data/history/` are publishable project outputs and may be committed. Snapshot documents and legacy CSVs are aggregate-only and must not contain listing/host identifiers, listing URLs, names, addresses, exact coordinates, or raw licence strings. Do not commit large raw upstream datasets.
 
-The GitHub Actions workflow in `.github/workflows/quarterly-analysis.yml` runs quarterly or through `workflow_dispatch`, tests before analysis, explicitly selects `--mode public --reuse-existing`, stages and audits only the sanitised `data/snapshots/` and `data/history/` outputs before committing them, builds the site from public snapshots, and publishes the site as a GitHub Pages artifact. Reusing an up-to-date run skips analysis; outdated versions are recalculated for the same dated source pair. It must never commit local/detailed outputs or the generated site.
+The GitHub Actions workflow in `.github/workflows/quarterly-analysis.yml` runs quarterly or through `workflow_dispatch`, tests before analysis, explicitly selects `analysis:public` with `REUSE_EXISTING=1`, stages and audits only the sanitised `data/snapshots/` and `data/history/` outputs before committing them, builds the site from public snapshots, and publishes the site as a GitHub Pages artifact. Reusing an up-to-date run skips analysis; outdated versions are recalculated for the same dated source pair. It must never commit local/detailed outputs or the generated site.
 
-The `.github/workflows/site-publish.yml` workflow rebuilds and publishes the site on human pushes to `main` and through `workflow_dispatch`. It skips the automated `github-actions[bot]` / `Atualiza análise trimestral` push because the quarterly workflow already builds and publishes the site in that same run. Site publication is therefore separate from the data-analysis decision, while both use `scripts/build_site.rb` and the publication audit.
+The `.github/workflows/site-publish.yml` workflow rebuilds and publishes the site on human pushes to `main` and through `workflow_dispatch`. It skips the automated `github-actions[bot]` / `Atualiza análise trimestral` push because the quarterly workflow already builds and publishes the site in that same run. Site publication is therefore separate from the data-analysis decision, while both use `bundle exec rake site:build` and the publication audit.
+
+Rake is the interface for analysis, site builds and site checks; its tasks load the required Ruby entry points (`AnalysisRunner`, `SiteBuilder`, `SiteChecker`) inside the task. npm provides frontend tooling through `npm run site:css`. Use `bundle exec rake -T` to list tasks. `bundle exec rake site:build` builds from existing public snapshots without running the analysis. `bundle exec rake site:check` checks the generated site. Test files load the application in the separate process launched by `Rake::TestTask`.
 
 Before committing changes to `data/snapshots/`, `data/history/`, or publication workflows, run `ruby scripts/audit_publication.rb`. Run `ruby scripts/audit_publication.rb --history` when auditing repository history. A history rewrite requires a recoverable Git backup and coordinated approval before force-pushing.
 
@@ -125,4 +130,4 @@ Measured overlap metrics live in the `registration_metrics` section of versioned
 - Do not commit raw downloaded datasets unless explicitly requested.
 - Treat `report.html` as the canonical self-contained report and `report.pdf` as a derivative.
 - Do not recreate or maintain the removed legacy `relatorio_anomalias_al.*` files; new reports belong inside their versioned run directory.
-- For homepage layout changes, run `npm run site:screenshots`. For other page layouts, build with `npm run site:build`, then run `node scripts/capture_homepage.mjs <page-path>` (for example, `freguesias/arroios/index.html` or `metodologia.html`). Inspect the 1440, 768, and 390 px images in `tmp/screenshots/`; the script checks for horizontal overflow.
+- For homepage layout changes, run `bundle exec rake site:screenshots`. For other page layouts, build with `bundle exec rake site:build`, then run `node scripts/capture_homepage.mjs <page-path>` (for example, `freguesias/arroios/index.html` or `metodologia.html`). Inspect the 1440, 768, and 390 px images in `tmp/screenshots/`; the script checks for horizontal overflow.

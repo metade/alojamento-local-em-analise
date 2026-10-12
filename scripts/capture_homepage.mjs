@@ -11,7 +11,7 @@ const output = join(root, "tmp", "screenshots");
 const preview = join(site, ".screenshot-preview.html");
 
 if (!existsSync(join(site, "assets", "story.css"))) {
-  throw new Error("CSS gerado em falta. Execute npm run site:build primeiro.");
+  throw new Error("CSS gerado em falta. Execute bundle exec rake site:build primeiro.");
 }
 
 // The published site uses a root-relative CSS URL. A temporary copy lets

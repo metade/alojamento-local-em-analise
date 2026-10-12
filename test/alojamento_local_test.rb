@@ -32,16 +32,6 @@ class AlojamentoLocalTest < Minitest::Test
     assert_equal [38.7530581, -9.181339], AlojamentoLocal.parse_lat_long("38,7530581;-9,181339")
   end
 
-  def test_local_is_the_default_cli_mode
-    assert_equal "local", AlojamentoLocal::CLI.mode!([])
-    assert_equal "public", AlojamentoLocal::CLI.mode!(["--mode", "public"])
-  end
-
-  def test_cli_accepts_local_mode_without_adding_a_public_details_option
-    assert_equal "local", AlojamentoLocal::CLI.mode!(["--mode=local"])
-    assert_raises(ArgumentError) { AlojamentoLocal::CLI.mode!(["--include-details"]) }
-  end
-
   def test_accepts_only_the_explicit_single_al_registration_prefix
     assert_equal "12807", AlojamentoLocal.parse_al_license("Registration Number: 12807/AL")
     assert_equal "123", AlojamentoLocal.parse_al_license("registration number: 00123 /AL")

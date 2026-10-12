@@ -38,9 +38,9 @@ jobs:
       - name: Construir site público
         env:
           JEKYLL_BASEURL: /alojamento-local-em-analise
-        run: bundle exec ruby scripts/build_site.rb
+        run: bundle exec rake site:build
       - name: Verificar estrutura do site
-        run: bundle exec ruby scripts/check_site.rb _site
+        run: bundle exec rake site:check
       - name: Gate do artefacto de publicação
         run: bundle exec ruby scripts/audit_publication.rb --artifact _site
       - name: Upload do site sanitizado
