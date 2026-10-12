@@ -26,10 +26,7 @@ jobs:
           node-version: '22'
           cache: npm
       - name: Testes
-        run: |
-          bundle exec ruby -Itest test/al_ilegal_test.rb
-          bundle exec ruby -Itest test/spatial_clusters_test.rb
-          bundle exec ruby -Itest test/versioned_analysis_test.rb
+        run: bundle exec rake test
       - name: Executar análise pública
         run: bundle exec ruby run_me.rb --mode public --reuse-existing
       - name: Preparar e validar outputs públicos

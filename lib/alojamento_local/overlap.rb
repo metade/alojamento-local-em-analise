@@ -1,4 +1,4 @@
-module AlIlegal
+module AlojamentoLocal
   # Used by scripts/build_site.rb to draw the area-proportional Venn diagrams
   # on the homepage and district pages. Converts saved set counts into SVG
   # circle radii and positions; the statistical counts are calculated elsewhere.

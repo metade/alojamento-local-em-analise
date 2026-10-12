@@ -32,10 +32,7 @@ jobs:
           node-version: '22'
           cache: npm
       - name: Testes
-        run: |
-          bundle exec ruby -Itest test/al_ilegal_test.rb
-          bundle exec ruby -Itest test/spatial_clusters_test.rb
-          bundle exec ruby -Itest test/versioned_analysis_test.rb
+        run: bundle exec rake test
       - name: Instalar ferramentas CSS
         run: npm ci
       - name: Construir site público

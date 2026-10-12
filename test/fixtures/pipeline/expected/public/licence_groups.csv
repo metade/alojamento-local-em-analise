@@ -1,0 +1,11 @@
+classification,official_municipality,official_type,licence_groups,listings,spatial_locations,establishments_estimate
+geografia oficial não identificada,não identificado,apartamento,6,6,6,6
+licença oficial fora de Lisboa,outro município,apartamento,2,3,3,3
+licença repetida em várias localizações,Lisboa,apartamento,1,4,2,4
+licença repetida na mesma localização,Lisboa,apartamento,2,5,2,2
+licença única em Lisboa,Lisboa,apartamento,4,4,4,4
+localização observada não identificada,Lisboa,apartamento,1,2,2,2
+número sem correspondência no RNAL,não identificado,não identificado,1,2,1,2
+provável estabelecimento com anúncios múltiplos,Lisboa,hospedagem,1,4,1,1
+sem licença,não identificado,não identificado,0,2,0,2
+sem licença identificável,não identificado,não identificado,0,2,0,2
