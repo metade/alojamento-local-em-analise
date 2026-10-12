@@ -365,8 +365,7 @@ module AlojamentoLocal
         write_json_outputs(run_dir, metadata, summary, "metadata_local.json", "summary_local.json")
         report_filename = "report_local.html"
       end
-      report = Report.html(metadata, summary, public_groups, public_listings)
-      File.write(File.join(run_dir, report_filename), report.sub("</body></html>", Report.metrics_section(metrics) + Report.historical_section(summary) + "</body></html>"))
+      File.write(File.join(run_dir, report_filename), Report.complete_html(metadata, summary, public_groups, public_listings, metrics))
     end
 
     # Validate the full result first, then replace the dated snapshot and its
@@ -627,6 +626,10 @@ module AlojamentoLocal
 
   module Report
     module_function
+
+    def complete_html(metadata, summary, groups, freguesias, metrics)
+      html(metadata, summary, groups, freguesias).sub("</body></html>", metrics_section(metrics) + historical_section(summary) + "</body></html>")
+    end
 
     def illustrative_anomalies
       [

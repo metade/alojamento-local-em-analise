@@ -49,6 +49,14 @@ Cada run contém:
 - `registration_metrics.json` — conjuntos de números AL e contagens de anúncios, com definições versionadas;
 - `report.html` — relatório autónomo em português.
 
+Para regenerar apenas o relatório de um snapshot existente, execute
+`bundle exec ruby scripts/regenerate_public_report.rb data/snapshots/<run_id>`.
+O script reutiliza as métricas de registo guardadas, valida-as e verifica a
+proveniência e os totais municipais antes de substituir `report.html`. Não
+descarrega fontes nem recalcula a análise. Snapshots sem métricas compatíveis
+exigem reanálise; a regeneração falha sem alterar o relatório existente. Um PDF
+existente não é atualizado por este comando.
+
 O histórico público em `data/history/summary.csv` mantém uma linha atual por par de datas. O gráfico de distâncias do site usa `data/history/distance_ranges.csv`: cada run público novo acrescenta quatro contagens agregadas de números de licença, sem coordenadas nem números de licença individuais. Para preencher este agregado num run público anterior sem alterar o snapshot, use `bundle exec ruby scripts/backfill_distance_ranges.rb <run_id>` com os ficheiros fonte originais; o script verifica os hashes do metadata antes de escrever. Uma reanálise substitui apenas as linhas históricas do mesmo par de datas, incluindo os agregados de distâncias e regiões. Para gerar também um PDF derivado, instale `wkhtmltopdf` ou `weasyprint` e execute:
 
 ```bash

@@ -69,9 +69,39 @@ da metodologia e a explicação do método atual, mesmo ao simplificar o sistema
   espacial. Fontes locais de junho/setembro sem alterações numéricas; avaliação
   e comparação sintética documentadas nas notas de metodologia do README.
 
-- [ ] Rever `scripts/regenerate_public_report.rb`: a regeneração atual omite
-  a secção de métricas de registo presente no relatório original. Preservado
-  nesta refatorização; recuperar as métricas validadas do snapshot ao regenerar.
+- [x] Rever `scripts/regenerate_public_report.rb`: recuperar as métricas
+  validadas do snapshot e verificar a proveniência antes de regenerar. Montagem
+  do relatório partilhada com o pipeline e testes de regressão da regeneração.
+
+- [ ] Introduzir um loader partilhado de snapshots públicos para a regeneração
+  do relatório e a construção do site. Ler os ficheiros atuais e devolver uma
+  estrutura com interface estável para metadata, resumo, grupos de licenças,
+  anúncios por freguesia e classificação, totais por freguesia e métricas de
+  registo. Centralizar a validação de schema, proveniência e coerência dos
+  agregados; manter explícitas as unidades e usar nomes sem ambiguidades.
+  Migrar os consumidores para essa interface e testar a equivalência dos
+  relatórios e dados do site com a fixture sintética, sem alterar os outputs.
+
+- [ ] Gerar os relatórios por snapshot através de um template e layout próprios
+  do Jekyll, consumindo os dados validados pelo loader partilhado. Incorporar
+  estilos e os restantes recursos necessários para manter `report.html`
+  autónomo, utilizável offline e como fonte do PDF derivado. Gerar os relatórios
+  no build do site, incluindo a publicação no GitHub, e acrescentar uma tarefa
+  Rake que monte uma fonte Jekyll mínima e temporária para gerar apenas o
+  relatório de um snapshot, usando o mesmo template sem construir o site todo.
+  Definir o destino do HTML e adaptar a análise, a regeneração, as verificações
+  de reutilização e a auditoria à nova etapa de geração; manter os builds do
+  site sem alterações aos snapshots versionados. Substituir a montagem HTML
+  de `Report` em Ruby e testar a equivalência entre os dois modos de build,
+  as secções e métricas preservadas e o funcionamento autónomo do relatório.
+
+- [ ] Depois do loader partilhado, consolidar os dados do snapshot num ficheiro
+  estruturado e versionado que esse loader consuma. Manter a interface do
+  loader para que o relatório e o site não dependam do formato de armazenamento.
+  Definir a compatibilidade com snapshots anteriores e o papel dos CSV como
+  exportações, evitando duas fontes de verdade. Atualizar a escrita, o schema
+  público, as verificações de reutilização, a auditoria de publicação e a
+  documentação; testar os formatos antigo e novo e a equivalência dos resultados.
 
 - [ ] Considerar integrar `scripts/reanalyse_public_run.rb` numa opção de
   `run_me.rb` para analisar as fontes de um run público anterior. Preservar a
