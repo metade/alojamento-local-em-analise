@@ -20,8 +20,8 @@ end
 namespace :analysis do
   desc "Run the local analysis (FORCE=1 preserves an existing run as a sibling rerun)"
   task :local do
-    require_relative "lib/alojamento_local/analysis_runner"
-    result = AlojamentoLocal::AnalysisRunner.run(mode: "local",
+    require_relative "lib/alojamento_local/analysis/runner"
+    result = AlojamentoLocal::Analysis::Runner.run(mode: "local",
       force: ENV["FORCE"] == "1", reuse_existing: ENV["REUSE_EXISTING"] == "1",
       generate_pdf: ENV["GENERATE_PDF"] == "1")
     print_analysis_result(result)
@@ -29,8 +29,8 @@ namespace :analysis do
 
   desc "Run the public analysis (REUSE_EXISTING=1 reuses current outputs)"
   task :public do
-    require_relative "lib/alojamento_local/analysis_runner"
-    result = AlojamentoLocal::AnalysisRunner.run(mode: "public",
+    require_relative "lib/alojamento_local/analysis/runner"
+    result = AlojamentoLocal::Analysis::Runner.run(mode: "public",
       force: ENV["FORCE"] == "1", reuse_existing: ENV["REUSE_EXISTING"] == "1",
       generate_pdf: ENV["GENERATE_PDF"] == "1")
     print_analysis_result(result)

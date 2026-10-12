@@ -54,11 +54,12 @@ Ruby syntax checks:
 
 ```bash
 ruby -c Rakefile
-ruby -c lib/alojamento_local/analysis_runner.rb
+ruby -c lib/alojamento_local/analysis.rb
+ruby -c lib/alojamento_local/analysis/runner.rb
 ruby -c lib/alojamento_local/site_builder.rb
 ruby -c lib/alojamento_local/site_checker.rb
 ruby -c lib/alojamento_local.rb
-ruby -c lib/alojamento_local/data.rb
+ruby -c lib/alojamento_local/analysis/data.rb
 ```
 
 ## Data and reproducibility
@@ -69,7 +70,7 @@ The GitHub Actions workflow in `.github/workflows/quarterly-analysis.yml` runs q
 
 The `.github/workflows/site-publish.yml` workflow rebuilds and publishes the site on human pushes to `main` and through `workflow_dispatch`. It skips the automated `github-actions[bot]` / `Atualiza análise trimestral` push because the quarterly workflow already builds and publishes the site in that same run. Site publication is therefore separate from the data-analysis decision, while both use `bundle exec rake site:build` and the publication audit.
 
-Rake is the interface for analysis, site builds and site checks; its tasks load the required Ruby entry points (`AnalysisRunner`, `SiteBuilder`, `SiteChecker`) inside the task. npm provides frontend tooling through `npm run site:css`. Use `bundle exec rake -T` to list tasks. `bundle exec rake site:build` builds from existing public snapshots without running the analysis. `bundle exec rake site:check` checks the generated site. Test files load the application in the separate process launched by `Rake::TestTask`.
+Rake is the interface for analysis, site builds and site checks; its tasks load the required Ruby entry points (`Analysis::Runner`, `SiteBuilder`, `SiteChecker`) inside the task. npm provides frontend tooling through `npm run site:css`. Use `bundle exec rake -T` to list tasks. `bundle exec rake site:build` builds from existing public snapshots without running the analysis. `bundle exec rake site:check` checks the generated site. Test files load the application in the separate process launched by `Rake::TestTask`.
 
 Before committing changes to `data/snapshots/`, `data/history/`, or publication workflows, run `ruby scripts/audit_publication.rb`. Run `ruby scripts/audit_publication.rb --history` when auditing repository history. A history rewrite requires a recoverable Git backup and coordinated approval before force-pushing.
 
@@ -114,7 +115,7 @@ Measured overlap metrics live in the `registration_metrics` section of versioned
 
 ### Source preparation and methodology changes
 
-- Prepare sources once per run with `PreparedSources::Pair`; no cache by filename. Preserve every official entry and its raw fields. Derive the classification lookup separately so resolving official conflicts never changes the entries used by metrics.
+- Prepare sources once per run with `Analysis::PreparedSources::Pair`; no cache by filename. Preserve every official entry and its raw fields. Derive the classification lookup separately so resolving official conflicts never changes the entries used by metrics.
 - Retain Airbnb rows whose municipality normalizes to Lisboa. Derive reuse counts from those same retained entries; classification, spatial grouping and metrics must use the same population. Preserve original source values internally.
 - Use the synthetic pipeline fixture for full public/local output regression. Update its expected files only for an intentional change, review the diffs and independently check the accounting described in [test/fixtures/pipeline/README.md](test/fixtures/pipeline/README.md).
 - Record the methodology version on every run and explain changes and measured impact on identical source bytes in README's methodology notes. Keep implementation details that do not change results under the analysis version. Deferred simplification and archive work belongs in TODO.md.

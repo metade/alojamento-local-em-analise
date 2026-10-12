@@ -197,11 +197,11 @@ class VersionedAnalysisTest < Minitest::Test
       <a href="https://data.insideairbnb.com/portugal/lisbon/lisbon/2026-06-23/data/listings.csv.gz">listings.csv.gz</a>
     HTML
 
-    assert_equal ["2026-06-23", "https://data.insideairbnb.com/portugal/lisbon/lisbon/2026-06-23/data/listings.csv.gz"], AlojamentoLocal::Data.latest_airbnb_snapshot(page)
+    assert_equal ["2026-06-23", "https://data.insideairbnb.com/portugal/lisbon/lisbon/2026-06-23/data/listings.csv.gz"], AlojamentoLocal::Analysis::Data.latest_airbnb_snapshot(page)
     older = '<a href="https://data.insideairbnb.com/portugal/lisbon/lisbon/2025-09-21/data/listings.csv.gz">older</a>'
     unordered = page.sub('<h4>', older + '<h4>')
-    assert_equal "2026-06-23", AlojamentoLocal::Data.latest_airbnb_snapshot(unordered).first
-    assert_raises(RuntimeError) { AlojamentoLocal::Data.latest_airbnb_snapshot('<h3>Lisbon</h3>changed page') }
+    assert_equal "2026-06-23", AlojamentoLocal::Analysis::Data.latest_airbnb_snapshot(unordered).first
+    assert_raises(RuntimeError) { AlojamentoLocal::Analysis::Data.latest_airbnb_snapshot('<h3>Lisbon</h3>changed page') }
   end
   def test_replacement_updates_only_its_own_history_rows_and_preserves_other_dates
     Dir.mktmpdir do |dir|

@@ -120,7 +120,7 @@ bundle exec rake site:build
 As tarefas do projeto são executadas pelo Rake; npm fornece as ferramentas
 frontend, incluindo a compilação de CSS. `bundle exec rake` continua a executar
 os testes por defeito. As tarefas carregam apenas o código necessário e chamam
-`AnalysisRunner`, `SiteBuilder` e `SiteChecker` em Ruby. O build do site usa os snapshots
+`Analysis::Runner`, `SiteBuilder` e `SiteChecker` em Ruby. O build do site usa os snapshots
 públicos existentes; não executa a análise nem descarrega fontes.
 
 `site:build` prepara os dados do Jekyll, gera as páginas, compila o CSS,

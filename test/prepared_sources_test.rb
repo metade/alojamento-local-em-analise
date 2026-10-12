@@ -45,10 +45,10 @@ class PreparedSourcesTest < Minitest::Test
 
   def test_retains_all_entries_and_derives_an_independent_classification_view
     with_sources do |_dir, airbnb, official|
-      sources = AlojamentoLocal::PreparedSources::Pair.new(airbnb_path: airbnb, official_path: official)
+      sources = AlojamentoLocal::Analysis::PreparedSources::Pair.new(airbnb_path: airbnb, official_path: official)
       retained = sources.official.entries.map { |entry| entry.raw.dup }
       listings, lookup = AlojamentoLocal::Analysis.classify(sources)
-      metrics = AlojamentoLocal::RegistrationMetrics.calculate(listings, sources.official)
+      metrics = AlojamentoLocal::Analysis::RegistrationMetrics.calculate(listings, sources.official)
       assert_equal CSV.read(official, headers: true).map(&:to_h), retained
       assert_equal retained, sources.official.entries.map(&:raw)
       assert_equal "First", lookup.fetch("1")["Denominacao"]
@@ -65,14 +65,14 @@ class PreparedSourcesTest < Minitest::Test
       assert_equal 1, metrics[:diagnostics][:unparseable_official_numbers]
       assert_equal [8, 4], metrics[:rows].first.values_at(:official_entries, :rnal)
       assert_equal [4, 4, 0], metrics[:rows].last.values_at(:airbnb, :airbnb_only, :intersection)
-      assert_equal AlojamentoLocal::RegistrationMetrics.calculate(listings, official), metrics
+      assert_equal AlojamentoLocal::Analysis::RegistrationMetrics.calculate(listings, official), metrics
       assert_equal AlojamentoLocal::Analysis.analyse(airbnb, official), [listings, lookup]
     end
   end
 
   def test_normalized_municipality_filter_keeps_reuse_and_classification_in_sync
     with_sources do |_dir, airbnb, official|
-      sources = AlojamentoLocal::PreparedSources::Pair.new(airbnb_path: airbnb, official_path: official)
+      sources = AlojamentoLocal::Analysis::PreparedSources::Pair.new(airbnb_path: airbnb, official_path: official)
       listings, = AlojamentoLocal::Analysis.classify(sources)
       assert_equal 10, listings.size
       assert_equal 4, sources.airbnb.licence_counts["1"]
@@ -98,7 +98,7 @@ class PreparedSourcesTest < Minitest::Test
           csv << [municipality, "1", "Arroios", "38.71", "-9.14"]
         end
       end
-      sources = AlojamentoLocal::PreparedSources::Pair.new(airbnb_path: airbnb, official_path: official)
+      sources = AlojamentoLocal::Analysis::PreparedSources::Pair.new(airbnb_path: airbnb, official_path: official)
       listings, = AlojamentoLocal::Analysis.classify(sources)
       assert_equal 8, listings.size
       assert_equal({"1" => 5, "2" => 1, nil => 2}, sources.airbnb.licence_counts)
@@ -107,7 +107,7 @@ class PreparedSourcesTest < Minitest::Test
       assert_equal ["licença repetida em várias localizações"], repeated.map { |row| row[:license_group_assessment] }.uniq
       assert repeated.all? { |row| row[:license_status].include?("licença reutilizada 5") }
       assert_equal 8, AlojamentoLocal.establishment_estimate(listings)
-      city = AlojamentoLocal::RegistrationMetrics.calculate(listings, sources.official)[:rows].first
+      city = AlojamentoLocal::Analysis::RegistrationMetrics.calculate(listings, sources.official)[:rows].first
       assert_equal [8, 1, 1, 6, 6, 2], city.values_at(:announcements, :empty_licence, :unrecognised_licence, :identifiable_number, :confirmed_rnal_match, :airbnb)
     end
   end
@@ -140,10 +140,10 @@ class PreparedSourcesTest < Minitest::Test
 
   def test_preparation_is_fresh_when_bytes_change_at_the_same_path
     with_sources do |_dir, airbnb, official|
-      first = AlojamentoLocal::PreparedSources::Pair.new(airbnb_path: airbnb, official_path: official)
+      first = AlojamentoLocal::Analysis::PreparedSources::Pair.new(airbnb_path: airbnb, official_path: official)
       File.write(official, "NrRNAL,Concelho,Freguesia\n99,Lisboa,Arroios\n")
       File.write(airbnb, "neighbourhood_group_cleansed,license,neighbourhood_cleansed\nLisboa,99,Arroios\n")
-      second = AlojamentoLocal::PreparedSources::Pair.new(airbnb_path: airbnb, official_path: official)
+      second = AlojamentoLocal::Analysis::PreparedSources::Pair.new(airbnb_path: airbnb, official_path: official)
       assert_equal 10, first.official.entries.size
       assert_equal ["99"], second.official.by_number.keys
       assert_equal ["99"], second.airbnb.entries.map(&:number)
@@ -174,7 +174,7 @@ class PreparedSourcesTest < Minitest::Test
         end
         metrics = builder.load_json(File.join(result[:path], "snapshot.json")).fetch("registration_metrics")
         refute metrics.fetch("rows").first.key?("geometry")
-        AlojamentoLocal::RegistrationMetrics.validate!(JSON.parse(JSON.generate(metrics), symbolize_names: true))
+        AlojamentoLocal::Analysis::RegistrationMetrics.validate!(JSON.parse(JSON.generate(metrics), symbolize_names: true))
       end
       # Existing published 2.0.0 snapshots remain readable with metric schema 1.0.0.
       snapshot = AlojamentoLocal::PublicSnapshot::Loader.new.load(result[:path])
