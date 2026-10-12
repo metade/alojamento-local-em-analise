@@ -77,3 +77,12 @@ O snapshot `2026-06-23__2026-10-01` e as suas linhas históricas foram importado
 Os testes cobrem formatos, conjuntos locais, duplicados, geografia por resolver, conservação das contagens, prioridades, transitividade, anfitriões e geometria vazia/disjunta/idêntica/contida. A auditoria inclui ficheiros públicos novos ainda não tracked e o artefacto gerado. Dados publicados contêm apenas agregados, definições e proveniência; relatórios exemplificativos mantêm a indicação de exemplos sintéticos.
 
 Validação final: 37 testes, 221 asserções, sem falhas; syntax checks de Ruby; recomputação independente dos conjuntos nas 26 geografias e reconciliação dos CSV; auditoria dos novos snapshots e de `_site`; build de 31 páginas HTML com 24 freguesias. Homepage, índice, Arroios, Santa Clara e metodologia foram capturados e inspecionados a 1440, 768 e 390 px, sem overflow horizontal. A simplificação das pastas não alterou as contagens medidas. Os snapshots de 18/19 de setembro e os ficheiros de outubro permaneceram iguais byte a byte; só as linhas históricas do par de setembro recalculado foram substituídas. `lisboa-freguesias.geojson` permaneceu intocado.
+
+## Refatorização da preparação (análise 3.1.1)
+
+A preparação das fontes é partilhada entre classificação e métricas, mantendo
+cada entrada oficial e os valores originais. Os cálculos e definições da versão
+1.0.0 continuam em `RegistrationMetrics`, com metodologia 2.0.0 e schema 4.0.0.
+A versão 3.1.1 é uma alteração de implementação; os snapshots publicados acima
+mantêm a proveniência original e não foram substituídos durante a verificação.
+Ver [pipeline](pipeline.md) para responsabilidades e testes de equivalência.

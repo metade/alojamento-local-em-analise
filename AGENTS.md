@@ -44,20 +44,18 @@ Public outputs use one folder per dated source pair. Reanalysis validates new ou
 
 Local runs use distinct names such as `listings_detailed.csv`, `licence_groups_detailed.csv`, `metadata_local.json`, `summary_local.json`, and `report_local.html`; they may contain diagnostic fields and are ignored by Git. Public runs contain `metadata.json`, `summary.json`, `listings.csv`, `licence_groups.csv`, `freguesias.csv`, `registration_metrics.json`, and `report.html`. Set `GENERATE_PDF=1` to create the optional PDF derivative when `wkhtmltopdf` or `weasyprint` is installed. Public history in `data/history/` keeps the current summary and auxiliary rows for each dated source pair, replacing only that pair on reanalysis. Local history in `data/private/history/` is append-only.
 
-Run tests:
+Run the full test suite (`bundle exec rake` also runs it by default):
 
 ```bash
-ruby -Itest test/al_ilegal_test.rb
-ruby -Itest test/spatial_clusters_test.rb
-ruby -Itest test/versioned_analysis_test.rb
+bundle exec rake test
 ```
 
 Ruby syntax checks:
 
 ```bash
 ruby -c run_me.rb
-ruby -c lib/al_ilegal.rb
-ruby -c lib/al_ilegal/data.rb
+ruby -c lib/alojamento_local.rb
+ruby -c lib/alojamento_local/data.rb
 ```
 
 ## Data and reproducibility

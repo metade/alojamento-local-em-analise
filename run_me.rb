@@ -1,19 +1,19 @@
 #!/usr/bin/env ruby
-require_relative "lib/al_ilegal"
+require_relative "lib/alojamento_local"
 
-mode = AlIlegal::CLI.mode!(ARGV)
-force = AlIlegal::CLI.force?(ARGV)
-reuse_existing = AlIlegal::CLI.reuse_existing?(ARGV)
+mode = AlojamentoLocal::CLI.mode!(ARGV)
+force = AlojamentoLocal::CLI.force?(ARGV)
+reuse_existing = AlojamentoLocal::CLI.reuse_existing?(ARGV)
 abort "--reuse-existing is only supported in public mode" if reuse_existing && mode != "public"
-airbnb_path, official_path = AlIlegal::Data.prepare!
+airbnb_path, official_path = AlojamentoLocal::Data.prepare!
 if reuse_existing
-  existing = AlIlegal::Analysis.existing_public_run(airbnb_path: airbnb_path, official_path: official_path)
+  existing = AlojamentoLocal::Analysis.existing_public_run(airbnb_path: airbnb_path, official_path: official_path)
   if existing
     puts "Run #{existing[:run_id]} já existe; a análise pública será reutilizada sem reescrever o snapshot."
     exit 0
   end
 end
-result = AlIlegal::Analysis.run(
+result = AlojamentoLocal::Analysis.run(
   airbnb_path: airbnb_path,
   official_path: official_path,
   generate_pdf: ENV["GENERATE_PDF"] == "1",

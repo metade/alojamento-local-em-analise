@@ -6,7 +6,7 @@
 require "csv"
 require "digest"
 require "json"
-require_relative "../lib/al_ilegal"
+require_relative "../lib/alojamento_local"
 
 root = File.expand_path("..", __dir__)
 run_id = ARGV.fetch(0)
@@ -24,16 +24,16 @@ official = File.join(root, "data_sources", "Estabelecimentos_de_Alojamento_Local
   raise "Source hash mismatch: #{source}" unless Digest::SHA256.file(path).hexdigest == expected
 end
 
-listings, = AlIlegal::Analysis.analyse(airbnb, official)
+listings, = AlojamentoLocal::Analysis.analyse(airbnb, official)
 repeated = listings.select { |row| row[:license_group_assessment] == "licença repetida em várias localizações" }
 public_count = CSV.read(File.join(run_dir, "listings.csv"), headers: true)
   .select { |row| row["classification"] == "licença repetida em várias localizações" }
   .sum { |row| row["listings"].to_i }
 raise "Announcement count mismatch" unless repeated.size == public_count
 
-counts = AlIlegal::Analysis.distance_range_counts(listings)
+counts = AlojamentoLocal::Analysis.distance_range_counts(listings)
 raise "Licence group count mismatch" unless counts.values.sum == summary.fetch("classifications").fetch("licença repetida em várias localizações")
 
 path = File.join(root, "data", "history", "distance_ranges.csv")
-AlIlegal::Analysis.append_distance_history(path, run_id, listings)
+AlojamentoLocal::Analysis.append_distance_history(path, run_id, listings)
 puts "#{run_id}: #{counts.values.sum} números de licença / #{repeated.size} anúncios; #{counts.inspect}"

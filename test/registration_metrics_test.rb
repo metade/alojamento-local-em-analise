@@ -1,11 +1,11 @@
 require "minitest/autorun"
 require "tmpdir"
-require_relative "../lib/al_ilegal"
-require_relative "../lib/al_ilegal/overlap"
+require_relative "../lib/alojamento_local"
+require_relative "../lib/alojamento_local/overlap"
 
 class RegistrationMetricsTest < Minitest::Test
   def observed(number, parish, raw: number)
-    {licensa: AlIlegal.parse_al_license(number), licensa_raw: raw, bairro: AlIlegal::Geography.parish(parish)}
+    {licensa: AlojamentoLocal.parse_al_license(number), licensa_raw: raw, bairro: AlojamentoLocal::Geography.parish(parish)}
   end
 
   def test_sets_are_distinct_and_local_with_exhaustive_differences
@@ -27,7 +27,7 @@ class RegistrationMetricsTest < Minitest::Test
                   *%w[2 3 4 5 8].map { |n| observed(n, "Arroios") }, observed("6", "Belém"),
                   observed("7", "Belém"), observed(nil, "Arroios", raw: " "), observed("406/UT/2017", "Arroios"),
                   observed("1", "missing")]
-      metrics = AlIlegal::RegistrationMetrics.calculate(listings, path)
+      metrics = AlojamentoLocal::RegistrationMetrics.calculate(listings, path)
       city = metrics[:rows].first
       arroios = metrics[:rows].find { |row| row[:geography] == "Arroios" }
       belem = metrics[:rows].find { |row| row[:geography] == "Belém" }
@@ -50,34 +50,34 @@ class RegistrationMetricsTest < Minitest::Test
     Dir.mktmpdir do |dir|
       path = File.join(dir, "official.csv")
       File.write(path, "NrRNAL,Concelho\n00123,Lisboa\n")
-      assert AlIlegal.licensed_als(path).key?("123")
+      assert AlojamentoLocal.licensed_als(path).key?("123")
       File.write(path, "NrRNAL,Concelho\n456,Porto\n")
-      refute AlIlegal.licensed_als(path).key?("123")
-      assert AlIlegal.licensed_als(path).key?("456")
+      refute AlojamentoLocal.licensed_als(path).key?("123")
+      assert AlojamentoLocal.licensed_als(path).key?("456")
     end
   end
 
   def test_geometry_preserves_circle_and_overlap_area_ratios
     [[100,80,40], [0,80,0], [0,0,0], [100,80,0], [100,100,100], [100,25,25], [100,1,1], [25,100,25]].each do |a,b,i|
-      g = AlIlegal::Overlap.geometry(a,b,i)
+      g = AlojamentoLocal::Overlap.geometry(a,b,i)
       assert g.values.all?(&:finite?)
       assert_operator g["x"] - g["r"], :>=, 19.999
       assert_operator g["y"] + g["s"], :<=, 620.001
       next if a.zero?
       assert_in_delta b.to_f/a, g["s"]**2 / g["r"]**2, 1e-6
-      overlap = AlIlegal::Overlap.area(g["r"],g["s"],g["distance"])
+      overlap = AlojamentoLocal::Overlap.area(g["r"],g["s"],g["distance"])
       assert_in_delta i.to_f/a, overlap/(Math::PI*g["r"]**2), 1e-6
     end
-    assert_raises(ArgumentError) { AlIlegal::Overlap.geometry(2,1,2) }
+    assert_raises(ArgumentError) { AlojamentoLocal::Overlap.geometry(2,1,2) }
   end
 
   def test_invalid_accounting_is_rejected
     Dir.mktmpdir do |dir|
       path = File.join(dir, "empty.csv")
       File.write(path, "NrRNAL,Concelho,Freguesia\n")
-      metrics = AlIlegal::RegistrationMetrics.calculate([], path)
+      metrics = AlojamentoLocal::RegistrationMetrics.calculate([], path)
       metrics[:rows].first[:intersection] = 1
-      assert_raises(RuntimeError) { AlIlegal::RegistrationMetrics.validate!(metrics) }
+      assert_raises(RuntimeError) { AlojamentoLocal::RegistrationMetrics.validate!(metrics) }
     end
   end
 end

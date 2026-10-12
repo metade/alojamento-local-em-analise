@@ -139,10 +139,18 @@ O workflow de GitHub Pages define automaticamente a base `/alojamento-local-em-a
 ## Testes
 
 ```bash
-ruby -Itest test/al_ilegal_test.rb
-ruby -Itest test/spatial_clusters_test.rb
-ruby -Itest test/versioned_analysis_test.rb
+bundle exec rake test
 ```
+
+O comando descobre todos os ficheiros `test/**/*_test.rb`, incluindo a regressão
+completa do pipeline com fontes sintéticas e outputs esperados em Git.
+`bundle exec rake` executa a mesma tarefa por omissão. Para executar só a regressão:
+
+```bash
+bundle exec rake test TEST=test/pipeline_regression_test.rb
+```
+
+Ver [casos e atualização dos outputs esperados](test/fixtures/pipeline/README.md).
 
 Antes de publicar ou rever alterações aos outputs, execute a auditoria de publicação:
 

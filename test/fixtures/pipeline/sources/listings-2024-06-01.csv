@@ -1,0 +1,37 @@
+neighbourhood_group_cleansed,license,listing_url,neighbourhood_cleansed,name,latitude,longitude,room_type,property_type,bedrooms,host_id,last_scraped
+Lisboa,0001/AL,https://example.invalid/rooms/synthetic-1,Arroios,Synthetic place,38.71,-9.14,Entire home/apt,House,1,synthetic-host,2024-05-31
+Lisboa,1,https://example.invalid/rooms/synthetic-2,Belm,Synthetic place,38.711,-9.14,Entire home/apt,House,1,other-synthetic-host,2024-05-31
+ Lisboa ,1,https://example.invalid/rooms/synthetic-3,Arroios,Synthetic place,38.71,-9.14,Entire home/apt,House,1,synthetic-host,2024-05-31
+lisboa,1,https://example.invalid/rooms/synthetic-4,Arroios,Synthetic place,38.71,-9.14,Entire home/apt,House,1,synthetic-host,2024-05-31
+Porto,1,https://example.invalid/rooms/synthetic-5,Arroios,Synthetic place,38.71,-9.14,Entire home/apt,House,1,synthetic-host,2024-05-31
+Lisboa,2,https://example.invalid/rooms/synthetic-6,Arroios,Synthetic place,38.71,-9.14,Entire home/apt,House,1,synthetic-host,2024-05-31
+Lisboa,2,https://example.invalid/rooms/synthetic-7,Arroios,Synthetic place,38.711,-9.14,Entire home/apt,House,1,synthetic-host,2024-05-31
+Lisboa,3,https://example.invalid/rooms/synthetic-8,Arroios,Synthetic place,38.71,-9.14,Entire home/apt,House,1,synthetic-host,2024-05-31
+Lisboa,3,https://example.invalid/rooms/synthetic-9,Arroios,Synthetic place,38.714,-9.14,Entire home/apt,House,1,synthetic-host,2024-05-31
+Lisboa,3,https://example.invalid/rooms/synthetic-10,Arroios,Synthetic place,38.718,-9.14,Entire home/apt,House,1,synthetic-host,2024-05-31
+Lisboa,3,https://example.invalid/rooms/synthetic-11,Arroios,Synthetic place,38.80,-9.14,Entire home/apt,House,1,synthetic-host,2024-05-31
+Lisboa,4,https://example.invalid/rooms/synthetic-12,Arroios,Synthetic place,38.71,-9.14,Entire home/apt,House,1,synthetic-host,2024-05-31
+Lisboa,4,https://example.invalid/rooms/synthetic-13,Arroios,Synthetic place,,,Entire home/apt,House,1,synthetic-host,2024-05-31
+Lisboa,5,https://example.invalid/rooms/synthetic-14,Arroios,Synthetic place,38.71,-9.14,Entire home/apt,House,1,synthetic-host,2024-05-31
+Lisboa,6,https://example.invalid/rooms/synthetic-15,Arroios,Synthetic room,38.71,-9.14,Entire home/apt,Room,1,synthetic-host,2024-05-31
+Lisboa,6,https://example.invalid/rooms/synthetic-16,Arroios,Synthetic room,38.711,-9.14,Entire home/apt,Room,1,synthetic-host,2024-05-31
+Lisboa,7,https://example.invalid/rooms/synthetic-17,Arroios,Synthetic place,38.71,-9.14,Entire home/apt,House,1,synthetic-host,2024-05-31
+Lisboa,8,https://example.invalid/rooms/synthetic-18,Belm,Synthetic place,38.71,-9.14,Entire home/apt,House,1,synthetic-host,2024-05-31
+Lisboa,9,https://example.invalid/rooms/synthetic-19,Ajuda,Synthetic place,38.71,-9.14,Entire home/apt,House,1,synthetic-host,2024-05-31
+Lisboa,10,https://example.invalid/rooms/synthetic-20,Arroios,Synthetic place,38.71,-9.14,Entire home/apt,House,1,synthetic-host,2024-05-31
+Lisboa,Registration Number: 00011/AL,https://example.invalid/rooms/synthetic-21,Arroios,Synthetic place,38.71,-9.14,Entire home/apt,House,1,synthetic-host,2024-06-02
+Lisboa,12,https://example.invalid/rooms/synthetic-22,Arroios,Synthetic place,38.71,-9.14,Entire home/apt,House,1,synthetic-host,2024-05-31
+Lisboa,12,https://example.invalid/rooms/synthetic-23,Arroios,Synthetic place,,,Entire home/apt,House,1,synthetic-host,2024-05-31
+Lisboa,15,https://example.invalid/rooms/synthetic-24,Arroios,Synthetic place,38.71,-9.14,Entire home/apt,House,1,synthetic-host,2024-05-31
+Lisboa,16,https://example.invalid/rooms/synthetic-25,Arroios,Synthetic place,38.71,-9.14,Entire home/apt,House,1,synthetic-host,2024-05-31
+Lisboa,17/2018,https://example.invalid/rooms/synthetic-26,Arroios,Synthetic place,38.71,-9.14,Entire home/apt,House,1,synthetic-host,2024-05-31
+Lisboa,18,https://example.invalid/rooms/synthetic-27,Unknown,Synthetic place,38.71,-9.14,Entire home/apt,House,1,synthetic-host,2024-05-31
+Lisboa,20,https://example.invalid/rooms/synthetic-28,Arroios,Synthetic place,38.71,-9.14,Entire home/apt,House,1,synthetic-host,2024-05-31
+Lisboa,21,https://example.invalid/rooms/synthetic-29,Arroios,Synthetic place,38.71,-9.14,Entire home/apt,House,1,synthetic-host,2024-05-31
+Lisboa,21,https://example.invalid/rooms/synthetic-30,Arroios,Synthetic place,38.714,-9.14,Entire home/apt,House,1,synthetic-host,2024-05-31
+Lisboa,21,https://example.invalid/rooms/synthetic-31,Arroios,Synthetic place,38.718,-9.14,Entire home/apt,House,1,synthetic-host,2024-05-31
+Porto,22,https://example.invalid/rooms/synthetic-32,Arroios,Synthetic place,38.71,-9.14,Entire home/apt,House,1,synthetic-host,2024-05-31
+Lisboa,,https://example.invalid/rooms/synthetic-33,Arroios,Synthetic place,38.71,-9.14,Entire home/apt,House,1,synthetic-host,2024-05-31
+Lisboa,   ,https://example.invalid/rooms/synthetic-34,Arroios,Synthetic place,38.71,-9.14,Entire home/apt,House,1,synthetic-host,2024-05-31
+Lisboa,Exempt,https://example.invalid/rooms/synthetic-35,Arroios,Synthetic place,38.71,-9.14,Entire home/apt,House,1,synthetic-host,2024-05-31
+Lisboa,406/UT/2017,https://example.invalid/rooms/synthetic-36,Arroios,Synthetic place,38.71,-9.14,Entire home/apt,House,1,synthetic-host,2024-05-31

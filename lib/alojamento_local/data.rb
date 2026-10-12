@@ -5,7 +5,7 @@ require "date"
 require "json"
 require "fileutils"
 
-module AlIlegal
+module AlojamentoLocal
   module Data
     AIRBNB_DATA_PAGE = "https://insideairbnb.com/get-the-data/"
     OFFICIAL_URL = "https://hub.arcgis.com/api/download/v1/items/4e62eb1977564991bd01e61d7aa8266f/csv?redirect=false&layers=6"
