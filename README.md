@@ -57,6 +57,24 @@ descarrega fontes nem recalcula a análise. Snapshots sem métricas compatíveis
 exigem reanálise; a regeneração falha sem alterar o relatório existente. Um PDF
 existente não é atualizado por este comando.
 
+A regeneração e a construção do site usam `PublicSnapshot::Loader`, também
+usado para validar os outputs antes da publicação de uma análise. O loader lê
+o schema público 4.0.0 com métricas 1.0.0 e metodologias 2.0.0/2.1.0, valida
+proveniência e contabilidade, e devolve um snapshot imutável com chaves string:
+`metadata`, `summary`, `licence_group_aggregates`,
+`announcements_by_parish_and_classification`, `parish_totals` e
+`registration_metrics`. Nos agregados, as contagens são inteiros:
+`announcements` conta anúncios, `announcements_with_identifiable_number` conta
+anúncios com número identificável e `estimated_establishments` é uma estimativa.
+`licence_groups` conta grupos de números identificáveis; `spatial_locations`
+conta clusters espaciais. Os conjuntos de números distintos estão apenas nas
+métricas de registo. Metadata e resumo conservam os campos JSON publicados.
+As estimativas e os números distintos da cidade não são somas de freguesias.
+Os adaptadores de saída mantêm os nomes e formatos publicados, sem alterar os
+relatórios ou os dados do site. Na seleção do site, snapshots antigos sem
+métricas suportadas continuam disponíveis no arquivo; um snapshot selecionado
+com dados inválidos faz a construção falhar.
+
 O histórico público em `data/history/summary.csv` mantém uma linha atual por par de datas. O gráfico de distâncias do site usa `data/history/distance_ranges.csv`: cada run público novo acrescenta quatro contagens agregadas de números de licença, sem coordenadas nem números de licença individuais. Para preencher este agregado num run público anterior sem alterar o snapshot, use `bundle exec ruby scripts/backfill_distance_ranges.rb <run_id>` com os ficheiros fonte originais; o script verifica os hashes do metadata antes de escrever. Uma reanálise substitui apenas as linhas históricas do mesmo par de datas, incluindo os agregados de distâncias e regiões. Para gerar também um PDF derivado, instale `wkhtmltopdf` ou `weasyprint` e execute:
 
 ```bash

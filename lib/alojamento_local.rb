@@ -1,3 +1,4 @@
+require_relative "alojamento_local/public_schema"
 require_relative "alojamento_local/data"
 require "fileutils"
 require "haversine"
@@ -15,15 +16,6 @@ module AlojamentoLocal
   ANALYSIS_VERSION = "3.2.0"
   OUTPUT_SCHEMA_VERSION = "4.0.0"
   METHODOLOGY_VERSION = "2.1.0"
-  PUBLIC_CSV_SCHEMAS = {
-    "listings.csv" => %w[freguesia classification listings identifiable_licences establishments_estimate],
-    "licence_groups.csv" => %w[classification official_municipality official_type licence_groups listings spatial_locations establishments_estimate],
-    "freguesias.csv" => %w[freguesia listings identifiable_licences establishments_estimate]
-  }.freeze
-  FORBIDDEN_PUBLIC_FIELDS = %w[
-    host_id listing_url url id name title nome licensa licensa_raw
-    latitude longitude lat lng address endereco official_address
-  ].freeze
   COLLAPSIBLE_ASSESSMENTS = [
     "provável estabelecimento com anúncios múltiplos",
     "licença repetida na mesma localização"
@@ -497,22 +489,8 @@ module AlojamentoLocal
     end
 
     def validate_public_outputs!(run_dir)
-      PUBLIC_CSV_SCHEMAS.each do |filename, expected_headers|
-        path = File.join(run_dir, filename)
-        headers = CSV.open(path, &:readline)
-        raise "Invalid public schema for #{filename}" unless headers == expected_headers
-        forbidden_headers = headers.map(&:downcase) & FORBIDDEN_PUBLIC_FIELDS
-        raise "Forbidden field in public output #{filename}: #{forbidden_headers.join(', ')}" unless forbidden_headers.empty?
-        CSV.foreach(path, headers: true) do |row|
-          values = row.fields.join(" ")
-          raise "Forbidden content in public output #{filename}" if values.match?(%r{https?://|www\.|/rooms/}i)
-        end
-      end
-
-      RegistrationMetrics.validate!(JSON.parse(File.read(File.join(run_dir, "registration_metrics.json")), symbolize_names: true))
-      metadata = JSON.parse(File.read(File.join(run_dir, "metadata.json")))
-      raise "Public metadata contains a local source path" if metadata.dig("source_files", "airbnb", "path") || metadata.dig("source_files", "official", "path")
-      raise "Forbidden field in public output" if metadata.to_s.match?(/host_id|listing_url|licensa_raw|latitude|longitude|official_address/i)
+      loader = PublicSnapshot::Loader.new
+      loader.load(run_dir, expected_run_id: loader.metadata(run_dir).fetch("run_id"))
     end
     def freguesia_rows(listings)
       grouped = listings.group_by { |row| row[:bairro].to_s }
@@ -691,3 +669,5 @@ module AlojamentoLocal
 end
 
 require_relative "alojamento_local/registration_metrics"
+
+require_relative "alojamento_local/public_snapshot"

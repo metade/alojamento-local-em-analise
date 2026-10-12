@@ -1,6 +1,6 @@
 require "csv"
 require "json"
-require_relative "registration_metrics"
+require_relative "public_snapshot"
 require_relative "overlap"
 
 module AlojamentoLocal
@@ -37,7 +37,7 @@ module AlojamentoLocal
       @distance_history = distance_history
       @outside_region_history = outside_region_history
       @quotes = quotes
-      @json_files = {}
+      @snapshot_loader = PublicSnapshot::Loader.new
     end
 
     def pretty(value)
@@ -47,14 +47,14 @@ module AlojamentoLocal
     def counts(rows)
       rows.each_with_object(Hash.new { |h, k| h[k] = {"listings" => 0, "licences" => 0, "estimate" => 0} }) do |row, out|
         value = out[row["classification"]]
-        value["listings"] += row["listings"].to_i
-        value["licences"] += row["identifiable_licences"].to_i
-        value["estimate"] += row["establishments_estimate"].to_i
+        value["listings"] += row.fetch("announcements")
+        value["licences"] += row.fetch("announcements_with_identifiable_number")
+        value["estimate"] += row.fetch("estimated_establishments")
       end
     end
 
     def load_json(path)
-      @json_files[path] ||= JSON.parse(File.read(path))
+      @snapshot_loader.load_json(path)
     end
 
     def public_runs
@@ -84,9 +84,9 @@ module AlojamentoLocal
       DISTANCE_LABELS.map { |key, label| {"key" => key, "label" => label, "count" => counts.fetch(key)} }
     end
 
-    def outside_regions(run_id, listings)
-      expected = listings.select { |row| row["classification"] == "licença oficial fora de Lisboa" }
-        .sum { |row| row["listings"].to_i }
+    def outside_regions(run_id, announcements)
+      expected = announcements.select { |row| row["classification"] == "licença oficial fora de Lisboa" }
+        .sum { |row| row.fetch("announcements") }
       return {"rows" => [], "total" => 0, "unresolved_municipality" => 0, "unresolved_region" => 0} if expected.zero?
 
       raise "Missing outside region counts for #{run_id}" unless File.file?(@outside_region_history)
@@ -119,31 +119,24 @@ module AlojamentoLocal
     end
 
     def measured_run(runs)
-      runs.find do |path|
-        metrics = File.join(path, "registration_metrics.json")
-        next false unless File.file?(metrics)
-        data = load_json(metrics)
-        data["metric_version"] == AlojamentoLocal::RegistrationMetrics::VERSION &&
-          AlojamentoLocal::RegistrationMetrics::SUPPORTED_METHODOLOGY_VERSIONS.include?(data["methodology_version"])
-      end || raise("No snapshot has supported measured registration metrics")
+      runs.find { |path| @snapshot_loader.supported_metrics?(path) } ||
+        raise("No snapshot has supported measured registration metrics")
     end
 
     def site_data(runs)
       run_dir = measured_run(runs)
-      run_id = File.basename(run_dir)
-      summary = load_json(File.join(run_dir, "summary.json"))
-      metadata = load_json(File.join(run_dir, "metadata.json"))
-      listings = CSV.read(File.join(run_dir, "listings.csv"), headers: true).map(&:to_h)
-      freguesias = CSV.read(File.join(run_dir, "freguesias.csv"), headers: true).map(&:to_h)
-      grouped = listings.group_by { |row| row["freguesia"] }.transform_values { |rows| counts(rows) }
+      snapshot = @snapshot_loader.load(run_dir)
+      run_id = snapshot.run_id
+      summary = snapshot.summary
+      metadata = snapshot.metadata
+      announcements = snapshot.announcements_by_parish_and_classification
+      listings = snapshot.published_announcement_rows
+      freguesias = snapshot.parish_totals
+      grouped = announcements.group_by { |row| row["freguesia"] }.transform_values { |rows| counts(rows) }
       ranges = distance_ranges(run_id, summary)
-      regions = outside_regions(run_id, listings)
-      metrics_path = File.join(run_dir, "registration_metrics.json")
-      raise "Missing measured registration metrics for #{run_id}" unless File.file?(metrics_path)
-      metrics_json = JSON.generate(load_json(metrics_path))
-      AlojamentoLocal::RegistrationMetrics.validate!(JSON.parse(metrics_json, symbolize_names: true))
-      metrics = JSON.parse(metrics_json)
-      raise "Metric provenance differs" unless metrics["run_id"] == run_id && metrics["source_files"] == metadata["source_files"] && metrics["methodology_version"] == metadata["methodology_version"]
+      regions = outside_regions(run_id, announcements)
+      # Geometry belongs to the site; do not mutate validated source metrics.
+      metrics = JSON.parse(JSON.generate(snapshot.registration_metrics))
       measures = metrics.fetch("rows").to_h do |row|
         row["geometry"] = AlojamentoLocal::Overlap.geometry(row["rnal"], row["airbnb"], row["intersection"])
         row["unresolved"] = row["empty_licence"] + row["unrecognised_licence"]
@@ -152,13 +145,8 @@ module AlojamentoLocal
       end
       measures.fetch("Lisboa")["observed_unknown_parish"] = measures.fetch(AlojamentoLocal::Geography::UNKNOWN).fetch("announcements")
       measures.fetch("Lisboa")["official_unknown_parish"] = metrics.fetch("diagnostics").fetch("lisbon_entries_unresolved_parish")
-      raise "City announcement count differs" unless summary.fetch("listings") == measures.fetch("Lisboa").fetch("announcements")
       districts = freguesias.reject { |row| row["freguesia"] == AlojamentoLocal::Geography::UNKNOWN }.map do |row|
         raw_name = row["freguesia"]
-        measured = measures.fetch(raw_name)
-        unless measured.fetch("announcements") == row.fetch("listings").to_i && measured.fetch("identifiable_number") == row.fetch("identifiable_licences").to_i
-          raise "District announcement metrics differ: #{raw_name}"
-        end
         # Keep the published routes while analysis now uses canonical parish names.
         route_name = AlojamentoLocal::Geography.route_name(raw_name)
         {
@@ -166,10 +154,10 @@ module AlojamentoLocal
           "name" => raw_name,
           "display_name" => pretty(raw_name),
           "slug" => route_name.downcase.tr("áàâãäéêëíìîïóôõöúùûüç", "aaaaaeeeiiiioooouuuuc").gsub(/[^a-z0-9]+/, "-").gsub(/\A-|-$|\A\z/, ""),
-          "listings" => row["listings"].to_i,
+          "listings" => row.fetch("announcements"),
           # This snapshot field counts listing rows, not distinct registration numbers.
-          "listings_with_identifiable_licence" => row["identifiable_licences"].to_i,
-          "establishments_estimate" => row["establishments_estimate"].to_i,
+          "listings_with_identifiable_licence" => row.fetch("announcements_with_identifiable_number"),
+          "establishments_estimate" => row.fetch("estimated_establishments"),
           "categories" => LABELS.filter_map do |key, label|
             value = grouped.dig(raw_name, key)
             value && value["listings"].positive? ? {"key" => key, "label" => label, **value} : nil
@@ -188,7 +176,7 @@ module AlojamentoLocal
         "metadata" => metadata,
         "official_count" => summary["official_registers_lisbon"],
         "listings" => listings,
-        "repeated_listings" => listings.select { |row| row["classification"] == "licença repetida em várias localizações" }.sum { |row| row["listings"].to_i },
+        "repeated_listings" => announcements.select { |row| row["classification"] == "licença repetida em várias localizações" }.sum { |row| row.fetch("announcements") },
         "distance_ranges" => ranges,
         "distance_total" => ranges.sum { |range| range["count"] },
         "distance_max" => ranges.map { |range| range["count"] }.max.to_i,

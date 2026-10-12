@@ -175,7 +175,7 @@ class PreparedSourcesTest < Minitest::Test
         AlojamentoLocal::RegistrationMetrics.validate!(JSON.parse(JSON.generate(metrics), symbolize_names: true))
       end
       # Existing published 2.0.0 snapshots remain readable with metric schema 1.0.0.
-      %w[metadata.json registration_metrics.json].each do |file|
+      %w[metadata.json summary.json registration_metrics.json].each do |file|
         path = File.join(result[:path], file)
         data = JSON.parse(File.read(path))
         data["methodology_version"] = "2.0.0"

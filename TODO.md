@@ -51,7 +51,7 @@ da metodologia e a explicação do método atual, mesmo ao simplificar o sistema
   limite. Manter a implementação atual por agora; não está prevista a troca
   por uma biblioteca de gráficos.
 
-- [ ] Introduzir um loader partilhado de snapshots públicos para a regeneração
+- [x] Introduzir um loader partilhado de snapshots públicos para a regeneração
   do relatório e a construção do site. Ler os ficheiros atuais e devolver uma
   estrutura com interface estável para metadata, resumo, grupos de licenças,
   anúncios por freguesia e classificação, totais por freguesia e métricas de
