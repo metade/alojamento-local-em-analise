@@ -90,9 +90,11 @@ runs, `snapshot.json` é a única fonte de verdade. O documento tem
 `parish_totals` e `registration_metrics`. O loader mantém a mesma interface
 imutável, com chaves string, independentemente do armazenamento.
 
-O relatório e o site leem exclusivamente `snapshot.json` nos runs consolidados.
+A regeneração do relatório e o site leem exclusivamente `snapshot.json` nos runs consolidados.
 A publicação valida o documento, a proveniência e a coerência dos agregados.
-A reutilização exige o documento e `report.html`, hashes e versões atuais.
+Cada análise pública recalcula os resultados e gera `snapshot.json` e
+`report.html`. Antes de substituir um par já publicado, verifica os hashes
+das fontes existentes e valida os novos outputs.
 Um documento inválido ou de versão incompatível faz a leitura falhar; nunca
 se tenta reconstruí-lo de ficheiros separados.
 
@@ -102,7 +104,7 @@ com métricas 1.0.0 e metodologias 2.0.0/2.1.0, adaptando-os antes da mesma
 validação. Runs antigos sem métricas suportadas podem permanecer no arquivo;
 a seleção do site conserva essa compatibilidade. Uma reanálise com fontes
 datadas e hashes verificados substitui apenas o par escolhido pelo formato
-atual. Formatos anteriores não são reutilizados como runs atuais. O formato
+atual. A leitura de um formato anterior não evita a reanálise. O formato
 dos outputs locais mantém-se.
 
 Nos agregados, as contagens são inteiros: `announcements` conta anúncios,
@@ -131,7 +133,47 @@ O histórico público em `data/history/summary.csv` mantém uma linha atual por 
 
 ```bash
 GENERATE_PDF=1 bundle exec rake analysis:public
+GENERATE_PDF=1 bundle exec rake analysis:local
 ```
+
+O PDF chama-se `report.pdf` nos dois modos. No modo público deriva de
+`report.html`; no modo local, de `report_local.html`. O writer tenta
+`wkhtmltopdf` e, se necessário, `weasyprint`.
+
+### Organização da análise
+
+`Analysis.run` descreve a sequência: preparar fontes e destino, calcular o
+resultado, gerar dados e relatório, gerar o PDF se pedido e publicar. Recebe
+os dois caminhos de fontes ou nenhum, o modo e as opções de destino/PDF;
+devolve `{run_id:, path:, summary:}`. Sem caminhos explícitos, seleciona o par
+local datado mais recente. Não existe uma classe `Runner` separada.
+
+As responsabilidades estão em objetos e módulos de `Analysis`:
+
+| Componente | Responsabilidade |
+| --- | --- |
+| `PreparedSources::Pair` | Seleção e preparação das fontes, datas, URLs, hashes, verificação dos bytes e identificador do par |
+| `Classifier` | Linhas detalhadas com correspondências e classificações |
+| `Aggregates`, `AnnouncementCounts`, `RegistrationMetrics` | Agregados de anúncios, grupos, freguesias e métricas de conjuntos |
+| `Result` | Resultado calculado, resumo, metadata e construção do `PublicSnapshot` validado |
+| `OutputWriter` | Escrita dos dados, relatório HTML e PDF opcional a partir de um resultado e destino |
+| `History` | Comparações e linhas históricas |
+| `PublicPublisher` | Staging, validação, instalação conjunta do snapshot e histórico, rollback e limpeza |
+
+O identificador base pertence ao par de fontes. O sufixo dos reruns locais
+depende dos diretórios existentes e é decidido pela análise. O metadata junta
+a proveniência das fontes à identificação e versões do run e à proveniência
+Git. `official_register_date` é a maior data de registo entre as linhas
+oficiais correspondentes aos anúncios classificados; não é a data de download
+do RNAL, guardada separadamente em `official_register_download_date`.
+
+A reorganização preserva metodologia, schema, agregados e os outputs da
+fixture sintética. Scripts e testes específicos usam diretamente o componente
+responsável; `Analysis` mantém apenas `run` como interface pública.
+
+Os relatórios ainda são montados por `Report` em Ruby durante a análise. A
+migração para templates Jekyll partilhados entre o site e um build de relatório
+isolado está planeada em [TODO.md](TODO.md).
 
 ## Site público
 
@@ -174,8 +216,11 @@ Jekyll escrever as páginas. Assim, `bundle exec jekyll build` e os rebuilds de
 ter Node e as dependências de `npm ci` instalados; uma falha na compilação faz
 falhar o build. `npm run site:css` continua disponível para compilar apenas o CSS.
 
-O resultado fica em `_site/` e inclui as páginas editoriais e de freguesias, relatórios HTML,
-CSVs agregados, metadata, licença e avisos de atribuição. Datasets brutos,
+O resultado fica em `_site/` e inclui as páginas editoriais e de freguesias,
+`snapshot.json`, relatórios HTML, PDFs existentes, licença e avisos de atribuição.
+As exportações agregadas de snapshots legados mantêm os seus caminhos antigos.
+Os relatórios são copiados para `_site/runs/<run_id>/`, sem regeneração de HTML
+ou PDF e sem alterar snapshots versionados. Datasets brutos,
 resultados locais e caches não são copiados. O diretório `_site/` pode ser usado
 como artefacto de um deployment estático. O workflow mensal constrói e
 valida esse diretório antes de o publicar no GitHub Pages.
@@ -234,6 +279,10 @@ bundle exec rake test
 
 O comando descobre todos os ficheiros `test/**/*_test.rb`, incluindo a regressão
 completa do pipeline com fontes sintéticas e outputs esperados em Git.
+Também verifica a preparação única das fontes, a separação das tarefas,
+os guards de hashes, os reruns locais e o rollback da publicação após falha
+ou interrupção. Os testes de PDF usam conversores simulados para verificar
+o HTML de origem nos dois modos, o fallback e o destino do ficheiro derivado.
 `bundle exec rake` executa a mesma tarefa por omissão. Para executar só a regressão:
 
 ```bash
@@ -270,7 +319,7 @@ bundle exec rake rebuild
 O repositório pode permanecer privado enquanto um deployment separado publica o
 conteúdo sanitizado de `_site/`.
 
-O workflow mensal faz commit apenas dos outputs públicos sanitizados em `data/snapshots/` e `data/history/`; o site é publicado como artefacto separado através do GitHub Pages, depois de executar testes, construir o site e passar os gates de publicação. Os snapshots commitados e o histórico são a fonte permanente do projeto. Datasets brutos em `data_sources/`, resultados detalhados em `data/private/` e caches em `tmp/` continuam fora do Git por defeito. Os CSVs dos snapshots são agregados e não contêm identificadores de anúncios, anfitriões, nomes, endereços, coordenadas ou valores de licença individuais.
+O workflow mensal faz commit apenas dos outputs públicos sanitizados em `data/snapshots/` e `data/history/`; o site é publicado como artefacto separado através do GitHub Pages, depois de executar testes, construir o site e passar os gates de publicação. Os snapshots commitados e o histórico são a fonte permanente do projeto. Datasets brutos em `data_sources/`, resultados detalhados em `data/private/` e caches em `tmp/` continuam fora do Git por defeito. Os documentos atuais e os CSVs legados dos snapshots são agregados e não contêm identificadores de anúncios, anfitriões, nomes, endereços, coordenadas ou valores de licença individuais.
 
 O workflow `.github/workflows/site-publish.yml` reconstrói e publica o site em pushes humanos para `main` e através de `workflow_dispatch`. Está protegido contra o commit `Atualiza análise mensal` produzido pelo workflow mensal, que já constrói e publica o site na própria execução.
 
