@@ -21,7 +21,11 @@ module AlojamentoLocal
           report_filename = "report_local.html"
           arguments = [metadata, summary, public_groups, public_listings, metrics]
         end
-        File.write(File.join(run_dir, report_filename), Report.complete_html(*arguments))
+        write_report(run_dir, report_filename, arguments)
+      end
+
+      def write_report(run_dir, filename, arguments)
+        File.write(File.join(run_dir, filename), Report.complete_html(*arguments))
       end
 
       def detailed_listing_rows(listings)
@@ -71,7 +75,7 @@ module AlojamentoLocal
         File.write(path, JSON.pretty_generate(data) + "\n")
       end
 
-      private_class_method :write_public_snapshot, :write_local_outputs, :write_json
+      private_class_method :write_json
     end
   end
 end

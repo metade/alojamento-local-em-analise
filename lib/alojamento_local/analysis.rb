@@ -2,14 +2,24 @@
 
 module AlojamentoLocal
   module Analysis
-    # Compatibility entry points. Run-scoped orchestration lives in Runner;
-    # calculation, output, history and publication have separate collaborators.
+    # Orchestrates a run; Runner holds its prepared data and publication state.
+    # The remaining entry points preserve existing helper interfaces.
 
     module_function
 
     def run(airbnb_path: nil, official_path: nil, output_root: nil, history_path: nil, generate_pdf: false, mode: "local")
-      Runner.new(airbnb_path: airbnb_path, official_path: official_path, output_root: output_root,
-        history_path: history_path, generate_pdf: generate_pdf, mode: mode).run
+      runner = Runner.new(airbnb_path: airbnb_path, official_path: official_path, mode: mode)
+      runner.prepare_analysis(output_root: output_root, history_path: history_path)
+      runner.publish do
+        if runner.public?
+          runner.generate_snapshot
+        else
+          runner.generate_local_outputs
+        end
+        runner.generate_report
+        runner.generate_pdf if generate_pdf
+      end
+      runner.result
     end
 
     def analyse(airbnb_path, official_path)

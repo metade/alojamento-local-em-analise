@@ -10,31 +10,79 @@ require "time"
 module AlojamentoLocal
   module Analysis
     class Runner
-      def initialize(airbnb_path: nil, official_path: nil, output_root: nil, history_path: nil, generate_pdf: false, mode: "local")
+      def initialize(airbnb_path: nil, official_path: nil, mode: "local")
         self.class.validate_options!(mode: mode)
         raise ArgumentError, "Provide both source paths or neither" if airbnb_path.nil? != official_path.nil?
 
         @airbnb_path, @official_path = airbnb_path.nil? ? Data.local_paths! : [airbnb_path, official_path]
         @mode = mode
-        @output_root = output_root || (public? ? "data/snapshots" : "data/private")
-        @history_path = history_path || (public? ? "data/history/summary.csv" : "data/private/history/summary.csv")
-        @generate_pdf = generate_pdf
       end
 
-      def run
+      def prepare_analysis(output_root: nil, history_path: nil)
+        @output_root = output_root || (public? ? "data/snapshots" : "data/private")
+        @history_path = history_path || (public? ? "data/history/summary.csv" : "data/private/history/summary.csv")
         @source_hashes = source_hashes
         sources = PreparedSources::Pair.new(airbnb_path: @airbnb_path, official_path: @official_path)
         listings, = Classifier.new(sources).classify
         raise "No observed Lisbon announcements" if listings.empty?
 
         dates = source_dates(listings)
-        run_id = select_run_id(dates)
-        destination = File.join(@output_root, run_id)
-        outputs = calculate_outputs(sources, listings, dates, run_id)
+        @run_id = select_run_id(dates)
+        @destination = File.join(@output_root, @run_id)
+        @outputs = calculate_outputs(sources, listings, dates, @run_id)
         verify_sources_unchanged!
-        History.verify_local_run!(@history_path, run_id) unless public?
-        write_run(destination, outputs)
-        {run_id: run_id, path: destination, summary: outputs.fetch(:summary)}
+        History.verify_local_run!(@history_path, @run_id) unless public?
+      end
+
+      def public?
+        @mode == "public"
+      end
+
+      def publish
+        if public?
+          PublicPublisher.new(destination: @destination, history_path: @history_path).publish(
+            summary: @outputs.fetch(:summary), listings: @outputs.fetch(:listings)
+          ) do |run_dir|
+            @run_dir = run_dir
+            FileUtils.mkdir_p(@run_dir)
+            yield
+          end
+        else
+          @run_dir = @destination
+          FileUtils.mkdir_p(@run_dir)
+          yield
+          History.append_history(@history_path, @outputs.fetch(:summary))
+        end
+      ensure
+        @run_dir = nil
+      end
+
+      def generate_snapshot
+        @snapshot = OutputWriter.write_public_snapshot(@run_dir, @outputs.fetch(:metadata), @outputs.fetch(:summary),
+          @outputs.fetch(:public_groups), @outputs.fetch(:public_listings), @outputs.fetch(:freguesias), @outputs.fetch(:metrics))
+      end
+
+      def generate_local_outputs
+        OutputWriter.write_local_outputs(@run_dir, @outputs.fetch(:metadata), @outputs.fetch(:summary),
+          @outputs.fetch(:listings), @outputs.fetch(:groups), @outputs.fetch(:freguesias), @outputs.fetch(:metrics))
+      end
+
+      def generate_report
+        filename = public? ? "report.html" : "report_local.html"
+        arguments = if public?
+          @snapshot.report_arguments
+        else
+          @outputs.values_at(:metadata, :summary, :public_groups, :public_listings, :metrics)
+        end
+        OutputWriter.write_report(@run_dir, filename, arguments)
+      end
+
+      def generate_pdf
+        OutputWriter.generate_pdf_file(@run_dir)
+      end
+
+      def result
+        {run_id: @run_id, path: @destination, summary: @outputs.fetch(:summary)}
       end
 
       def self.validate_options!(mode:)
@@ -55,10 +103,6 @@ module AlojamentoLocal
       end
 
       private
-
-      def public?
-        @mode == "public"
-      end
 
       def source_hashes
         [@airbnb_path, @official_path].map { |path| Digest::SHA256.file(path).hexdigest }
@@ -116,23 +160,6 @@ module AlojamentoLocal
           public_listings: Aggregates.public_listing_rows(listings), public_groups: Aggregates.public_group_rows(groups),
           metadata: metadata, summary: summary, metrics: metrics
         }
-      end
-
-      def write_run(destination, outputs)
-        if public?
-          PublicPublisher.new(destination: destination, history_path: @history_path).publish(
-            summary: outputs.fetch(:summary), listings: outputs.fetch(:listings)
-          ) { |run_dir| write_outputs(run_dir, outputs) }
-        else
-          write_outputs(destination, outputs)
-          History.append_history(@history_path, outputs.fetch(:summary))
-        end
-      end
-
-      def write_outputs(run_dir, outputs)
-        FileUtils.mkdir_p(run_dir)
-        OutputWriter.write_outputs(run_dir: run_dir, mode: @mode, **outputs)
-        OutputWriter.generate_pdf_file(run_dir) if @generate_pdf
       end
     end
   end
