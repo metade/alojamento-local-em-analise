@@ -192,22 +192,22 @@ class PublicSnapshotTest < Minitest::Test
     end
   end
 
-  def test_reuse_requires_current_document_and_report_without_exports
+  def test_source_hash_guard_uses_authoritative_document_without_exports_or_report
     with_snapshot do |_, path|
       snapshot = consolidate(path)
       hashes = %w[airbnb official].map { |source| snapshot.metadata.fetch("source_files").fetch(source).fetch("sha256") }
       %w[metadata.json summary.json registration_metrics.json listings.csv licence_groups.csv freguesias.csv].each { |file| FileUtils.rm(File.join(path, file)) }
-      assert AlojamentoLocal::Analysis.public_run_current?(path, hashes)
+      AlojamentoLocal::Analysis.verify_public_sources!(path, hashes)
       FileUtils.rm(File.join(path, "report.html"))
-      refute AlojamentoLocal::Analysis.public_run_current?(path, hashes)
+      AlojamentoLocal::Analysis.verify_public_sources!(path, hashes)
       File.write(File.join(path, "report.html"), AlojamentoLocal::Report.complete_html(*snapshot.report_arguments))
       mutate_json(path, "snapshot.json") { |data| data["summary"]["listings"] += 1 }
-      assert_raises(RuntimeError) { AlojamentoLocal::Analysis.public_run_current?(path, hashes) }
-      assert_raises(RuntimeError) { AlojamentoLocal::Analysis.public_run_current?(path, ["0" * 64, hashes.last]) }
+      assert_raises(RuntimeError) { AlojamentoLocal::PublicSnapshot::Loader.new.load(path) }
+      assert_raises(RuntimeError) { AlojamentoLocal::Analysis.verify_public_sources!(path, ["0" * 64, hashes.last]) }
     end
   end
 
-  def test_previous_consolidated_schema_loads_without_its_exports_but_is_not_reused
+  def test_previous_consolidated_schema_loads_without_its_exports
     with_snapshot do |_, path|
       snapshot = consolidate(path)
       data = JSON.parse(JSON.generate(snapshot.to_h))
@@ -218,7 +218,7 @@ class PublicSnapshotTest < Minitest::Test
       assert_equal data, loaded.to_h
       assert_equal snapshot.registration_metrics, loaded.registration_metrics
       hashes = %w[airbnb official].map { |source| loaded.metadata.fetch("source_files").fetch(source).fetch("sha256") }
-      refute AlojamentoLocal::Analysis.public_run_current?(path, hashes)
+      AlojamentoLocal::Analysis.verify_public_sources!(path, hashes)
     end
   end
 

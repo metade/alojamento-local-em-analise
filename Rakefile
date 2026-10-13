@@ -9,33 +9,47 @@ end
 task default: :test
 
 def print_analysis_result(result)
-  if result[:reused]
-    puts "Run #{result[:run_id]} já existe; a análise pública será reutilizada sem reescrever o snapshot."
-  else
-    puts "Run #{result[:run_id]} criado em #{result[:path]}"
-    puts JSON.pretty_generate(result[:summary])
+  puts "Run #{result[:run_id]} criado em #{result[:path]}"
+  puts JSON.pretty_generate(result[:summary])
+end
+
+namespace :sources do
+  desc "Update sources when needed (FORCE=1 downloads both sources again)"
+  task :update do
+    require_relative "lib/alojamento_local"
+    puts AlojamentoLocal::Analysis::Data.update!(force: ENV["FORCE"] == "1")
+  end
+
+  desc "Stage the latest local source pair for an Actions artifact"
+  task :archive do
+    require_relative "lib/alojamento_local"
+    puts AlojamentoLocal::Analysis::Data.archive!
   end
 end
 
 namespace :analysis do
-  desc "Run the local analysis (FORCE=1 preserves an existing run as a sibling rerun)"
+  desc "Analyse local sources with detailed outputs (no downloads)"
   task :local do
     require_relative "lib/alojamento_local"
-    result = AlojamentoLocal::Analysis::Runner.run(mode: "local",
-      force: ENV["FORCE"] == "1", reuse_existing: ENV["REUSE_EXISTING"] == "1",
+    result = AlojamentoLocal::Analysis.run(mode: "local",
       generate_pdf: ENV["GENERATE_PDF"] == "1")
     print_analysis_result(result)
   end
 
-  desc "Run the public analysis (REUSE_EXISTING=1 reuses current outputs)"
+  desc "Analyse local sources with public outputs (no downloads)"
   task :public do
     require_relative "lib/alojamento_local"
-    result = AlojamentoLocal::Analysis::Runner.run(mode: "public",
-      force: ENV["FORCE"] == "1", reuse_existing: ENV["REUSE_EXISTING"] == "1",
+    result = AlojamentoLocal::Analysis.run(mode: "public",
       generate_pdf: ENV["GENERATE_PDF"] == "1")
     print_analysis_result(result)
   end
 end
+
+desc "Analyse local sources into public outputs, then build the site"
+task rebuild: ["analysis:public", "site:build"]
+
+desc "Update sources, analyse into public outputs, then build the site"
+task refresh: ["sources:update", :rebuild]
 
 namespace :site do
   desc "Build and validate the public site from existing snapshots"

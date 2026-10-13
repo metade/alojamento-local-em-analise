@@ -14,19 +14,20 @@ Install dependencies:
 bundle install
 ```
 
-Run the analysis:
+Update sources, then run the analysis:
 
 ```bash
+bundle exec rake sources:update
 bundle exec rake analysis:local
 ```
 
-The default mode is `local`. It downloads missing public source snapshots and creates an immutable detailed run under:
+Source updates, analysis and site builds are independent. `sources:update` checks the latest Lisbon Airbnb snapshot and downloads missing files; it refreshes RNAL only when no dated copy exists or its download date is older than the Airbnb snapshot. Analysis tasks select the latest dated local files without network requests. `refresh` runs source updates, public analysis and the site build; `rebuild` runs public analysis and the site build without source updates. The default analysis mode is `local`, creating an immutable detailed run under:
 
 ```text
 data/private/<airbnb-snapshot-date>__<official-download-date>/
 ```
 
-Local runs are immutable. For development reruns, `FORCE=1 bundle exec rake analysis:local` preserves the existing run and writes a timestamped sibling rerun; force is not supported for public runs.
+Local runs are immutable. Each repeated local analysis automatically creates a timestamped sibling rerun, preserving previous results. Analysis always recalculates from local sources and has no force or reuse option. `FORCE=1` applies only to `sources:update` (including the source stage of `refresh`), downloading both sources again. `rebuild` never downloads sources, even with `FORCE=1`.
 
 Use the explicit public mode to create sanitised, publishable outputs:
 
@@ -40,9 +41,9 @@ Public runs are created under:
 data/snapshots/<airbnb-snapshot-date>__<official-download-date>/
 ```
 
-Public outputs use one folder per dated source pair. Reanalysis validates new outputs before replacing that folder and its history rows; Git retains previously committed versions. Other date pairs remain unchanged. Local runs remain immutable. Automated workflows may use `REUSE_EXISTING=1 bundle exec rake analysis:public`: reuse requires matching source hashes, analysis/methodology/schema versions and all required files. Outdated outputs are recalculated in the same folder; changed source hashes for an existing date pair are rejected.
+Public outputs use one folder per dated source pair. Reanalysis validates new outputs before replacing that folder and its history rows; Git retains previously committed versions. Other date pairs remain unchanged. Local runs remain immutable. Each analysis invocation recalculates. `REUSE_EXISTING` is no longer used. Reanalysis replaces public outputs for the same dated source pair after validation; repeated local analysis creates a preserved sibling rerun. Changed source hashes for an existing public date pair remain rejected.
 
-Local runs use distinct names such as `listings_detailed.csv`, `licence_groups_detailed.csv`, `metadata_local.json`, `summary_local.json`, and `report_local.html`; they may contain diagnostic fields and are ignored by Git. Public runs contain only authoritative `snapshot.json` (schema 6.0.0) and `report.html`. No separate CSV/JSON downloads are generated. The loader also reads consolidated schema 5.0.0 without its former exports and legacy split-file schema 4.0.0 with supported registration metrics; a present consolidated document is always authoritative. Publication validates its schema, provenance and aggregates; reuse requires current hashes/versions, the document and the HTML report. Set `GENERATE_PDF=1` to create the optional PDF derivative when `wkhtmltopdf` or `weasyprint` is installed. Public history in `data/history/` keeps the current summary and auxiliary rows for each dated source pair, replacing only that pair on reanalysis. Local history in `data/private/history/` is append-only.
+Local runs use distinct names such as `listings_detailed.csv`, `licence_groups_detailed.csv`, `metadata_local.json`, `summary_local.json`, and `report_local.html`; they may contain diagnostic fields and are ignored by Git. Public runs contain only authoritative `snapshot.json` (schema 6.0.0) and `report.html`. No separate CSV/JSON downloads are generated. The loader also reads consolidated schema 5.0.0 without its former exports and legacy split-file schema 4.0.0 with supported registration metrics; a present consolidated document is always authoritative. Publication validates its schema, provenance and aggregates. Existing public source hashes are verified before replacing a dated run. Set `GENERATE_PDF=1` to create the optional PDF derivative when `wkhtmltopdf` or `weasyprint` is installed. Public history in `data/history/` keeps the current summary and auxiliary rows for each dated source pair, replacing only that pair on reanalysis. Local history in `data/private/history/` is append-only.
 
 Run the full test suite (`bundle exec rake` also runs it by default):
 
@@ -55,7 +56,6 @@ Ruby syntax checks:
 ```bash
 ruby -c Rakefile
 ruby -c lib/alojamento_local/analysis.rb
-ruby -c lib/alojamento_local/analysis/runner.rb
 ruby -c lib/alojamento_local/site_builder.rb
 ruby -c lib/alojamento_local/site_checker.rb
 ruby -c lib/alojamento_local.rb
@@ -66,17 +66,17 @@ ruby -c lib/alojamento_local/analysis/data.rb
 
 Raw data under `data_sources/**/*.csv`, detailed local results under `data/private/`, and cached files under `tmp/` are intentionally ignored by Git. Transformed, versioned outputs under `data/snapshots/` and `data/history/` are publishable project outputs and may be committed. Snapshot documents and legacy CSVs are aggregate-only and must not contain listing/host identifiers, listing URLs, names, addresses, exact coordinates, or raw licence strings. Do not commit large raw upstream datasets.
 
-The GitHub Actions workflow in `.github/workflows/quarterly-analysis.yml` runs quarterly or through `workflow_dispatch`, tests before analysis, explicitly selects `analysis:public` with `REUSE_EXISTING=1`, stages and audits only the sanitised `data/snapshots/` and `data/history/` outputs before committing them, builds the site from public snapshots, and publishes the site as a GitHub Pages artifact. Reusing an up-to-date run skips analysis; outdated versions are recalculated for the same dated source pair. It must never commit local/detailed outputs or the generated site.
+The GitHub Actions workflow in `.github/workflows/monthly-analysis.yml` runs monthly or through `workflow_dispatch`, tests before source updates and analysis, restores the latest retained `analysis-sources` artifact from a successful default-branch run, runs `sources:update`, archives only the latest dated pair with 90-day retention renewed each run, explicitly selects `analysis:public`, stages and audits only the sanitised `data/snapshots/` and `data/history/` outputs before committing them, builds the site from public snapshots, and publishes the site as a GitHub Pages artifact. Reusing an up-to-date run skips analysis; outdated versions are recalculated for the same dated source pair. It must never commit local/detailed outputs or the generated site.
 
-The `.github/workflows/site-publish.yml` workflow rebuilds and publishes the site on human pushes to `main` and through `workflow_dispatch`. It skips the automated `github-actions[bot]` / `Atualiza análise trimestral` push because the quarterly workflow already builds and publishes the site in that same run. Site publication is therefore separate from the data-analysis decision, while both use `bundle exec rake site:build` and the publication audit.
+The `.github/workflows/site-publish.yml` workflow rebuilds and publishes the site on human pushes to `main` and through `workflow_dispatch`. It skips the automated `github-actions[bot]` / `Atualiza análise mensal` push because the monthly workflow already builds and publishes the site in that same run. Site publication is therefore separate from the data-analysis decision, while both use `bundle exec rake site:build` and the publication audit.
 
-Rake is the interface for analysis, site builds and site checks; its tasks require `lib/alojamento_local.rb` inside the task and call `Analysis::Runner`, `SiteBuilder` or `SiteChecker`. The entry point configures Zeitwerk to load project constants from matching file paths. Keep standard-library and gem requires explicit; do not require individual project files. `public_schema.rb` defines shared constants and is explicitly required outside the loader. `test/alojamento_local_test.rb` checks eager loading for filename/constant consistency. npm provides frontend tooling through `npm run site:css`. Use `bundle exec rake -T` to list tasks. `bundle exec rake site:build` builds from existing public snapshots without running the analysis. `bundle exec rake site:check` checks the generated site. Test files load the application in the separate process launched by `Rake::TestTask`.
+Rake is the interface for analysis, site builds and site checks; its tasks require `lib/alojamento_local.rb` inside the task and call `Analysis.run`, `SiteBuilder` or `SiteChecker`. The entry point configures Zeitwerk to load project constants from matching file paths. Keep standard-library and gem requires explicit; do not require individual project files. `public_schema.rb` defines shared constants and is explicitly required outside the loader. `test/alojamento_local_test.rb` checks eager loading for filename/constant consistency. npm provides frontend tooling through `npm run site:css`. Use `bundle exec rake -T` to list tasks. `bundle exec rake site:build` builds from existing public snapshots without running the analysis. `bundle exec rake site:check` checks the generated site. Test files load the application in the separate process launched by `Rake::TestTask`.
 
 Before committing changes to `data/snapshots/`, `data/history/`, or publication workflows, run `ruby scripts/audit_publication.rb`. Run `ruby scripts/audit_publication.rb --history` when auditing repository history. A history rewrite requires a recoverable Git backup and coordinated approval before force-pushing.
 
 The Airbnb snapshot is discovered from the public Inside Airbnb data page at runtime. `latest_airbnb_snapshot` must select the latest Lisbon `listings.csv.gz` entry and fail clearly if the page format changes. The run ID uses the date in the source filename, rather than assuming that the maximum listing-level `last_scraped` date is the archive date.
 
-The official register is downloaded with the current date in its filename. The analysis uses the dated file returned by the downloader, not an older undated copy. The `metadata` section of `snapshot.json` records source URLs, source dates, SHA-256 hashes, Git commit, analysis version, methodology version, and output schema version.
+A fresh official register is downloaded with the actual current date in its filename only when needed for the Airbnb snapshot. Cached RNAL files retain their original download date. Analysis uses the latest dated local copy, never an undated file. The `metadata` section of `snapshot.json` records source URLs, source dates, SHA-256 hashes, Git commit, analysis version, methodology version, and output schema version.
 
 Airbnb `last_scraped` values are listing-level collection dates and may span several days. They are not necessarily the same as the archive snapshot date.
 

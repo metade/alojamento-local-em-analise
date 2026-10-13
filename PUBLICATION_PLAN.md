@@ -185,7 +185,7 @@ Critério de conclusão: cumprido. O artefacto é gerado apenas a partir de `dat
 
 ## Sessão 6 — Automatização e publicação
 
-Objetivo: tornar segura a execução trimestral.
+Objetivo: tornar segura a execução mensal.
 
 Tarefas:
 
@@ -200,13 +200,13 @@ Tarefas:
   - presença de atribuição;
   - ausência de ficheiros brutos.
 - Fazer uma execução completa de ensaio e inspecionar manualmente o site.
-- Só depois ativar Pages e o agendamento trimestral.
+- Só depois ativar Pages e o agendamento mensal.
 
 Critério de conclusão: uma execução automática publica exclusivamente o artefacto sanitizado.
 
 Implementação concluída:
 
-- [x] O workflow trimestral executa explicitamente o modo público e faz commit apenas de `data/snapshots/` e `data/history/`, nunca de dados locais ou do site gerado.
+- [x] O workflow mensal executa explicitamente o modo público e faz commit apenas de `data/snapshots/` e `data/history/`, nunca de dados locais ou do site gerado.
 - [x] O site é construído a partir de `data/snapshots/` e enviado como artefacto do GitHub Pages; o deployment ocorre num job separado com apenas `pages: write`, `id-token: write` e `actions: read`.
 - [x] Actions de terceiros estão fixadas por SHA completo.
 - [x] O gate verifica outputs públicos e o artefacto final, incluindo modo `public`, padrões de URLs/identificadores, referências a fontes locais e presença de `NOTICE`.

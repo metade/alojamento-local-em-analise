@@ -13,43 +13,23 @@ module AlojamentoLocal
   module Analysis
     module_function
 
-    def validate_options!(mode:, force: false, reuse_existing: false)
+    def validate_options!(mode:)
       raise ArgumentError, "Mode must be public or local" unless %w[public local].include?(mode)
-      raise ArgumentError, "Force is only supported in local mode" if force && mode != "local"
-      raise ArgumentError, "Reuse is only supported in public mode" if reuse_existing && mode != "public"
     end
 
-    def run_id_for(airbnb_path:, official_path:)
-      airbnb_date = File.basename(airbnb_path)[/(\d{4}-\d{2}-\d{2})/, 1]
-      official_date = File.basename(official_path)[/(\d{4}-\d{2}-\d{2})/, 1] || File.mtime(official_path).to_date.to_s
-      "#{airbnb_date}__#{official_date}"
-    end
-
-    def existing_public_run(airbnb_path:, official_path:, output_root: "data/snapshots")
-      run_id = run_id_for(airbnb_path: airbnb_path, official_path: official_path)
-      path = File.join(output_root, run_id)
-      return nil unless Dir.exist?(path)
-      hashes = [airbnb_path, official_path].map { |source| Digest::SHA256.file(source).hexdigest }
-      return nil unless public_run_current?(path, hashes)
-      {run_id: run_id, path: path}
-    end
-
-    def public_run_current?(path, hashes)
+    def verify_public_sources!(path, hashes)
       loader = PublicSnapshot::Loader.new
       metadata = loader.metadata(path)
       expected = {"airbnb" => hashes[0], "official" => hashes[1]}
       unless expected.all? { |key, hash| metadata.dig("source_files", key, "sha256") == hash }
         raise "Source hashes differ for existing dated snapshot: #{path}"
       end
-      return false unless metadata["methodology_version"] == METHODOLOGY_VERSION && metadata["output_schema_version"] == OUTPUT_SCHEMA_VERSION &&
-        metadata["analysis_version"] == ANALYSIS_VERSION && metadata["mode"] == "public" &&
-        PublicSnapshot::REQUIRED_FILES.all? { |file| File.file?(File.join(path, file)) }
-      loader.load(path)
-      true
     end
 
-    def run(airbnb_path:, official_path:, output_root: nil, history_path: nil, generate_pdf: false, mode: "local", force: false)
-      validate_options!(mode: mode, force: force)
+    def run(airbnb_path: nil, official_path: nil, output_root: nil, history_path: nil, generate_pdf: false, mode: "local")
+      validate_options!(mode: mode)
+      raise ArgumentError, "Provide both source paths or neither" if airbnb_path.nil? != official_path.nil?
+      airbnb_path, official_path = Data.local_paths! if airbnb_path.nil?
 
       output_root ||= mode == "public" ? "data/snapshots" : "data/private"
       history_path ||= mode == "public" ? "data/history/summary.csv" : "data/private/history/summary.csv"
@@ -64,10 +44,8 @@ module AlojamentoLocal
       base_run_id = "#{dates[:airbnb_snapshot_date]}__#{official_download_date}"
       run_id = base_run_id
       run_dir = File.join(output_root, run_id)
-      public_run_current?(run_dir, source_hashes) if mode == "public" && Dir.exist?(run_dir)
+      verify_public_sources!(run_dir, source_hashes) if mode == "public" && Dir.exist?(run_dir)
       if mode == "local" && Dir.exist?(run_dir)
-        raise "Run already exists and is immutable: #{run_dir}; use FORCE=1 for a preserved local rerun" unless force
-
         suffix = Time.now.utc.strftime("%Y%m%dT%H%M%S%6N")
         run_id = "#{base_run_id}__rerun-#{suffix}"
         run_dir = File.join(output_root, run_id)

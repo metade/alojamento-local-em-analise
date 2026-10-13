@@ -23,7 +23,7 @@ class VersionedAnalysisTest < Minitest::Test
     end
   end
 
-  def test_existing_public_run_is_detected_without_mutating_it
+  def test_source_hash_guard_preserves_existing_snapshot
     Dir.mktmpdir do |dir|
       airbnb = File.expand_path("fixtures/pipeline/sources/listings-2024-06-01.csv", __dir__)
       official = File.join(dir, "official-2024-07-01.csv")
@@ -33,16 +33,16 @@ class VersionedAnalysisTest < Minitest::Test
         output_root: output_root, history_path: File.join(dir, "history", "summary.csv"))
       path = result.fetch(:path)
       before = File.binread(File.join(path, "snapshot.json"))
-      existing = AlojamentoLocal::Analysis.existing_public_run(airbnb_path: airbnb, official_path: official, output_root: output_root)
-      assert_equal "2024-06-01__2024-07-01", existing[:run_id]
+      hashes = [airbnb, official].map { |source| Digest::SHA256.file(source).hexdigest }
+      AlojamentoLocal::Analysis.verify_public_sources!(path, hashes)
       assert_equal before, File.binread(File.join(path, "snapshot.json"))
       File.write(official, "changed bytes")
-      assert_raises(RuntimeError) { AlojamentoLocal::Analysis.existing_public_run(airbnb_path: airbnb, official_path: official, output_root: output_root) }
+      assert_raises(RuntimeError) { AlojamentoLocal::Analysis.verify_public_sources!(path, [hashes.first, Digest::SHA256.file(official).hexdigest]) }
       FileUtils.cp(File.expand_path("fixtures/pipeline/sources/official-2024-07-01.csv", __dir__), official)
       data = JSON.parse(before)
       data["metadata"]["analysis_version"] = "3.2.0"
       File.write(File.join(path, "snapshot.json"), JSON.generate(data))
-      assert_nil AlojamentoLocal::Analysis.existing_public_run(airbnb_path: airbnb, official_path: official, output_root: output_root)
+      AlojamentoLocal::Analysis.verify_public_sources!(path, hashes)
     end
   end
 
@@ -90,7 +90,7 @@ class VersionedAnalysisTest < Minitest::Test
     end
   end
 
-  def test_force_creates_a_preserved_local_rerun
+  def test_repeated_analysis_creates_a_preserved_local_rerun
     Dir.mktmpdir do |dir|
       airbnb = File.join(dir, "listings-2026-06-23.csv")
       official = File.join(dir, "official-2026-09-17.csv")
@@ -104,7 +104,7 @@ class VersionedAnalysisTest < Minitest::Test
       root = File.join(dir, "private")
       history = File.join(dir, "private", "history", "summary.csv")
       first = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "local", output_root: root, history_path: history)
-      rerun = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "local", output_root: root, history_path: history, force: true)
+      rerun = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "local", output_root: root, history_path: history)
 
       assert_equal "2026-06-23__2026-09-17", first[:run_id]
       assert_match(/\A2026-06-23__2026-09-17__rerun-\d{8}T\d{12}\z/, rerun[:run_id])

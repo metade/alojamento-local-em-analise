@@ -14,12 +14,12 @@ permissions:
 
 jobs:
   build:
-    # The quarterly workflow builds Pages in the same run as its analysis.
+    # The monthly workflow builds Pages in the same run as its analysis.
     # This job is for human/main pushes and manual site-only publishes.
     if: >-
       github.actor != 'github-actions[bot]' &&
       (github.event_name == 'workflow_dispatch' ||
-       !startsWith(github.event.head_commit.message, 'Atualiza análise trimestral'))
+       !startsWith(github.event.head_commit.message, 'Atualiza análise mensal'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
