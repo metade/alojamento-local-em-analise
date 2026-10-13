@@ -76,10 +76,6 @@ module AlojamentoLocal
         end
 
         def provenance
-          self.class.provenance(source_dates: source_dates, source_hashes: source_hashes)
-        end
-
-        def self.provenance(source_dates:, source_hashes:)
           {
             source_urls: {airbnb: Data.airbnb_url(source_dates[:airbnb_snapshot_date]), official: Data::OFFICIAL_URL},
             source_dates: source_dates, source_files: {airbnb: {sha256: source_hashes[0]}, official: {sha256: source_hashes[1]}}

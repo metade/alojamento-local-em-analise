@@ -17,13 +17,15 @@ module AlojamentoLocal
         [listings, @official]
       end
 
-      def self.parse_date(value)
+      private
+
+      def parse_date(value)
         Date.parse(value) if value && !value.empty?
       rescue ArgumentError
         nil
       end
 
-      def self.status(record, distance, count)
+      def status(record, distance, count)
         return "sem licença identificável" unless record
 
         values = []
@@ -32,18 +34,16 @@ module AlojamentoLocal
         values.join(";")
       end
 
-      private
-
       def listing_row(entry)
         row = entry.raw
         record = @official[entry.number]
         distance = distance_from_register(row, record)
         {
           fonte: "airbnb", licensa: entry.number, licensa_raw: row["license"],
-          license_status: self.class.status(record, distance, @sources.airbnb.licence_counts[entry.number]),
+          license_status: status(record, distance, @sources.airbnb.licence_counts[entry.number]),
           url: row["listing_url"], bairro: entry.parish, nome: row["name"], lat: row["latitude"], lng: row["longitude"],
           room_type: row["room_type"], property_type: row["property_type"], quartos: row["bedrooms"], host_id: row["host_id"],
-          airbnb_date: self.class.parse_date(row["last_scraped"]), official_date: record && self.class.parse_date(record["DataRegisto"]),
+          airbnb_date: parse_date(row["last_scraped"]), official_date: record && parse_date(record["DataRegisto"]),
           official_name: record && record["Denominacao"], official_address: record && record["Endereco"],
           official_concelho: record && record["Concelho"], official_region: record && record["NUTSII"],
           official_modalidade: record && record["Modalidade"], official_capacity: record && record["NrUtentes"], distance_km: distance

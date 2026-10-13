@@ -11,19 +11,6 @@ module AlojamentoLocal
 
       module_function
 
-      def write_outputs(run_dir:, mode:, listings:, groups:, freguesias:, public_listings:, public_groups:, metadata:, summary:, metrics:)
-        if mode == "public"
-          snapshot = write_public_snapshot(run_dir, metadata, summary, public_groups, public_listings, freguesias, metrics)
-          report_filename = "report.html"
-          arguments = snapshot.report_arguments
-        else
-          write_local_outputs(run_dir, metadata, summary, listings, groups, freguesias, metrics)
-          report_filename = "report_local.html"
-          arguments = [metadata, summary, public_groups, public_listings, metrics]
-        end
-        write_report(run_dir, report_filename, arguments)
-      end
-
       def write_report(run_dir, filename, arguments)
         File.write(File.join(run_dir, filename), Report.complete_html(*arguments))
       end
@@ -54,21 +41,16 @@ module AlojamentoLocal
         system("wkhtmltopdf", "--quiet", html, pdf) || system("weasyprint", html, pdf)
       end
 
-      def write_public_snapshot(run_dir, metadata, summary, groups, announcements, parishes, metrics)
-        inputs = JSON.parse(JSON.generate({metadata: metadata, summary: summary, groups: groups,
-          announcements: announcements, parishes: parishes, metrics: metrics}))
-        snapshot = PublicSnapshot.from_legacy(**inputs.transform_keys(&:to_sym))
-        PublicSnapshot::Validator.new.validate!(snapshot, expected_run_id: metadata.fetch(:run_id), schema: PublicSnapshot::SCHEMA_VERSION)
+      def write_snapshot(run_dir, snapshot)
         write_json(File.join(run_dir, PublicSnapshot::FILE), snapshot.to_h)
-        snapshot
       end
 
-      def write_local_outputs(run_dir, metadata, summary, listings, groups, freguesias, metrics)
-        write_json(File.join(run_dir, "registration_metrics.json"), metrics)
-        write_csv(File.join(run_dir, "listings_detailed.csv"), detailed_listing_rows(listings))
-        write_csv(File.join(run_dir, "licence_groups_detailed.csv"), detailed_group_rows(groups))
-        write_csv(File.join(run_dir, "freguesias_summary.csv"), freguesias)
-        write_json_outputs(run_dir, metadata, summary, "metadata_local.json", "summary_local.json")
+      def write_local_outputs(run_dir, result)
+        write_json(File.join(run_dir, "registration_metrics.json"), result.registration_metrics)
+        write_csv(File.join(run_dir, "listings_detailed.csv"), detailed_listing_rows(result.listings))
+        write_csv(File.join(run_dir, "licence_groups_detailed.csv"), detailed_group_rows(result.licence_groups))
+        write_csv(File.join(run_dir, "freguesias_summary.csv"), result.parish_totals)
+        write_json_outputs(run_dir, result.metadata, result.summary, "metadata_local.json", "summary_local.json")
       end
 
       def write_json(path, data)

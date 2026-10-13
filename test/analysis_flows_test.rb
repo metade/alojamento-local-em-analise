@@ -91,17 +91,16 @@ class AnalysisFlowsTest < Minitest::Test
       AlojamentoLocal::Analysis.run(mode: "public")
       before = analysis_files
       writer = AlojamentoLocal::Analysis::OutputWriter
-      write_snapshot = writer.method(:write_public_snapshot)
-      corrupt_snapshot = ->(run_dir, *arguments) do
-        snapshot = write_snapshot.call(run_dir, *arguments)
+      write_snapshot = writer.method(:write_snapshot)
+      corrupt_snapshot = ->(run_dir, snapshot) do
+        write_snapshot.call(run_dir, snapshot)
         path = File.join(run_dir, "snapshot.json")
         document = JSON.parse(File.read(path))
         document.fetch("summary")["listings"] = -1
         File.write(path, JSON.generate(document))
-        snapshot
       end
 
-      writer.stub(:write_public_snapshot, corrupt_snapshot) do
+      writer.stub(:write_snapshot, corrupt_snapshot) do
         assert_raises(RuntimeError) { AlojamentoLocal::Analysis.run(mode: "public") }
       end
       assert_equal before, analysis_files

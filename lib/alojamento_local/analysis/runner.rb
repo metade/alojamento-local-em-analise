@@ -48,14 +48,12 @@ module AlojamentoLocal
       end
 
       def generate_snapshot
-        @snapshot = OutputWriter.write_public_snapshot(@run_dir, @analysis_result.metadata, @analysis_result.summary,
-          @analysis_result.licence_group_aggregates, @analysis_result.announcements_by_parish_and_classification,
-          @analysis_result.parish_totals, @analysis_result.registration_metrics)
+        @snapshot = @analysis_result.public_snapshot
+        OutputWriter.write_snapshot(@run_dir, @snapshot)
       end
 
       def generate_local_outputs
-        OutputWriter.write_local_outputs(@run_dir, @analysis_result.metadata, @analysis_result.summary,
-          @analysis_result.listings, @analysis_result.licence_groups, @analysis_result.parish_totals, @analysis_result.registration_metrics)
+        OutputWriter.write_local_outputs(@run_dir, @analysis_result)
       end
 
       def generate_report

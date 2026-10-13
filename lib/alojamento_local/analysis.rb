@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require "digest"
-
 module AlojamentoLocal
   module Analysis
     # Orchestrates a run; Runner holds its prepared data and publication state.
@@ -90,12 +88,6 @@ module AlojamentoLocal
       History.historical_comparisons(path, current)
     end
 
-    def write_outputs(run_dir:, mode:, listings:, groups:, freguesias:, public_listings:, public_groups:, metadata:, summary:, metrics:)
-      OutputWriter.write_outputs(run_dir: run_dir, mode: mode, listings: listings, groups: groups,
-        freguesias: freguesias, public_listings: public_listings, public_groups: public_groups,
-        metadata: metadata, summary: summary, metrics: metrics)
-    end
-
     def detailed_listing_rows(listings)
       OutputWriter.detailed_listing_rows(listings)
     end
@@ -130,20 +122,6 @@ module AlojamentoLocal
 
     def validate_public_outputs!(run_dir)
       PublicPublisher.validate_public_outputs!(run_dir)
-    end
-
-    def metadata(airbnb, official, dates, run_id, mode)
-      hashes = [airbnb, official].map { |path| Digest::SHA256.file(path).hexdigest }
-      provenance = PreparedSources::Pair.provenance(source_dates: dates, source_hashes: hashes)
-      Result.build_metadata(source_provenance: provenance, run_id: run_id, mode: mode)
-    end
-
-    def parse_date(value)
-      Classifier.parse_date(value)
-    end
-
-    def status(record, distance, count)
-      Classifier.status(record, distance, count)
     end
   end
 end
