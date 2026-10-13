@@ -2,6 +2,13 @@ require "minitest/autorun"
 require_relative "../lib/alojamento_local"
 
 class AlojamentoLocalTest < Minitest::Test
+  def test_project_files_follow_zeitwerk_conventions
+    AlojamentoLocal::LOADER.eager_load(force: true)
+    assert true
+  rescue Zeitwerk::NameError => error
+    flunk error.message
+  end
+
   def test_normalizes_leading_zeroes_and_whitespace_in_al_licenses
     assert_equal "1584", AlojamentoLocal.parse_al_license("001584/AL")
     assert_equal "104882", AlojamentoLocal.parse_al_license("104882\t/AL")
@@ -30,16 +37,6 @@ class AlojamentoLocalTest < Minitest::Test
 
   def test_parses_coordinates_without_spaces_and_with_decimal_commas
     assert_equal [38.7530581, -9.181339], AlojamentoLocal.parse_lat_long("38,7530581;-9,181339")
-  end
-
-  def test_local_is_the_default_cli_mode
-    assert_equal "local", AlojamentoLocal::CLI.mode!([])
-    assert_equal "public", AlojamentoLocal::CLI.mode!(["--mode", "public"])
-  end
-
-  def test_cli_accepts_local_mode_without_adding_a_public_details_option
-    assert_equal "local", AlojamentoLocal::CLI.mode!(["--mode=local"])
-    assert_raises(ArgumentError) { AlojamentoLocal::CLI.mode!(["--include-details"]) }
   end
 
   def test_accepts_only_the_explicit_single_al_registration_prefix

@@ -18,5 +18,6 @@ jobs:
       - uses: ruby/setup-ruby@866b91cc020931c510d42e43e498a7f07d335f60 # v1
         with:
           ruby-version: '3.2'
+          bundler-cache: true
       - name: Verificar outputs publicáveis
-        run: ruby scripts/audit_publication.rb
+        run: bundle exec ruby scripts/audit_publication.rb

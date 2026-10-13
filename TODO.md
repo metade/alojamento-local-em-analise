@@ -6,6 +6,11 @@ Prioridade: publicar uma primeira análise com o par de fontes atual. Guardar as
 fontes agora; adiar comparações e integração do arquivo. Manter a identificação
 da metodologia e a explicação do método atual, mesmo ao simplificar o sistema.
 
+Os artefactos `analysis-sources` do workflow mensal conservam apenas o último
+par para reutilização entre execuções, com retenção de 90 dias renovada em cada
+run. A recuperação de fontes históricas após expiração continua a depender do
+arquivo permanente e da integração descrita abaixo.
+
 1. [x] Fazer backup no Google Drive das fontes datadas Airbnb e RNAL existentes.
    Preservar os bytes originais em ficheiros comprimidos, nomes/datas e um
    manifesto com SHA-256, tamanhos, contagens e URLs das fontes. Verificar os
@@ -81,11 +86,11 @@ da metodologia e a explicação do método atual, mesmo ao simplificar o sistema
   loader para que o relatório e o site não dependam do formato de armazenamento.
   Definir a compatibilidade com snapshots anteriores; CSV apenas no leitor
   legado, sem exportações nos novos runs, evitando duas fontes de verdade. Atualizar a escrita, o schema
-  público, as verificações de reutilização, a auditoria de publicação e a
+  público, a auditoria de publicação e a
   documentação; testar os formatos antigo e novo e a equivalência dos resultados.
 
-- [ ] Considerar integrar `scripts/reanalyse_public_run.rb` numa opção de
-  `run_me.rb` para analisar as fontes de um run público anterior. Preservar a
+- [ ] Considerar integrar `scripts/reanalyse_public_run.rb` numa tarefa Rake
+  de análise de fontes de um run público anterior. Preservar a
   seleção das fontes datadas através do metadata, a verificação dos hashes
   SHA-256, a validação antes da substituição e a preservação dos outros pares de datas; usar o pipeline existente com as
   versões atuais, sem descarregar fontes novas. Atualizar documentação e testes

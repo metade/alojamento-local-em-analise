@@ -3,7 +3,6 @@ require "tmpdir"
 require "fileutils"
 require "open3"
 require_relative "../lib/alojamento_local"
-require_relative "../lib/alojamento_local/site_data"
 
 class PublicSnapshotTest < Minitest::Test
   FIXTURE = File.expand_path("fixtures/pipeline/legacy_public", __dir__)
@@ -155,7 +154,6 @@ class PublicSnapshotTest < Minitest::Test
       assert_equal %w[report.html snapshot.json], Dir.children(path).sort
       assert_equal expected, builder(root).site_data([path])
       assert_equal snapshot.to_h, AlojamentoLocal::PublicSnapshot::Loader.new.load(path).to_h
-      AlojamentoLocal::Analysis.validate_public_outputs!(path)
       FileUtils.cp(File.expand_path("../NOTICE", __dir__), File.join(path, "NOTICE"))
       output, status = Open3.capture2e(RbConfig.ruby, File.expand_path("../scripts/audit_publication.rb", __dir__), "--artifact", path)
       assert status.success?, output
@@ -193,22 +191,22 @@ class PublicSnapshotTest < Minitest::Test
     end
   end
 
-  def test_reuse_requires_current_document_and_report_without_exports
+  def test_source_hash_guard_uses_authoritative_document_without_exports_or_report
     with_snapshot do |_, path|
       snapshot = consolidate(path)
       hashes = %w[airbnb official].map { |source| snapshot.metadata.fetch("source_files").fetch(source).fetch("sha256") }
       %w[metadata.json summary.json registration_metrics.json listings.csv licence_groups.csv freguesias.csv].each { |file| FileUtils.rm(File.join(path, file)) }
-      assert AlojamentoLocal::Analysis.public_run_current?(path, hashes)
+      AlojamentoLocal::Analysis::PublicPublisher.verify_public_sources!(path, hashes)
       FileUtils.rm(File.join(path, "report.html"))
-      refute AlojamentoLocal::Analysis.public_run_current?(path, hashes)
+      AlojamentoLocal::Analysis::PublicPublisher.verify_public_sources!(path, hashes)
       File.write(File.join(path, "report.html"), AlojamentoLocal::Report.complete_html(*snapshot.report_arguments))
       mutate_json(path, "snapshot.json") { |data| data["summary"]["listings"] += 1 }
-      assert_raises(RuntimeError) { AlojamentoLocal::Analysis.public_run_current?(path, hashes) }
-      assert_raises(RuntimeError) { AlojamentoLocal::Analysis.public_run_current?(path, ["0" * 64, hashes.last]) }
+      assert_raises(RuntimeError) { AlojamentoLocal::PublicSnapshot::Loader.new.load(path) }
+      assert_raises(RuntimeError) { AlojamentoLocal::Analysis::PublicPublisher.verify_public_sources!(path, ["0" * 64, hashes.last]) }
     end
   end
 
-  def test_previous_consolidated_schema_loads_without_its_exports_but_is_not_reused
+  def test_previous_consolidated_schema_loads_without_its_exports
     with_snapshot do |_, path|
       snapshot = consolidate(path)
       data = JSON.parse(JSON.generate(snapshot.to_h))
@@ -219,7 +217,7 @@ class PublicSnapshotTest < Minitest::Test
       assert_equal data, loaded.to_h
       assert_equal snapshot.registration_metrics, loaded.registration_metrics
       hashes = %w[airbnb official].map { |source| loaded.metadata.fetch("source_files").fetch(source).fetch("sha256") }
-      refute AlojamentoLocal::Analysis.public_run_current?(path, hashes)
+      AlojamentoLocal::Analysis::PublicPublisher.verify_public_sources!(path, hashes)
     end
   end
 

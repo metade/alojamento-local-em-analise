@@ -1,0 +1,114 @@
+name: Análise mensal
+
+on:
+  schedule:
+    - cron: '0 7 1 * *'
+  workflow_dispatch:
+
+concurrency:
+  group: public-analysis
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: ruby/setup-ruby@866b91cc020931c510d42e43e498a7f07d335f60 # v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Testes
+        run: bundle exec rake test
+      - name: Encontrar fontes guardadas na última execução bem-sucedida
+        id: previous-sources
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          script: |
+            const repository = {...context.repo};
+            const branch = context.payload.repository.default_branch;
+            for await (const page of github.paginate.iterator(github.rest.actions.listWorkflowRuns, {
+              ...repository, workflow_id: 'monthly-analysis.yml', branch, status: 'success', per_page: 100
+            })) {
+              for (const run of page.data) {
+                if (String(run.id) === String(context.runId)) continue;
+                const artifacts = await github.paginate(github.rest.actions.listWorkflowRunArtifacts, {
+                  ...repository, run_id: run.id, per_page: 100
+                });
+                const artifact = artifacts.find(item => item.name === 'analysis-sources' && !item.expired);
+                if (artifact) {
+                  core.setOutput('run-id', String(run.id));
+                  core.info(`Restoring source pair from run ${run.id}`);
+                  return;
+                }
+              }
+            }
+            core.info('No retained source artifact; sources will be downloaded.');
+      - name: Restaurar fontes datadas
+        if: steps.previous-sources.outputs.run-id != ''
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: analysis-sources
+          path: data_sources
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.previous-sources.outputs.run-id }}
+      - name: Atualizar fontes quando necessário
+        run: bundle exec rake sources:update sources:archive
+      # Re-upload even an unchanged pair so monthly runs renew its retention.
+      # Raw sources are separate from the audited, sanitised Pages artifact.
+      - name: Guardar o par de fontes para a próxima execução
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: analysis-sources
+          path: tmp/source-artifact/*.csv
+          if-no-files-found: error
+          retention-days: 90
+      - name: Executar análise pública
+        run: bundle exec rake analysis:public
+      - name: Preparar e validar outputs públicos
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add data/snapshots data/history
+          bundle exec ruby scripts/audit_publication.rb
+      - name: Registar outputs públicos no histórico Git
+        run: |
+          git diff --cached --quiet || git commit -m "Atualiza análise mensal"
+          git push
+      - name: Construir site público
+        env:
+          JEKYLL_BASEURL: /alojamento-local-em-analise
+        run: |
+          npm ci
+          bundle exec rake site:build
+      - name: Verificar estrutura do site
+        run: bundle exec rake site:check
+      - name: Gate do artefacto de publicação
+        run: bundle exec ruby scripts/audit_publication.rb --artifact _site
+      - name: Upload do site sanitizado
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publicar no GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5

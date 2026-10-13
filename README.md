@@ -6,30 +6,55 @@ Análise investigativa de snapshots de anúncios Airbnb em Lisboa comparados com
 
 ```bash
 bundle install
-bundle exec ruby run_me.rb
+bundle exec rake sources:update
+bundle exec rake analysis:local
 ```
 
-Por defeito, a execução é local e cria um run imutável detalhado em:
+A atualização das fontes, a análise e a construção do site são etapas independentes:
+
+```bash
+bundle exec rake sources:update   # verifica fontes remotas e descarrega se necessário
+bundle exec rake analysis:local   # análise detalhada das fontes locais, sem rede
+bundle exec rake analysis:public  # análise agregada publicável, sem rede
+bundle exec rake site:build       # site a partir dos snapshots públicos existentes
+```
+
+Para executar as etapas seguintes em conjunto:
+
+```bash
+bundle exec rake refresh          # atualizar fontes → análise pública → site
+bundle exec rake rebuild          # análise pública das fontes locais → site
+```
+
+`sources:update` consulta sempre o índice Inside Airbnb para Lisboa, mas só descarrega um CSV em falta. Reutiliza o RNAL datado mais recente se a sua data de download for igual ou posterior à data do snapshot Airbnb; caso contrário, descarrega uma cópia com a data real de hoje. Não procura uma versão histórica do RNAL nem altera a data de um ficheiro existente.
+
+As tarefas de análise selecionam os ficheiros datados mais recentes em `data_sources/`. Se faltarem fontes, falham com indicação para executar `sources:update`. Para reproduzir um par histórico específico, use o script de reanálise descrito abaixo.
+
+Por defeito, a análise é local e cria um run imutável detalhado em:
 
 ```text
 data/private/<airbnb-snapshot-date>__<official-download-date>/
 ```
 
-Runs locais são imutáveis. Durante o desenvolvimento, `--force` preserva o run existente e cria um novo diretório local com sufixo `__rerun-<timestamp>`:
-
-```bash
-bundle exec ruby run_me.rb --force
-```
-
-Esta opção só está disponível no modo local e não substitui nem remove resultados anteriores.
+Runs locais são imutáveis. Cada nova análise do mesmo par de fontes cria automaticamente um diretório irmão com sufixo `__rerun-<timestamp>`, preservando os resultados anteriores.
 
 Os resultados locais incluem diagnósticos como `host_id`, coordenadas e valores de licença originais e permanecem fora do Git. Para gerar os outputs agregados publicáveis, selecione explicitamente o modo público:
 
 ```bash
-bundle exec ruby run_me.rb --mode public
+bundle exec rake analysis:public
 ```
 
-Para uma execução automatizada repetida, `bundle exec ruby run_me.rb --mode public --reuse-existing` reutiliza resultados com hashes e versões de análise/metodologia/schema atuais e todos os ficheiros exigidos. Versões anteriores são recalculadas na mesma pasta; hashes diferentes para as mesmas datas são rejeitados.
+Cada invocação recalcula a análise a partir das fontes locais. Não existe reutilização de resultados nem uma opção de force na análise; `REUSE_EXISTING` deixa de ser necessário. Uma reanálise pública valida os outputs antes de substituir o run do mesmo par de datas. Hashes diferentes para um par já publicado continuam a ser rejeitados.
+
+`FORCE=1` pertence apenas à atualização das fontes: volta a descarregar o snapshot Airbnb mais recente e uma cópia RNAL com a data real de hoje, mesmo quando existem ficheiros locais adequados. Os downloads substituem o ficheiro datado apenas depois de concluídos; uma falha preserva a cópia anterior. Se os bytes de uma fonte com a mesma data mudarem, a proteção de proveniência da análise pública continua a rejeitar a substituição do run existente.
+
+```bash
+FORCE=1 bundle exec rake sources:update  # descarregar ambas as fontes novamente
+FORCE=1 bundle exec rake refresh         # descarregar → analisar → construir site
+bundle exec rake rebuild                # analisar → construir site; sem downloads
+```
+
+`rebuild`, `analysis:local`, `analysis:public` e `site:build` não consultam `FORCE` e nunca descarregam fontes.
 
 O modo público cria o run em:
 
@@ -65,9 +90,11 @@ runs, `snapshot.json` é a única fonte de verdade. O documento tem
 `parish_totals` e `registration_metrics`. O loader mantém a mesma interface
 imutável, com chaves string, independentemente do armazenamento.
 
-O relatório e o site leem exclusivamente `snapshot.json` nos runs consolidados.
+A regeneração do relatório e o site leem exclusivamente `snapshot.json` nos runs consolidados.
 A publicação valida o documento, a proveniência e a coerência dos agregados.
-A reutilização exige o documento e `report.html`, hashes e versões atuais.
+Cada análise pública recalcula os resultados e gera `snapshot.json` e
+`report.html`. Antes de substituir um par já publicado, verifica os hashes
+das fontes existentes e valida os novos outputs.
 Um documento inválido ou de versão incompatível faz a leitura falhar; nunca
 se tenta reconstruí-lo de ficheiros separados.
 
@@ -77,7 +104,7 @@ com métricas 1.0.0 e metodologias 2.0.0/2.1.0, adaptando-os antes da mesma
 validação. Runs antigos sem métricas suportadas podem permanecer no arquivo;
 a seleção do site conserva essa compatibilidade. Uma reanálise com fontes
 datadas e hashes verificados substitui apenas o par escolhido pelo formato
-atual. Formatos anteriores não são reutilizados como runs atuais. O formato
+atual. A leitura de um formato anterior não evita a reanálise. O formato
 dos outputs locais mantém-se.
 
 Nos agregados, as contagens são inteiros: `announcements` conta anúncios,
@@ -105,8 +132,48 @@ recuperáveis pelo Git; as fontes locais e os backups foram preservados.
 O histórico público em `data/history/summary.csv` mantém uma linha atual por par de datas. O gráfico de distâncias do site usa `data/history/distance_ranges.csv`: cada run público novo acrescenta quatro contagens agregadas de números de licença, sem coordenadas nem números de licença individuais. Para preencher este agregado num run público anterior sem alterar o snapshot, use `bundle exec ruby scripts/backfill_distance_ranges.rb <run_id>` com os ficheiros fonte originais; o script verifica os hashes do metadata antes de escrever. Uma reanálise substitui apenas as linhas históricas do mesmo par de datas, incluindo os agregados de distâncias e regiões. Para gerar também um PDF derivado, instale `wkhtmltopdf` ou `weasyprint` e execute:
 
 ```bash
-GENERATE_PDF=1 bundle exec ruby run_me.rb --mode public
+GENERATE_PDF=1 bundle exec rake analysis:public
+GENERATE_PDF=1 bundle exec rake analysis:local
 ```
+
+O PDF chama-se `report.pdf` nos dois modos. No modo público deriva de
+`report.html`; no modo local, de `report_local.html`. O writer tenta
+`wkhtmltopdf` e, se necessário, `weasyprint`.
+
+### Organização da análise
+
+`Analysis.run` descreve a sequência: preparar fontes e destino, calcular o
+resultado, gerar dados e relatório, gerar o PDF se pedido e publicar. Recebe
+os dois caminhos de fontes ou nenhum, o modo e as opções de destino/PDF;
+devolve `{run_id:, path:, summary:}`. Sem caminhos explícitos, seleciona o par
+local datado mais recente. Não existe uma classe `Runner` separada.
+
+As responsabilidades estão em objetos e módulos de `Analysis`:
+
+| Componente | Responsabilidade |
+| --- | --- |
+| `PreparedSources::Pair` | Seleção e preparação das fontes, datas, URLs, hashes, verificação dos bytes e identificador do par |
+| `Classifier` | Linhas detalhadas com correspondências e classificações |
+| `Aggregates`, `AnnouncementCounts`, `RegistrationMetrics` | Agregados de anúncios, grupos, freguesias e métricas de conjuntos |
+| `Result` | Resultado calculado, resumo, metadata e construção do `PublicSnapshot` validado |
+| `OutputWriter` | Escrita dos dados, relatório HTML e PDF opcional a partir de um resultado e destino |
+| `History` | Comparações e linhas históricas |
+| `PublicPublisher` | Staging, validação, instalação conjunta do snapshot e histórico, rollback e limpeza |
+
+O identificador base pertence ao par de fontes. O sufixo dos reruns locais
+depende dos diretórios existentes e é decidido pela análise. O metadata junta
+a proveniência das fontes à identificação e versões do run e à proveniência
+Git. `official_register_date` é a maior data de registo entre as linhas
+oficiais correspondentes aos anúncios classificados; não é a data de download
+do RNAL, guardada separadamente em `official_register_download_date`.
+
+A reorganização preserva metodologia, schema, agregados e os outputs da
+fixture sintética. Scripts e testes específicos usam diretamente o componente
+responsável; `Analysis` mantém apenas `run` como interface pública.
+
+Os relatórios ainda são montados por `Report` em Ruby durante a análise. A
+migração para templates Jekyll partilhados entre o site e um build de relatório
+isolado está planeada em [TODO.md](TODO.md).
 
 ## Site público
 
@@ -114,8 +181,19 @@ O site estático publicável é montado a partir dos snapshots e do histórico a
 
 ```bash
 npm ci
-npm run site:build
+bundle exec rake site:build
 ```
+
+As tarefas do projeto são executadas pelo Rake; npm fornece as ferramentas
+frontend, incluindo a compilação de CSS. `bundle exec rake` continua a executar
+os testes por defeito. As tarefas carregam apenas o código necessário e chamam
+`Analysis.run`, `SiteBuilder` e `SiteChecker` em Ruby. O build do site usa os snapshots
+públicos existentes; não executa a análise nem descarrega fontes.
+
+Scripts e testes carregam `lib/alojamento_local.rb`; o Zeitwerk carrega as
+classes e módulos conforme os caminhos em `lib/alojamento_local/`. O teste
+de carregamento antecipado em `test/alojamento_local_test.rb` verifica essa
+correspondência.
 
 `site:build` prepara os dados do Jekyll, gera as páginas, compila o CSS,
 verifica a estrutura e executa a auditoria de publicação do artefacto. Para
@@ -123,7 +201,7 @@ repetir apenas as etapas de CSS ou verificação:
 
 ```bash
 npm run site:css
-npm run site:check
+bundle exec rake site:check
 ruby scripts/audit_publication.rb --artifact _site
 ```
 
@@ -138,31 +216,35 @@ Jekyll escrever as páginas. Assim, `bundle exec jekyll build` e os rebuilds de
 ter Node e as dependências de `npm ci` instalados; uma falha na compilação faz
 falhar o build. `npm run site:css` continua disponível para compilar apenas o CSS.
 
-O resultado fica em `_site/` e inclui as páginas editoriais e de freguesias, relatórios HTML,
-CSVs agregados, metadata, licença e avisos de atribuição. Datasets brutos,
+O resultado fica em `_site/` e inclui as páginas editoriais e de freguesias,
+`snapshot.json`, relatórios HTML, PDFs existentes, licença e avisos de atribuição.
+As exportações agregadas de snapshots legados mantêm os seus caminhos antigos.
+Os relatórios são copiados para `_site/runs/<run_id>/`, sem regeneração de HTML
+ou PDF e sem alterar snapshots versionados. Datasets brutos,
 resultados locais e caches não são copiados. O diretório `_site/` pode ser usado
-como artefacto de um deployment estático. O workflow trimestral constrói e
+como artefacto de um deployment estático. O workflow mensal constrói e
 valida esse diretório antes de o publicar no GitHub Pages.
 
 O site é mantido como um projeto Jekyll em `site/`: layouts e includes
 partilham a estrutura HTML, as páginas Liquid tratam a narrativa editorial e
-`scripts/build_site.rb` prepara os dados públicos e chama Jekyll.
+`AlojamentoLocal::SiteBuilder` prepara os dados públicos e chama Jekyll através
+da tarefa `site:build`.
 
 Para rever alterações localmente, construa o artefacto e sirva `_site/`:
 
 ```bash
-npm run site:build
+bundle exec rake site:build
 python3 -m http.server 4000 --directory _site
 ```
 
 Abra `http://localhost:4000`. Depois de editar apenas CSS, execute
 `npm run site:css` e atualize a página. Depois de editar templates ou dados,
-execute `npm run site:build` e atualize a página.
+execute `bundle exec rake site:build` e atualize a página.
 
 Para rever a homepage em desktop, tablet e telemóvel:
 
 ```bash
-npm run site:screenshots
+bundle exec rake site:screenshots
 ```
 
 O comando constrói o site e usa Playwright com o Chrome instalado para guardar
@@ -171,12 +253,12 @@ precisar de outro executável Chromium. O comando falha se houver deslocamento
 horizontal. Verifique também o foco por teclado, os links e as restantes páginas
 num browser local.
 
-O mesmo script aceita outras páginas, depois de construir o site:
+Para capturar outras páginas, passe o caminho à tarefa (as aspas protegem os
+parênteses retos na shell):
 
 ```bash
-npm run site:build
-node scripts/capture_homepage.mjs freguesias/arroios/index.html
-node scripts/capture_homepage.mjs metodologia.html
+bundle exec rake 'site:screenshots[freguesias/arroios/index.html]'
+bundle exec rake 'site:screenshots[metodologia.html]'
 ```
 
 As capturas recebem o nome da página, por exemplo
@@ -197,6 +279,10 @@ bundle exec rake test
 
 O comando descobre todos os ficheiros `test/**/*_test.rb`, incluindo a regressão
 completa do pipeline com fontes sintéticas e outputs esperados em Git.
+Também verifica a preparação única das fontes, a separação das tarefas,
+os guards de hashes, os reruns locais e o rollback da publicação após falha
+ou interrupção. Os testes de PDF usam conversores simulados para verificar
+o HTML de origem nos dois modos, o fallback e o destino do ficheiro derivado.
 `bundle exec rake` executa a mesma tarefa por omissão. Para executar só a regressão:
 
 ```bash
@@ -216,20 +302,30 @@ O primeiro comando verifica os ficheiros publicáveis na árvore atual; o segund
 
 ## GitHub Actions
 
-`.github/workflows/quarterly-analysis.yml` permite execução trimestral e manual. O workflow executa os testes, descarrega as fontes, chama explicitamente `run_me.rb --mode public`, publica os outputs versionados no repositório e guarda artefactos temporários para debugging.
+`.github/workflows/monthly-analysis.yml` executa no dia 1 de cada mês, às 07:00 UTC, ou manualmente. Depois dos testes, restaura o artefacto `analysis-sources` da última execução bem-sucedida com fontes ainda disponíveis no ramo principal. Executa `sources:update`, guarda apenas o par datado selecionado num novo artefacto e chama `analysis:public`. Regista os outputs públicos versionados no repositório e constrói o site com `site:build` antes de o publicar.
+
+O artefacto das fontes tem retenção de 90 dias e é novamente carregado em cada execução mensal, mesmo quando o par não muda. Se não existir um artefacto disponível, o workflow descarrega as fontes atuais. Não é um arquivo permanente: uma pausa superior à retenção pode perder as fontes de um run antigo. Para preparar manualmente apenas o par local para este artefacto, use `bundle exec rake sources:archive` (`tmp/source-artifact/`).
+
+Para reutilizar localmente as fontes de uma execução Actions, descarregue o
+artefacto sem alterar nomes ou datas (com GitHub CLI autenticado):
+
+```bash
+gh run download <run-id-actions> --name analysis-sources --dir data_sources
+bundle exec rake rebuild
+```
 
 `.github/workflows/publication-audit.yml` executa automaticamente a verificação de segurança dos outputs em pushes e pull requests.
 
 O repositório pode permanecer privado enquanto um deployment separado publica o
 conteúdo sanitizado de `_site/`.
 
-O workflow trimestral faz commit apenas dos outputs públicos sanitizados em `data/snapshots/` e `data/history/`; o site é publicado como artefacto separado através do GitHub Pages, depois de executar testes, construir o site e passar os gates de publicação. Os snapshots commitados e o histórico são a fonte permanente do projeto. Datasets brutos em `data_sources/`, resultados detalhados em `data/private/` e caches em `tmp/` continuam fora do Git por defeito. Os CSVs dos snapshots são agregados e não contêm identificadores de anúncios, anfitriões, nomes, endereços, coordenadas ou valores de licença individuais.
+O workflow mensal faz commit apenas dos outputs públicos sanitizados em `data/snapshots/` e `data/history/`; o site é publicado como artefacto separado através do GitHub Pages, depois de executar testes, construir o site e passar os gates de publicação. Os snapshots commitados e o histórico são a fonte permanente do projeto. Datasets brutos em `data_sources/`, resultados detalhados em `data/private/` e caches em `tmp/` continuam fora do Git por defeito. Os documentos atuais e os CSVs legados dos snapshots são agregados e não contêm identificadores de anúncios, anfitriões, nomes, endereços, coordenadas ou valores de licença individuais.
 
-O workflow `.github/workflows/site-publish.yml` reconstrói e publica o site em pushes humanos para `main` e através de `workflow_dispatch`. Está protegido contra o commit `Atualiza análise trimestral` produzido pelo workflow trimestral, que já constrói e publica o site na própria execução.
+O workflow `.github/workflows/site-publish.yml` reconstrói e publica o site em pushes humanos para `main` e através de `workflow_dispatch`. Está protegido contra o commit `Atualiza análise mensal` produzido pelo workflow mensal, que já constrói e publica o site na própria execução.
 
 ## Dados e método
 
-As fontes são o arquivo público [Inside Airbnb](https://insideairbnb.com/get-the-data/) e o registo oficial disponibilizado pelo Turismo de Portugal. Em cada execução, o downloader descobre na página do Inside Airbnb o snapshot mais recente disponível para Lisboa; `last_scraped` é uma data ao nível do anúncio e pode abranger vários dias.
+As fontes são o arquivo público [Inside Airbnb](https://insideairbnb.com/get-the-data/) e o registo oficial disponibilizado pelo Turismo de Portugal. Na etapa `sources:update`, o downloader descobre na página do Inside Airbnb o snapshot mais recente disponível para Lisboa; `last_scraped` é uma data ao nível do anúncio e pode abranger vários dias.
 
 As licenças são normalizadas de forma conservadora. O analisador distingue, entre outras categorias:
 

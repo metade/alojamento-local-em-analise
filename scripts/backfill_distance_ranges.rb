@@ -28,7 +28,8 @@ official = File.join(root, "data_sources", "Estabelecimentos_de_Alojamento_Local
   raise "Source hash mismatch: #{source}" unless Digest::SHA256.file(path).hexdigest == expected
 end
 
-listings, = AlojamentoLocal::Analysis.analyse(airbnb, official)
+sources = AlojamentoLocal::Analysis::PreparedSources::Pair.new(airbnb_path: airbnb, official_path: official)
+listings, = AlojamentoLocal::Analysis::Classifier.new(sources).classify
 repeated = listings.select { |row| row[:license_group_assessment] == "licença repetida em várias localizações" }
 public_rows = snapshot ? snapshot.published_announcement_rows : CSV.read(File.join(run_dir, "listings.csv"), headers: true)
 public_count = public_rows
@@ -36,9 +37,9 @@ public_count = public_rows
   .sum { |row| row["listings"].to_i }
 raise "Announcement count mismatch" unless repeated.size == public_count
 
-counts = AlojamentoLocal::Analysis.distance_range_counts(listings)
+counts = AlojamentoLocal::Analysis::History.distance_range_counts(listings)
 raise "Licence group count mismatch" unless counts.values.sum == summary.fetch("classifications").fetch("licença repetida em várias localizações")
 
 path = File.join(root, "data", "history", "distance_ranges.csv")
-AlojamentoLocal::Analysis.append_distance_history(path, run_id, listings)
+AlojamentoLocal::Analysis::History.append_distance_history(path, run_id, listings)
 puts "#{run_id}: #{counts.values.sum} números de licença / #{repeated.size} anúncios; #{counts.inspect}"

@@ -1,7 +1,6 @@
 require "minitest/autorun"
 require "tmpdir"
 require_relative "../lib/alojamento_local"
-require_relative "../lib/alojamento_local/overlap"
 
 class RegistrationMetricsTest < Minitest::Test
   def observed(number, parish, raw: number)
@@ -27,7 +26,7 @@ class RegistrationMetricsTest < Minitest::Test
                   *%w[2 3 4 5 8].map { |n| observed(n, "Arroios") }, observed("6", "Belém"),
                   observed("7", "Belém"), observed(nil, "Arroios", raw: " "), observed("406/UT/2017", "Arroios"),
                   observed("1", "missing")]
-      metrics = AlojamentoLocal::RegistrationMetrics.calculate(listings, path)
+      metrics = AlojamentoLocal::Analysis::RegistrationMetrics.calculate(listings, path)
       city = metrics[:rows].first
       arroios = metrics[:rows].find { |row| row[:geography] == "Arroios" }
       belem = metrics[:rows].find { |row| row[:geography] == "Belém" }
@@ -75,9 +74,9 @@ class RegistrationMetricsTest < Minitest::Test
     Dir.mktmpdir do |dir|
       path = File.join(dir, "empty.csv")
       File.write(path, "NrRNAL,Concelho,Freguesia\n")
-      metrics = AlojamentoLocal::RegistrationMetrics.calculate([], path)
+      metrics = AlojamentoLocal::Analysis::RegistrationMetrics.calculate([], path)
       metrics[:rows].first[:intersection] = 1
-      assert_raises(RuntimeError) { AlojamentoLocal::RegistrationMetrics.validate!(metrics) }
+      assert_raises(RuntimeError) { AlojamentoLocal::Analysis::RegistrationMetrics.validate!(metrics) }
     end
   end
 end

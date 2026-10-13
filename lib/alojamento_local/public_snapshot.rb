@@ -1,8 +1,6 @@
 require "csv"
 require "json"
 require "date"
-require_relative "public_schema"
-require_relative "registration_metrics"
 
 module AlojamentoLocal
   # Storage-independent, immutable public data. Aggregate counts are integers;
@@ -122,8 +120,8 @@ module AlojamentoLocal
         file = File.join(path, "registration_metrics.json")
         return false unless File.file?(file)
         data = load_json(file)
-        data["metric_version"] == RegistrationMetrics::VERSION &&
-          RegistrationMetrics::SUPPORTED_METHODOLOGY_VERSIONS.include?(data["methodology_version"])
+        data["metric_version"] == Analysis::RegistrationMetrics::VERSION &&
+          Analysis::RegistrationMetrics::SUPPORTED_METHODOLOGY_VERSIONS.include?(data["methodology_version"])
       end
 
       def load(path, expected_run_id: File.basename(path))
@@ -186,7 +184,7 @@ module AlojamentoLocal
         raise "Invalid public mode" unless meta.fetch("mode") == "public" && summary.fetch("mode") == "public"
         raise "Public metadata contains a local source path" if meta.dig("source_files", "airbnb", "path") || meta.dig("source_files", "official", "path")
         raise "Forbidden field in public output" if meta.to_s.match?(/host_id|listing_url|licensa_raw|latitude|longitude|official_address/i)
-        RegistrationMetrics.validate!(JSON.parse(JSON.generate(metrics), symbolize_names: true))
+        Analysis::RegistrationMetrics.validate!(JSON.parse(JSON.generate(metrics), symbolize_names: true))
         %w[run_id source_files methodology_version source_dates].each do |key|
           raise "Metric provenance differs: #{key}" unless metrics.fetch(key) == meta.fetch(key)
         end

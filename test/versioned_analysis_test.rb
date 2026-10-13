@@ -1,4 +1,5 @@
 require "minitest/autorun"
+require "minitest/mock"
 require "open3"
 require "tmpdir"
 require_relative "../lib/alojamento_local"
@@ -23,7 +24,7 @@ class VersionedAnalysisTest < Minitest::Test
     end
   end
 
-  def test_existing_public_run_is_detected_without_mutating_it
+  def test_source_hash_guard_preserves_existing_snapshot
     Dir.mktmpdir do |dir|
       airbnb = File.expand_path("fixtures/pipeline/sources/listings-2024-06-01.csv", __dir__)
       official = File.join(dir, "official-2024-07-01.csv")
@@ -33,16 +34,16 @@ class VersionedAnalysisTest < Minitest::Test
         output_root: output_root, history_path: File.join(dir, "history", "summary.csv"))
       path = result.fetch(:path)
       before = File.binread(File.join(path, "snapshot.json"))
-      existing = AlojamentoLocal::Analysis.existing_public_run(airbnb_path: airbnb, official_path: official, output_root: output_root)
-      assert_equal "2024-06-01__2024-07-01", existing[:run_id]
+      hashes = [airbnb, official].map { |source| Digest::SHA256.file(source).hexdigest }
+      AlojamentoLocal::Analysis::PublicPublisher.verify_public_sources!(path, hashes)
       assert_equal before, File.binread(File.join(path, "snapshot.json"))
       File.write(official, "changed bytes")
-      assert_raises(RuntimeError) { AlojamentoLocal::Analysis.existing_public_run(airbnb_path: airbnb, official_path: official, output_root: output_root) }
+      assert_raises(RuntimeError) { AlojamentoLocal::Analysis::PublicPublisher.verify_public_sources!(path, [hashes.first, Digest::SHA256.file(official).hexdigest]) }
       FileUtils.cp(File.expand_path("fixtures/pipeline/sources/official-2024-07-01.csv", __dir__), official)
       data = JSON.parse(before)
       data["metadata"]["analysis_version"] = "3.2.0"
       File.write(File.join(path, "snapshot.json"), JSON.generate(data))
-      assert_nil AlojamentoLocal::Analysis.existing_public_run(airbnb_path: airbnb, official_path: official, output_root: output_root)
+      AlojamentoLocal::Analysis::PublicPublisher.verify_public_sources!(path, hashes)
     end
   end
 
@@ -72,7 +73,7 @@ class VersionedAnalysisTest < Minitest::Test
       assert_equal "2.1.0", snapshot.summary.fetch("methodology_version")
       assert_equal "6.0.0", snapshot.metadata.fetch("output_schema_version")
       refute JSON.generate(snapshot.to_h).match?(/host_id|listing_url|licensa_raw|latitude|longitude|official_address/i)
-      assert_raises(RuntimeError) { AlojamentoLocal::Analysis.append_history(File.join(dir, "history", "summary.csv"), result[:summary]) }
+      assert_raises(RuntimeError) { AlojamentoLocal::Analysis::History.append_history(File.join(dir, "history", "summary.csv"), result[:summary]) }
       report = File.read(File.join(run_dir, "report.html"))
       assert_operator report.length, :>, 1_000
       assert_includes report, "Exemplos ilustrativos"
@@ -90,7 +91,7 @@ class VersionedAnalysisTest < Minitest::Test
     end
   end
 
-  def test_force_creates_a_preserved_local_rerun
+  def test_repeated_analysis_creates_a_preserved_local_rerun
     Dir.mktmpdir do |dir|
       airbnb = File.join(dir, "listings-2026-06-23.csv")
       official = File.join(dir, "official-2026-09-17.csv")
@@ -104,7 +105,7 @@ class VersionedAnalysisTest < Minitest::Test
       root = File.join(dir, "private")
       history = File.join(dir, "private", "history", "summary.csv")
       first = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "local", output_root: root, history_path: history)
-      rerun = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "local", output_root: root, history_path: history, force: true)
+      rerun = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "local", output_root: root, history_path: history)
 
       assert_equal "2026-06-23__2026-09-17", first[:run_id]
       assert_match(/\A2026-06-23__2026-09-17__rerun-\d{8}T\d{12}\z/, rerun[:run_id])
@@ -158,7 +159,7 @@ class VersionedAnalysisTest < Minitest::Test
       assert_equal "1", rows.find { |row| row["range"] == "2_5_km" }["licence_groups"]
       assert_equal 2, AlojamentoLocal::PublicSnapshot::Loader.new.load(result[:path]).published_announcement_rows.sum { |row| row["listings"].to_i }
       assert_equal %w[snapshot.json report.html].sort, Dir.children(result[:path]).sort
-      assert_raises(RuntimeError) { AlojamentoLocal::Analysis.append_distance_history(File.join(dir, "history", "distance_ranges.csv"), result[:run_id], []) }
+      assert_raises(RuntimeError) { AlojamentoLocal::Analysis::History.append_distance_history(File.join(dir, "history", "distance_ranges.csv"), result[:run_id], []) }
     end
   end
 
@@ -186,7 +187,7 @@ class VersionedAnalysisTest < Minitest::Test
       assert_equal 2, counts.values.sum
       assert rows.all? { |row| row["region_method"] == "official_register_nutsii_v1" }
       assert_equal 2, AlojamentoLocal::PublicSnapshot::Loader.new.load(result[:path]).published_announcement_rows.select { |row| row["classification"] == "licença oficial fora de Lisboa" }.sum { |row| row["listings"].to_i }
-      assert_raises(RuntimeError) { AlojamentoLocal::Analysis.append_outside_region_history(File.join(dir, "history", "outside_regions.csv"), result[:run_id], []) }
+      assert_raises(RuntimeError) { AlojamentoLocal::Analysis::History.append_outside_region_history(File.join(dir, "history", "outside_regions.csv"), result[:run_id], []) }
     end
   end
 
@@ -197,52 +198,76 @@ class VersionedAnalysisTest < Minitest::Test
       <a href="https://data.insideairbnb.com/portugal/lisbon/lisbon/2026-06-23/data/listings.csv.gz">listings.csv.gz</a>
     HTML
 
-    assert_equal ["2026-06-23", "https://data.insideairbnb.com/portugal/lisbon/lisbon/2026-06-23/data/listings.csv.gz"], AlojamentoLocal::Data.latest_airbnb_snapshot(page)
+    assert_equal ["2026-06-23", "https://data.insideairbnb.com/portugal/lisbon/lisbon/2026-06-23/data/listings.csv.gz"], AlojamentoLocal::Analysis::Data.latest_airbnb_snapshot(page)
     older = '<a href="https://data.insideairbnb.com/portugal/lisbon/lisbon/2025-09-21/data/listings.csv.gz">older</a>'
     unordered = page.sub('<h4>', older + '<h4>')
-    assert_equal "2026-06-23", AlojamentoLocal::Data.latest_airbnb_snapshot(unordered).first
-    assert_raises(RuntimeError) { AlojamentoLocal::Data.latest_airbnb_snapshot('<h3>Lisbon</h3>changed page') }
+    assert_equal "2026-06-23", AlojamentoLocal::Analysis::Data.latest_airbnb_snapshot(unordered).first
+    assert_raises(RuntimeError) { AlojamentoLocal::Analysis::Data.latest_airbnb_snapshot('<h3>Lisbon</h3>changed page') }
   end
   def test_replacement_updates_only_its_own_history_rows_and_preserves_other_dates
     Dir.mktmpdir do |dir|
       path = File.join(dir, "summary.csv")
       first = {run_id: "2026-06-23__2026-09-26", source_dates: {airbnb_snapshot_date: "2026-06-23", official_register_download_date: "2026-09-26"}, methodology_version: "1.1.0", listings: 10, licence_groups: 5, establishment_estimate: 8, generated_at: "before"}
       october = first.merge(run_id: "2026-06-23__2026-10-01", generated_at: "october")
-      AlojamentoLocal::Analysis.append_history(path, first)
-      AlojamentoLocal::Analysis.append_history(path, october)
+      AlojamentoLocal::Analysis::History.append_history(path, first)
+      AlojamentoLocal::Analysis::History.append_history(path, october)
       original_october = File.readlines(path).find { |line| line.start_with?(october[:run_id] + ",") }
       latest = first.merge(methodology_version: "2.0.0", establishment_estimate: 9, generated_at: "after")
-      AlojamentoLocal::Analysis.append_history(path, latest, replace: true)
+      AlojamentoLocal::Analysis::History.append_history(path, latest, replace: true)
       assert_equal original_october, File.readlines(path).find { |line| line.start_with?(october[:run_id] + ",") }
       rows = CSV.read(path, headers: true)
       assert_equal 2, rows.size
       assert_equal "2.0.0", rows.find { |row| row["run_id"] == first[:run_id] }["methodology_version"]
-      comparisons = AlojamentoLocal::Analysis.historical_comparisons(path, latest)
+      comparisons = AlojamentoLocal::Analysis::History.historical_comparisons(path, latest)
       assert_equal [october[:run_id]], comparisons.map { |row| row[:run_id] }
       assert_match(/incompatível/, comparisons.first[:status])
       regions = File.join(dir, "outside_regions.csv")
-      AlojamentoLocal::Analysis.append_outside_region_history(regions, first[:run_id], [{license_group_assessment: "licença oficial fora de Lisboa", official_concelho: "Porto", official_region: "Norte"}])
-      AlojamentoLocal::Analysis.append_outside_region_history(regions, first[:run_id], [], replace: true)
+      AlojamentoLocal::Analysis::History.append_outside_region_history(regions, first[:run_id], [{license_group_assessment: "licença oficial fora de Lisboa", official_concelho: "Porto", official_region: "Norte"}])
+      AlojamentoLocal::Analysis::History.append_outside_region_history(regions, first[:run_id], [], replace: true)
       assert_empty CSV.read(regions, headers: true)
     end
   end
 
   def test_failed_public_install_restores_previous_snapshot_and_history
     Dir.mktmpdir do |dir|
-      staging = File.join(dir, "staging")
-      candidate = File.join(staging, "snapshot")
-      destination = File.join(dir, "snapshot")
-      history = File.join(dir, "history.csv")
-      FileUtils.mkdir_p(candidate)
-      FileUtils.mkdir_p(destination)
-      File.write(File.join(candidate, "sentinel"), "new")
-      File.write(File.join(destination, "sentinel"), "old")
-      File.write(history, "old history")
-      assert_raises(Errno::ENOENT) do
-        AlojamentoLocal::Analysis.publish_public_run!(candidate, destination, {File.join(staging, "missing.csv") => history}, staging)
+      airbnb = File.expand_path("fixtures/pipeline/sources/listings-2024-06-01.csv", __dir__)
+      official = File.expand_path("fixtures/pipeline/sources/official-2024-07-01.csv", __dir__)
+      output_root = File.join(dir, "snapshots")
+      history = File.join(dir, "history", "summary.csv")
+      published = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "public",
+        output_root: output_root, history_path: history)
+      destination = published.fetch(:path)
+      sources = AlojamentoLocal::Analysis::PreparedSources::Pair.new(airbnb_path: airbnb, official_path: official)
+      listings, = AlojamentoLocal::Analysis::Classifier.new(sources).classify
+      publisher = AlojamentoLocal::Analysis::PublicPublisher.new(destination: destination, history_path: history)
+      read_files = -> do
+        Dir.glob(File.join(dir, "**", "*"), File::FNM_DOTMATCH).select { |path| File.file?(path) }.to_h do |path|
+          [path, File.binread(path)]
+        end
       end
-      assert_equal "old", File.read(File.join(destination, "sentinel"))
-      assert_equal "old history", File.read(history)
+      before = read_files.call
+      move = FileUtils.method(:mv)
+      distance_history = File.join(File.dirname(history), "distance_ranges.csv")
+
+      [Errno::EIO, Interrupt].each do |failure_class|
+        fail_install = ->(source, target, **options) do
+          # Fail after the snapshot and summary are installed, and after the
+          # existing distance history has been moved to its staging backup.
+          raise failure_class, "Injected install failure" if File.basename(source) == "distance_ranges.csv" && target == distance_history
+
+          move.call(source, target, **options)
+        end
+        FileUtils.stub(:mv, fail_install) do
+          assert_raises(failure_class) do
+            publisher.publish(summary: published.fetch(:summary).merge(generated_at: "replacement"), listings: listings) do |run_dir|
+              FileUtils.cp_r(destination, run_dir)
+              File.open(File.join(run_dir, "report.html"), "a") { |file| file.write("<!-- replacement -->") }
+            end
+          end
+        end
+        assert_equal before, read_files.call
+        assert_empty Dir.glob(File.join(output_root, ".analysis-*"))
+      end
     end
   end
 
