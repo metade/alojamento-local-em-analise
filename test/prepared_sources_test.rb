@@ -173,6 +173,7 @@ class PreparedSourcesTest < Minitest::Test
       sources = AlojamentoLocal::Analysis::PreparedSources::Pair.new(airbnb_path: airbnb, official_path: official)
       assert_equal({airbnb_snapshot_date: "2026-06-23",
                     official_register_download_date: "2026-09-26"}, sources.source_dates)
+      assert_equal "2026-06-23__2026-09-26", sources.identifier
       result = AlojamentoLocal::Analysis::Result.new(sources: sources, run_id: "2026-06-23__2026-09-26", mode: "public")
       assert_equal({airbnb_snapshot_date: "2026-06-23", official_register_date: "2020-01-01",
                     official_register_download_date: "2026-09-26"}, result.metadata.fetch(:source_dates))
@@ -191,6 +192,7 @@ class PreparedSourcesTest < Minitest::Test
       undated = AlojamentoLocal::Analysis::PreparedSources::Pair.new(airbnb_path: undated_airbnb, official_path: undated_official)
       assert_equal({airbnb_snapshot_date: "2026-06-25",
                     official_register_download_date: "2026-09-20"}, undated.source_dates)
+      assert_equal "2026-06-25__2026-09-20", undated.identifier
     end
   end
 

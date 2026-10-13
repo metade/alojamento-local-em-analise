@@ -82,6 +82,10 @@ module AlojamentoLocal
           }
         end
 
+        def identifier
+          source_dates.values_at(:airbnb_snapshot_date, :official_register_download_date).join("__")
+        end
+
         def verify_unchanged!
           raise "Source bytes changed during analysis" unless source_hashes == current_hashes
         end

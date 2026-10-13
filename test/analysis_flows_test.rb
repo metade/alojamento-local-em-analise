@@ -90,17 +90,17 @@ class AnalysisFlowsTest < Minitest::Test
     with_sources do
       AlojamentoLocal::Analysis.run(mode: "public")
       before = analysis_files
-      writer = AlojamentoLocal::Analysis::OutputWriter
-      write_snapshot = writer.method(:write_snapshot)
-      corrupt_snapshot = ->(run_dir, snapshot) do
-        write_snapshot.call(run_dir, snapshot)
-        path = File.join(run_dir, "snapshot.json")
-        document = JSON.parse(File.read(path))
-        document.fetch("summary")["listings"] = -1
-        File.write(path, JSON.generate(document))
+      write_file = File.method(:write)
+      corrupt_snapshot = ->(path, content, *arguments, **options) do
+        if File.basename(path) == "snapshot.json"
+          document = JSON.parse(content)
+          document.fetch("summary")["listings"] = -1
+          content = JSON.generate(document)
+        end
+        write_file.call(path, content, *arguments, **options)
       end
 
-      writer.stub(:write_snapshot, corrupt_snapshot) do
+      File.stub(:write, corrupt_snapshot) do
         assert_raises(RuntimeError) { AlojamentoLocal::Analysis.run(mode: "public") }
       end
       assert_equal before, analysis_files
@@ -111,6 +111,42 @@ class AnalysisFlowsTest < Minitest::Test
   def analysis_files
     Dir.glob("data/**/*", File::FNM_DOTMATCH).select { |path| File.file?(path) }.to_h do |path|
       [path, File.binread(path)]
+    end
+  end
+
+  def test_optional_pdf_uses_the_generated_report_in_both_modes
+    %w[public local].each do |mode|
+      with_sources do
+        commands = []
+        report_filename = (mode == "public") ? "report.html" : "report_local.html"
+        converter = ->(*command) do
+          commands << command.first
+          html, pdf = command.last(2)
+          assert_equal report_filename, File.basename(html)
+          assert File.file?(html), "PDF generation requires the completed report"
+          assert_includes File.read(html), "<!doctype html>"
+          if command.first == "weasyprint"
+            File.write(pdf, "PDF derivative")
+            true
+          else
+            false
+          end
+        end
+        writer_class = AlojamentoLocal::Analysis::OutputWriter
+        new_writer = writer_class.method(:new)
+        build_writer = ->(**arguments) do
+          writer = new_writer.call(**arguments)
+          writer.define_singleton_method(:system) { |*command| converter.call(*command) }
+          writer
+        end
+
+        result = writer_class.stub(:new, build_writer) do
+          AlojamentoLocal::Analysis.run(mode: mode, generate_pdf: true)
+        end
+        assert_equal %w[wkhtmltopdf weasyprint], commands
+        assert_equal "PDF derivative", File.read(File.join(result.fetch(:path), "report.pdf"))
+        assert_empty Dir.glob("data/snapshots/.analysis-*")
+      end
     end
   end
 
