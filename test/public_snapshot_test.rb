@@ -154,7 +154,6 @@ class PublicSnapshotTest < Minitest::Test
       assert_equal %w[report.html snapshot.json], Dir.children(path).sort
       assert_equal expected, builder(root).site_data([path])
       assert_equal snapshot.to_h, AlojamentoLocal::PublicSnapshot::Loader.new.load(path).to_h
-      AlojamentoLocal::Analysis::PublicPublisher.validate_public_outputs!(path)
       FileUtils.cp(File.expand_path("../NOTICE", __dir__), File.join(path, "NOTICE"))
       output, status = Open3.capture2e(RbConfig.ruby, File.expand_path("../scripts/audit_publication.rb", __dir__), "--artifact", path)
       assert status.success?, output

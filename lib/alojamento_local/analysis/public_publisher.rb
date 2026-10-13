@@ -19,9 +19,9 @@ module AlojamentoLocal
         begin
           run_dir = File.join(staging, "snapshot")
           yield run_dir
-          self.class.validate_public_outputs!(run_dir)
+          validate_public_outputs!(run_dir)
           histories = stage_histories(staging, summary, listings)
-          self.class.publish_public_run!(run_dir, @destination, histories, staging)
+          install(run_dir, histories, staging)
         ensure
           FileUtils.rm_rf(staging)
         end
@@ -36,14 +36,16 @@ module AlojamentoLocal
         end
       end
 
-      def self.validate_public_outputs!(run_dir)
+      private
+
+      def validate_public_outputs!(run_dir)
         loader = PublicSnapshot::Loader.new
         loader.load(run_dir, expected_run_id: loader.metadata(run_dir).fetch("run_id"))
       end
 
-      def self.publish_public_run!(staged_run, destination, histories, staging)
+      def install(staged_run, histories, staging)
         installed = []
-        {staged_run => destination, **histories}.each_with_index do |(source, target), index|
+        {staged_run => @destination, **histories}.each_with_index do |(source, target), index|
           FileUtils.mkdir_p(File.dirname(target))
           backup = File.join(staging, "previous-#{index}")
           existed = File.exist?(target)
@@ -53,14 +55,16 @@ module AlojamentoLocal
         end
       # Roll back even on interruption or exit, then propagate the exception.
       rescue Exception # standard:disable Lint/RescueException
+        rollback(installed)
+        raise
+      end
+
+      def rollback(installed)
         installed.reverse_each do |target, backup|
           FileUtils.rm_rf(target)
           FileUtils.mv(backup, target) if backup && File.exist?(backup)
         end
-        raise
       end
-
-      private
 
       def stage_histories(staging, summary, listings)
         histories = %w[summary.csv distance_ranges.csv outside_regions.csv].to_h do |filename|

@@ -1,4 +1,5 @@
 require "minitest/autorun"
+require "minitest/mock"
 require "open3"
 require "tmpdir"
 require_relative "../lib/alojamento_local"
@@ -229,20 +230,44 @@ class VersionedAnalysisTest < Minitest::Test
 
   def test_failed_public_install_restores_previous_snapshot_and_history
     Dir.mktmpdir do |dir|
-      staging = File.join(dir, "staging")
-      candidate = File.join(staging, "snapshot")
-      destination = File.join(dir, "snapshot")
-      history = File.join(dir, "history.csv")
-      FileUtils.mkdir_p(candidate)
-      FileUtils.mkdir_p(destination)
-      File.write(File.join(candidate, "sentinel"), "new")
-      File.write(File.join(destination, "sentinel"), "old")
-      File.write(history, "old history")
-      assert_raises(Errno::ENOENT) do
-        AlojamentoLocal::Analysis::PublicPublisher.publish_public_run!(candidate, destination, {File.join(staging, "missing.csv") => history}, staging)
+      airbnb = File.expand_path("fixtures/pipeline/sources/listings-2024-06-01.csv", __dir__)
+      official = File.expand_path("fixtures/pipeline/sources/official-2024-07-01.csv", __dir__)
+      output_root = File.join(dir, "snapshots")
+      history = File.join(dir, "history", "summary.csv")
+      published = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "public",
+        output_root: output_root, history_path: history)
+      destination = published.fetch(:path)
+      sources = AlojamentoLocal::Analysis::PreparedSources::Pair.new(airbnb_path: airbnb, official_path: official)
+      listings, = AlojamentoLocal::Analysis::Classifier.new(sources).classify
+      publisher = AlojamentoLocal::Analysis::PublicPublisher.new(destination: destination, history_path: history)
+      read_files = -> do
+        Dir.glob(File.join(dir, "**", "*"), File::FNM_DOTMATCH).select { |path| File.file?(path) }.to_h do |path|
+          [path, File.binread(path)]
+        end
       end
-      assert_equal "old", File.read(File.join(destination, "sentinel"))
-      assert_equal "old history", File.read(history)
+      before = read_files.call
+      move = FileUtils.method(:mv)
+      distance_history = File.join(File.dirname(history), "distance_ranges.csv")
+
+      [Errno::EIO, Interrupt].each do |failure_class|
+        fail_install = ->(source, target, **options) do
+          # Fail after the snapshot and summary are installed, and after the
+          # existing distance history has been moved to its staging backup.
+          raise failure_class, "Injected install failure" if File.basename(source) == "distance_ranges.csv" && target == distance_history
+
+          move.call(source, target, **options)
+        end
+        FileUtils.stub(:mv, fail_install) do
+          assert_raises(failure_class) do
+            publisher.publish(summary: published.fetch(:summary).merge(generated_at: "replacement"), listings: listings) do |run_dir|
+              FileUtils.cp_r(destination, run_dir)
+              File.open(File.join(run_dir, "report.html"), "a") { |file| file.write("<!-- replacement -->") }
+            end
+          end
+        end
+        assert_equal before, read_files.call
+        assert_empty Dir.glob(File.join(output_root, ".analysis-*"))
+      end
     end
   end
 
