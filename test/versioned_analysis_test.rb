@@ -34,15 +34,15 @@ class VersionedAnalysisTest < Minitest::Test
       path = result.fetch(:path)
       before = File.binread(File.join(path, "snapshot.json"))
       hashes = [airbnb, official].map { |source| Digest::SHA256.file(source).hexdigest }
-      AlojamentoLocal::Analysis.verify_public_sources!(path, hashes)
+      AlojamentoLocal::Analysis::PublicPublisher.verify_public_sources!(path, hashes)
       assert_equal before, File.binread(File.join(path, "snapshot.json"))
       File.write(official, "changed bytes")
-      assert_raises(RuntimeError) { AlojamentoLocal::Analysis.verify_public_sources!(path, [hashes.first, Digest::SHA256.file(official).hexdigest]) }
+      assert_raises(RuntimeError) { AlojamentoLocal::Analysis::PublicPublisher.verify_public_sources!(path, [hashes.first, Digest::SHA256.file(official).hexdigest]) }
       FileUtils.cp(File.expand_path("fixtures/pipeline/sources/official-2024-07-01.csv", __dir__), official)
       data = JSON.parse(before)
       data["metadata"]["analysis_version"] = "3.2.0"
       File.write(File.join(path, "snapshot.json"), JSON.generate(data))
-      AlojamentoLocal::Analysis.verify_public_sources!(path, hashes)
+      AlojamentoLocal::Analysis::PublicPublisher.verify_public_sources!(path, hashes)
     end
   end
 
@@ -72,7 +72,7 @@ class VersionedAnalysisTest < Minitest::Test
       assert_equal "2.1.0", snapshot.summary.fetch("methodology_version")
       assert_equal "6.0.0", snapshot.metadata.fetch("output_schema_version")
       refute JSON.generate(snapshot.to_h).match?(/host_id|listing_url|licensa_raw|latitude|longitude|official_address/i)
-      assert_raises(RuntimeError) { AlojamentoLocal::Analysis.append_history(File.join(dir, "history", "summary.csv"), result[:summary]) }
+      assert_raises(RuntimeError) { AlojamentoLocal::Analysis::History.append_history(File.join(dir, "history", "summary.csv"), result[:summary]) }
       report = File.read(File.join(run_dir, "report.html"))
       assert_operator report.length, :>, 1_000
       assert_includes report, "Exemplos ilustrativos"
@@ -158,7 +158,7 @@ class VersionedAnalysisTest < Minitest::Test
       assert_equal "1", rows.find { |row| row["range"] == "2_5_km" }["licence_groups"]
       assert_equal 2, AlojamentoLocal::PublicSnapshot::Loader.new.load(result[:path]).published_announcement_rows.sum { |row| row["listings"].to_i }
       assert_equal %w[snapshot.json report.html].sort, Dir.children(result[:path]).sort
-      assert_raises(RuntimeError) { AlojamentoLocal::Analysis.append_distance_history(File.join(dir, "history", "distance_ranges.csv"), result[:run_id], []) }
+      assert_raises(RuntimeError) { AlojamentoLocal::Analysis::History.append_distance_history(File.join(dir, "history", "distance_ranges.csv"), result[:run_id], []) }
     end
   end
 
@@ -186,7 +186,7 @@ class VersionedAnalysisTest < Minitest::Test
       assert_equal 2, counts.values.sum
       assert rows.all? { |row| row["region_method"] == "official_register_nutsii_v1" }
       assert_equal 2, AlojamentoLocal::PublicSnapshot::Loader.new.load(result[:path]).published_announcement_rows.select { |row| row["classification"] == "licença oficial fora de Lisboa" }.sum { |row| row["listings"].to_i }
-      assert_raises(RuntimeError) { AlojamentoLocal::Analysis.append_outside_region_history(File.join(dir, "history", "outside_regions.csv"), result[:run_id], []) }
+      assert_raises(RuntimeError) { AlojamentoLocal::Analysis::History.append_outside_region_history(File.join(dir, "history", "outside_regions.csv"), result[:run_id], []) }
     end
   end
 
@@ -208,21 +208,21 @@ class VersionedAnalysisTest < Minitest::Test
       path = File.join(dir, "summary.csv")
       first = {run_id: "2026-06-23__2026-09-26", source_dates: {airbnb_snapshot_date: "2026-06-23", official_register_download_date: "2026-09-26"}, methodology_version: "1.1.0", listings: 10, licence_groups: 5, establishment_estimate: 8, generated_at: "before"}
       october = first.merge(run_id: "2026-06-23__2026-10-01", generated_at: "october")
-      AlojamentoLocal::Analysis.append_history(path, first)
-      AlojamentoLocal::Analysis.append_history(path, october)
+      AlojamentoLocal::Analysis::History.append_history(path, first)
+      AlojamentoLocal::Analysis::History.append_history(path, october)
       original_october = File.readlines(path).find { |line| line.start_with?(october[:run_id] + ",") }
       latest = first.merge(methodology_version: "2.0.0", establishment_estimate: 9, generated_at: "after")
-      AlojamentoLocal::Analysis.append_history(path, latest, replace: true)
+      AlojamentoLocal::Analysis::History.append_history(path, latest, replace: true)
       assert_equal original_october, File.readlines(path).find { |line| line.start_with?(october[:run_id] + ",") }
       rows = CSV.read(path, headers: true)
       assert_equal 2, rows.size
       assert_equal "2.0.0", rows.find { |row| row["run_id"] == first[:run_id] }["methodology_version"]
-      comparisons = AlojamentoLocal::Analysis.historical_comparisons(path, latest)
+      comparisons = AlojamentoLocal::Analysis::History.historical_comparisons(path, latest)
       assert_equal [october[:run_id]], comparisons.map { |row| row[:run_id] }
       assert_match(/incompatível/, comparisons.first[:status])
       regions = File.join(dir, "outside_regions.csv")
-      AlojamentoLocal::Analysis.append_outside_region_history(regions, first[:run_id], [{license_group_assessment: "licença oficial fora de Lisboa", official_concelho: "Porto", official_region: "Norte"}])
-      AlojamentoLocal::Analysis.append_outside_region_history(regions, first[:run_id], [], replace: true)
+      AlojamentoLocal::Analysis::History.append_outside_region_history(regions, first[:run_id], [{license_group_assessment: "licença oficial fora de Lisboa", official_concelho: "Porto", official_region: "Norte"}])
+      AlojamentoLocal::Analysis::History.append_outside_region_history(regions, first[:run_id], [], replace: true)
       assert_empty CSV.read(regions, headers: true)
     end
   end
@@ -239,7 +239,7 @@ class VersionedAnalysisTest < Minitest::Test
       File.write(File.join(destination, "sentinel"), "old")
       File.write(history, "old history")
       assert_raises(Errno::ENOENT) do
-        AlojamentoLocal::Analysis.publish_public_run!(candidate, destination, {File.join(staging, "missing.csv") => history}, staging)
+        AlojamentoLocal::Analysis::PublicPublisher.publish_public_run!(candidate, destination, {File.join(staging, "missing.csv") => history}, staging)
       end
       assert_equal "old", File.read(File.join(destination, "sentinel"))
       assert_equal "old history", File.read(history)

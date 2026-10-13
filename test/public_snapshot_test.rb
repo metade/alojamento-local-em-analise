@@ -154,7 +154,7 @@ class PublicSnapshotTest < Minitest::Test
       assert_equal %w[report.html snapshot.json], Dir.children(path).sort
       assert_equal expected, builder(root).site_data([path])
       assert_equal snapshot.to_h, AlojamentoLocal::PublicSnapshot::Loader.new.load(path).to_h
-      AlojamentoLocal::Analysis.validate_public_outputs!(path)
+      AlojamentoLocal::Analysis::PublicPublisher.validate_public_outputs!(path)
       FileUtils.cp(File.expand_path("../NOTICE", __dir__), File.join(path, "NOTICE"))
       output, status = Open3.capture2e(RbConfig.ruby, File.expand_path("../scripts/audit_publication.rb", __dir__), "--artifact", path)
       assert status.success?, output
@@ -197,13 +197,13 @@ class PublicSnapshotTest < Minitest::Test
       snapshot = consolidate(path)
       hashes = %w[airbnb official].map { |source| snapshot.metadata.fetch("source_files").fetch(source).fetch("sha256") }
       %w[metadata.json summary.json registration_metrics.json listings.csv licence_groups.csv freguesias.csv].each { |file| FileUtils.rm(File.join(path, file)) }
-      AlojamentoLocal::Analysis.verify_public_sources!(path, hashes)
+      AlojamentoLocal::Analysis::PublicPublisher.verify_public_sources!(path, hashes)
       FileUtils.rm(File.join(path, "report.html"))
-      AlojamentoLocal::Analysis.verify_public_sources!(path, hashes)
+      AlojamentoLocal::Analysis::PublicPublisher.verify_public_sources!(path, hashes)
       File.write(File.join(path, "report.html"), AlojamentoLocal::Report.complete_html(*snapshot.report_arguments))
       mutate_json(path, "snapshot.json") { |data| data["summary"]["listings"] += 1 }
       assert_raises(RuntimeError) { AlojamentoLocal::PublicSnapshot::Loader.new.load(path) }
-      assert_raises(RuntimeError) { AlojamentoLocal::Analysis.verify_public_sources!(path, ["0" * 64, hashes.last]) }
+      assert_raises(RuntimeError) { AlojamentoLocal::Analysis::PublicPublisher.verify_public_sources!(path, ["0" * 64, hashes.last]) }
     end
   end
 
@@ -218,7 +218,7 @@ class PublicSnapshotTest < Minitest::Test
       assert_equal data, loaded.to_h
       assert_equal snapshot.registration_metrics, loaded.registration_metrics
       hashes = %w[airbnb official].map { |source| loaded.metadata.fetch("source_files").fetch(source).fetch("sha256") }
-      AlojamentoLocal::Analysis.verify_public_sources!(path, hashes)
+      AlojamentoLocal::Analysis::PublicPublisher.verify_public_sources!(path, hashes)
     end
   end
 

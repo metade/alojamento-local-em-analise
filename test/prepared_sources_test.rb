@@ -46,7 +46,7 @@ class PreparedSourcesTest < Minitest::Test
     with_sources do |_dir, airbnb, official|
       sources = AlojamentoLocal::Analysis::PreparedSources::Pair.new(airbnb_path: airbnb, official_path: official)
       retained = sources.official.entries.map { |entry| entry.raw.dup }
-      listings, lookup = AlojamentoLocal::Analysis.classify(sources)
+      listings, lookup = AlojamentoLocal::Analysis::Classifier.new(sources).classify
       metrics = AlojamentoLocal::Analysis::RegistrationMetrics.calculate(listings, sources.official)
       assert_equal CSV.read(official, headers: true).map(&:to_h), retained
       assert_equal retained, sources.official.entries.map(&:raw)
@@ -65,14 +65,15 @@ class PreparedSourcesTest < Minitest::Test
       assert_equal [8, 4], metrics[:rows].first.values_at(:official_entries, :rnal)
       assert_equal [4, 4, 0], metrics[:rows].last.values_at(:airbnb, :airbnb_only, :intersection)
       assert_equal AlojamentoLocal::Analysis::RegistrationMetrics.calculate(listings, official), metrics
-      assert_equal AlojamentoLocal::Analysis.analyse(airbnb, official), [listings, lookup]
+      fresh_sources = AlojamentoLocal::Analysis::PreparedSources::Pair.new(airbnb_path: airbnb, official_path: official)
+      assert_equal [listings, lookup], AlojamentoLocal::Analysis::Classifier.new(fresh_sources).classify
     end
   end
 
   def test_normalized_municipality_filter_keeps_reuse_and_classification_in_sync
     with_sources do |_dir, airbnb, official|
       sources = AlojamentoLocal::Analysis::PreparedSources::Pair.new(airbnb_path: airbnb, official_path: official)
-      listings, = AlojamentoLocal::Analysis.classify(sources)
+      listings, = AlojamentoLocal::Analysis::Classifier.new(sources).classify
       assert_equal 10, listings.size
       assert_equal 4, sources.airbnb.licence_counts["1"]
       assert_equal sources.airbnb.entries.group_by(&:number).transform_values(&:size), sources.airbnb.licence_counts
@@ -98,7 +99,7 @@ class PreparedSourcesTest < Minitest::Test
         end
       end
       sources = AlojamentoLocal::Analysis::PreparedSources::Pair.new(airbnb_path: airbnb, official_path: official)
-      listings, = AlojamentoLocal::Analysis.classify(sources)
+      listings, = AlojamentoLocal::Analysis::Classifier.new(sources).classify
       assert_equal 8, listings.size
       assert_equal({"1" => 5, "2" => 1, nil => 2}, sources.airbnb.licence_counts)
       repeated = listings.select { |row| row[:licensa] == "1" }

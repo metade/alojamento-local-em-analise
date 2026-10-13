@@ -25,7 +25,7 @@ class SpatialClustersTest < Minitest::Test
     expected = Haversine.distance(38.71, -9.14, 38.77, -9.14).to_km
 
     assert_in_delta expected, distance, 0.001
-    assert_equal({"500_m_1_km" => 0, "1_2_km" => 0, "2_5_km" => 0, "over_5_km" => 1}, AlojamentoLocal::Analysis.distance_range_counts(listings))
+    assert_equal({"500_m_1_km" => 0, "1_2_km" => 0, "2_5_km" => 0, "over_5_km" => 1}, AlojamentoLocal::Analysis::History.distance_range_counts(listings))
   end
 
   def test_distance_range_boundaries_do_not_overlap
