@@ -88,7 +88,7 @@ class PreparedSourcesTest < Minitest::Test
     with_sources do |_dir, airbnb, official|
       CSV.open(airbnb, "w", write_headers: true, headers: %w[neighbourhood_group_cleansed license neighbourhood_cleansed latitude longitude]) do |csv|
         ["Lisboa", " Lisboa ", "lisboa", "LISBOA", "Lísboa"].each_with_index do |municipality, index|
-          csv << [municipality, "001/AL", "Arroios", index == 4 ? "38.80" : "38.71", "-9.14"]
+          csv << [municipality, "001/AL", "Arroios", (index == 4) ? "38.80" : "38.71", "-9.14"]
         end
         csv << [" lisboa ", "2", "Arroios", "38.71", "-9.14"]
         csv << ["LISBOA", nil, "Arroios", "38.71", "-9.14"]
@@ -122,7 +122,10 @@ class PreparedSourcesTest < Minitest::Test
         reads[path] += 1 if block
         foreach.call(path, *args, **options, &block)
       end
-      parse = ->(value) { parsed << value; parser.call(value) }
+      parse = ->(value) do
+        parsed << value
+        parser.call(value)
+      end
       with_method(CSV, :foreach, read) do
         with_method(AlojamentoLocal, :parse_al_license, parse) do
           result = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "public",
@@ -149,13 +152,57 @@ class PreparedSourcesTest < Minitest::Test
     end
   end
 
+  def test_source_provenance_preserves_archive_dates_and_undated_fallbacks
+    with_sources do |dir, airbnb, official|
+      airbnb_rows = CSV.read(airbnb, headers: true)
+      airbnb_rows[-1]["last_scraped"] = "2026-06-25"
+      airbnb_rows.find { |row| row["neighbourhood_group_cleansed"] == "Porto" }["last_scraped"] = "2030-01-01"
+      File.write(airbnb, airbnb_rows.to_csv)
+      official_rows = CSV.read(official, headers: true)
+      official_rows.each do |row|
+        row["DataRegisto"] = case row["NrRNAL"]
+        when "001" then "2020-01-01"
+        when "1" then "2021-01-01" # The classification lookup retains the first entry.
+        when "n/a" then "2030-01-01" # An unmatched entry does not set this date.
+        else "invalid"
+        end
+      end
+      File.write(official, official_rows.to_csv)
+
+      sources = AlojamentoLocal::Analysis::PreparedSources::Pair.new(airbnb_path: airbnb, official_path: official)
+      assert_equal({airbnb_snapshot_date: "2026-06-23",
+                    official_register_download_date: "2026-09-26"}, sources.source_dates)
+      result = AlojamentoLocal::Analysis::Result.new(sources: sources, run_id: "2026-06-23__2026-09-26", mode: "public")
+      assert_equal({airbnb_snapshot_date: "2026-06-23", official_register_date: "2020-01-01",
+                    official_register_download_date: "2026-09-26"}, result.metadata.fetch(:source_dates))
+      refute sources.source_dates.key?(:official_register_date), "Result must not modify source provenance"
+      provenance = sources.provenance
+      assert_equal Digest::SHA256.file(airbnb).hexdigest, provenance.dig(:source_files, :airbnb, :sha256)
+      assert_equal Digest::SHA256.file(official).hexdigest, provenance.dig(:source_files, :official, :sha256)
+      assert_includes provenance.dig(:source_urls, :airbnb), "/2026-06-23/"
+
+      undated_airbnb = File.join(dir, "listings.csv")
+      undated_official = File.join(dir, "official.csv")
+      FileUtils.cp(airbnb, undated_airbnb)
+      FileUtils.cp(official, undated_official)
+      download_time = Time.utc(2026, 9, 20, 12)
+      File.utime(download_time, download_time, undated_official)
+      undated = AlojamentoLocal::Analysis::PreparedSources::Pair.new(airbnb_path: undated_airbnb, official_path: undated_official)
+      assert_equal({airbnb_snapshot_date: "2026-06-25",
+                    official_register_download_date: "2026-09-20"}, undated.source_dates)
+    end
+  end
+
   def test_site_loads_selected_json_once_and_keeps_measured_inputs_unmodified
     with_sources do |dir, airbnb, official|
       result = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "public",
         output_root: File.join(dir, "snapshots"), history_path: File.join(dir, "history", "summary.csv"))
       reads = Hash.new(0)
       original = File.method(:read)
-      read = ->(path, *args, **options) { reads[path] += 1; original.call(path, *args, **options) }
+      read = ->(path, *args, **options) do
+        reads[path] += 1
+        original.call(path, *args, **options)
+      end
       builder = AlojamentoLocal::SiteData.new(snapshots: File.join(dir, "snapshots"),
         distance_history: File.join(dir, "history", "distance_ranges.csv"),
         outside_region_history: File.join(dir, "history", "outside_regions.csv"))

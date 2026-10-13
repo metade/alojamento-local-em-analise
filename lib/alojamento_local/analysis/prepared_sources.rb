@@ -1,4 +1,6 @@
 require "csv"
+require "date"
+require "digest"
 
 module AlojamentoLocal
   module Analysis
@@ -53,11 +55,55 @@ module AlojamentoLocal
       end
 
       class Pair
-        attr_reader :airbnb, :official
+        attr_reader :airbnb, :official, :source_hashes
 
-        def initialize(airbnb_path:, official_path:)
+        def initialize(airbnb_path: nil, official_path: nil)
+          raise ArgumentError, "Provide both source paths or neither" if airbnb_path.nil? != official_path.nil?
+
+          airbnb_path, official_path = Data.local_paths! if airbnb_path.nil?
+          @airbnb_path = airbnb_path
+          @official_path = official_path
+          @source_hashes = current_hashes.freeze
           @airbnb = Airbnb.new(airbnb_path)
           @official = Official.new(official_path)
+        end
+
+        def source_dates
+          @source_dates ||= {
+            airbnb_snapshot_date: filename_date(@airbnb_path) || airbnb.entries.filter_map { |entry| parse_date(entry.raw["last_scraped"]) }.max&.to_s,
+            official_register_download_date: filename_date(@official_path) || File.mtime(@official_path).to_date.to_s
+          }
+        end
+
+        def provenance
+          self.class.provenance(source_dates: source_dates, source_hashes: source_hashes)
+        end
+
+        def self.provenance(source_dates:, source_hashes:)
+          {
+            source_urls: {airbnb: Data.airbnb_url(source_dates[:airbnb_snapshot_date]), official: Data::OFFICIAL_URL},
+            source_dates: source_dates, source_files: {airbnb: {sha256: source_hashes[0]}, official: {sha256: source_hashes[1]}}
+          }
+        end
+
+        def verify_unchanged!
+          raise "Source bytes changed during analysis" unless source_hashes == current_hashes
+        end
+
+        private
+
+        def current_hashes
+          [@airbnb_path, @official_path].map { |path| Digest::SHA256.file(path).hexdigest }
+        end
+
+        def filename_date(path)
+          File.basename(path)[/(\d{4}-\d{2}-\d{2})/, 1]
+        end
+
+        def parse_date(value)
+          Date.parse(value) if value && !value.empty?
+        rescue ArgumentError
+          nil
         end
       end
     end

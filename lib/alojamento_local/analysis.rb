@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "digest"
+
 module AlojamentoLocal
   module Analysis
     # Orchestrates a run; Runner holds its prepared data and publication state.
@@ -8,7 +10,9 @@ module AlojamentoLocal
     module_function
 
     def run(airbnb_path: nil, official_path: nil, output_root: nil, history_path: nil, generate_pdf: false, mode: "local")
-      runner = Runner.new(airbnb_path: airbnb_path, official_path: official_path, mode: mode)
+      validate_options!(mode: mode)
+      sources = PreparedSources::Pair.new(airbnb_path: airbnb_path, official_path: official_path)
+      runner = Runner.new(sources: sources, mode: mode)
       runner.prepare_analysis(output_root: output_root, history_path: history_path)
       runner.publish do
         if runner.public?
@@ -113,7 +117,7 @@ module AlojamentoLocal
     end
 
     def validate_options!(mode:)
-      Runner.validate_options!(mode: mode)
+      raise ArgumentError, "Mode must be public or local" unless %w[public local].include?(mode)
     end
 
     def verify_public_sources!(path, hashes)
@@ -129,7 +133,9 @@ module AlojamentoLocal
     end
 
     def metadata(airbnb, official, dates, run_id, mode)
-      Runner.metadata(airbnb, official, dates, run_id, mode)
+      hashes = [airbnb, official].map { |path| Digest::SHA256.file(path).hexdigest }
+      provenance = PreparedSources::Pair.provenance(source_dates: dates, source_hashes: hashes)
+      Result.build_metadata(source_provenance: provenance, run_id: run_id, mode: mode)
     end
 
     def parse_date(value)
