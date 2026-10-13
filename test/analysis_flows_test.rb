@@ -64,6 +64,56 @@ class AnalysisFlowsTest < Minitest::Test
     end
   end
 
+  def test_source_mutation_during_analysis_preserves_outputs_and_history
+    %w[public local].each do |mode|
+      with_sources do
+        AlojamentoLocal::Analysis.run(mode: mode)
+        before = analysis_files
+        metrics = AlojamentoLocal::Analysis::RegistrationMetrics
+        calculate = metrics.method(:calculate)
+        mutate_source = ->(*arguments) do
+          result = calculate.call(*arguments)
+          File.open("data_sources/listings-2024-06-01.csv", "a") { |file| file.write("\n") }
+          result
+        end
+
+        error = metrics.stub(:calculate, mutate_source) do
+          assert_raises(RuntimeError) { AlojamentoLocal::Analysis.run(mode: mode) }
+        end
+        assert_equal "Source bytes changed during analysis", error.message
+        assert_equal before, analysis_files
+      end
+    end
+  end
+
+  def test_invalid_staged_snapshot_preserves_publication_and_cleans_staging
+    with_sources do
+      AlojamentoLocal::Analysis.run(mode: "public")
+      before = analysis_files
+      writer = AlojamentoLocal::Analysis::OutputWriter
+      write_outputs = writer.method(:write_outputs)
+      corrupt_snapshot = ->(**arguments) do
+        write_outputs.call(**arguments)
+        path = File.join(arguments.fetch(:run_dir), "snapshot.json")
+        document = JSON.parse(File.read(path))
+        document.fetch("summary")["listings"] = -1
+        File.write(path, JSON.generate(document))
+      end
+
+      writer.stub(:write_outputs, corrupt_snapshot) do
+        assert_raises(RuntimeError) { AlojamentoLocal::Analysis.run(mode: "public") }
+      end
+      assert_equal before, analysis_files
+      assert_empty Dir.glob("data/snapshots/.analysis-*")
+    end
+  end
+
+  def analysis_files
+    Dir.glob("data/**/*", File::FNM_DOTMATCH).select { |path| File.file?(path) }.to_h do |path|
+      [path, File.binread(path)]
+    end
+  end
+
   def test_cascading_tasks_and_independent_stages
     rakefile = File.expand_path("../Rakefile", __dir__)
     Rake.with_application do
