@@ -2,36 +2,110 @@
 <html lang="pt-PT">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="description" content="{{ site.description }}">
-    <title>{{ page.title }} · AL em análise</title>
-    <link rel="icon" type="image/svg+xml" href="{{ '/favicon.svg' | relative_url }}">
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ '/favicon-32.png' | relative_url }}">
-    <link rel="apple-touch-icon" href="{{ '/apple-touch-icon.png' | relative_url }}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ '/assets/story.css' | relative_url }}">
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1"
+    >
+    <meta
+      name="description"
+      content="{{ site.description }}"
+    >
+    <title>
+      {{ page.title }}
+      · AL em análise
+    </title>
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="{{ '/favicon.svg' | relative_url }}"
+    >
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="{{ '/favicon-32.png' | relative_url }}"
+    >
+    <link
+      rel="apple-touch-icon"
+      href="{{ '/apple-touch-icon.png' | relative_url }}"
+    >
+    <link
+      rel="preconnect"
+      href="https://fonts.googleapis.com"
+    >
+    <link
+      rel="preconnect"
+      href="https://fonts.gstatic.com"
+      crossorigin
+    >
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    >
+    <link
+      rel="stylesheet"
+      href="{{ '/assets/story.css' | relative_url }}"
+    >
   </head>
   <body class="antialiased">
-    <a class="skip-link" href="#conteudo">Saltar para o conteúdo</a>
-    <header class="site-header"><div class="wrap header-inner">
-      <a class="brand" href="{{ '/' | relative_url }}"><span class="al-mark">AL</span><span><strong>Quantos alojamentos locais existem realmente em Lisboa?</strong></span></a>
-      <nav aria-label="Navegação principal">
-        <a class="nav-link" href="{{ '/' | relative_url }}">Investigação</a>
-        <a class="nav-link" href="{{ '/freguesias/' | relative_url }}">Freguesias</a>
-        <a class="nav-link" href="{{ '/metodologia.html' | relative_url }}">Metodologia</a>
-      </nav>
-    </div></header>
+    <a
+      class="skip-link"
+      href="#conteudo"
+    >
+      Saltar para o conteúdo
+    </a>
+    <header class="site-header">
+      <div class="wrap header-inner">
+        <a
+          class="brand"
+          href="{{ '/' | relative_url }}"
+        >
+          <span class="al-mark">AL</span>
+          <span><strong>Quantos alojamentos locais existem realmente em Lisboa?</strong></span>
+        </a>
+        <nav aria-label="Navegação principal">
+          <a
+            class="nav-link"
+            href="{{ '/' | relative_url }}"
+          >
+            Investigação
+          </a>
+          <a
+            class="nav-link"
+            href="{{ '/freguesias/' | relative_url }}"
+          >
+            Freguesias
+          </a>
+          <a
+            class="nav-link"
+            href="{{ '/metodologia.html' | relative_url }}"
+          >
+            Metodologia
+          </a>
+        </nav>
+      </div>
+    </header>
     <div class="tile-rule"></div>
     <main id="conteudo">{{ content }}</main>
-    <footer class="border-t border-[var(--color-line)] py-8"><div class="wrap grid gap-4 lg:grid-cols-[1fr_auto_auto] lg:items-center lg:gap-8">
-      <span class="text-sm font-semibold">Alojamento Local em Análise</span>
-      {% include provenance.html %}
-      <div class="flex flex-wrap gap-4 text-sm">
-        <a class="text-[var(--color-blue)] underline underline-offset-4" href="{{ '/runs/' | append: site.data.site.run_id | append: '/report.html' | relative_url }}">Relatório técnico ↗</a>
-        <a class="text-[var(--color-blue)] underline underline-offset-4" href="{{ '/metodologia.html' | relative_url }}">Metodologia →</a>
+    <footer class="border-t border-[var(--color-line)] py-8">
+      <div class="wrap grid gap-4 lg:grid-cols-[1fr_auto_auto] lg:items-center lg:gap-8">
+        <span class="text-sm font-semibold">Alojamento Local em Análise</span>
+        {% include provenance.html %}
+        <div class="flex flex-wrap gap-4 text-sm">
+          <a
+            class="text-[var(--color-blue)] underline underline-offset-4"
+            href="{{ '/runs/' | append: site.data.site.run_id | append: '/report.html' | relative_url }}"
+          >
+            Relatório técnico ↗
+          </a>
+          <a
+            class="text-[var(--color-blue)] underline underline-offset-4"
+            href="{{ '/metodologia.html' | relative_url }}"
+          >
+            Metodologia →
+          </a>
+        </div>
       </div>
-    </div></footer>
+    </footer>
   </body>
 </html>

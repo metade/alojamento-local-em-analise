@@ -26,6 +26,10 @@ jobs:
         with:
           node-version: '22'
           cache: npm
+      - name: Instalar ferramentas frontend
+        run: npm ci
+      - name: Verificar formatação dos templates
+        run: npm run site:lint
       - name: Testes
         run: bundle exec rake test
       - name: Encontrar fontes guardadas na última execução bem-sucedida
@@ -87,7 +91,6 @@ jobs:
         env:
           JEKYLL_BASEURL: /alojamento-local-em-analise
         run: |
-          npm ci
           bundle exec rake site:build
       - name: Verificar estrutura do site
         run: bundle exec rake site:check

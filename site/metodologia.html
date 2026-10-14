@@ -2,14 +2,32 @@
 layout: default
 title: Metodologia e proveniência
 ---
-{% assign d = site.data.site %}{% assign s = d.summary %}
-<section class="py-14 sm:py-20" aria-labelledby="method-title"><div class="wrap">
-  <h1 id="method-title" class="font-[family-name:var(--font-serif)] text-[clamp(3.4rem,7vw,7rem)] leading-[.95] tracking-[-.045em]">Como contamos?</h1>
-  <p class="mt-7 max-w-[68ch] text-lg">Cruzamos anúncios Airbnb com o Registo Nacional do Alojamento Local (RNAL). O resultado distingue o que cada fonte conta e identifica sinais que precisam de verificação, não conclusões de ilegalidade.</p>
-</div></section>
+{% assign d = site.data.site -%}
+{%- assign s = d.summary %}
+<section
+  class="py-14 sm:py-20"
+  aria-labelledby="method-title"
+>
+  <div class="wrap">
+    <h1
+      id="method-title"
+      class="font-[family-name:var(--font-serif)] text-[clamp(3.4rem,7vw,7rem)] leading-[.95] tracking-[-.045em]"
+    >
+      Como contamos?
+    </h1>
+    <p class="mt-7 max-w-[68ch] text-lg">
+      Cruzamos anúncios Airbnb com o Registo Nacional do Alojamento Local (RNAL). O resultado
+      distingue o que cada fonte conta e identifica sinais que precisam de verificação, não
+      conclusões de ilegalidade.
+    </p>
+  </div>
+</section>
 
 <div class="wrap grid items-start gap-10 pb-14 lg:grid-cols-[minmax(0,1fr)_minmax(0,3fr)] lg:gap-16 sm:pb-20">
-  <nav class="block! border-t border-[var(--color-line)] pt-5 lg:sticky lg:top-24" aria-label="Nesta página">
+  <nav
+    class="block! border-t border-[var(--color-line)] pt-5 lg:sticky lg:top-24"
+    aria-label="Nesta página"
+  >
     <h2 class="text-sm font-semibold">Nesta página</h2>
     <ul class="mt-4 grid gap-3 text-sm text-[var(--color-blue)] sm:grid-cols-2 lg:grid-cols-1 [&_a]:underline [&_a]:underline-offset-4">
       <li><a href="#contagens">O que contamos</a></li>
@@ -23,58 +41,225 @@ title: Metodologia e proveniência
   </nav>
 
   <div class="min-w-0 max-w-[76ch] space-y-12 [&_section]:scroll-mt-24 [&_h2]:font-[family-name:var(--font-serif)] [&_h2]:text-3xl [&_h2]:leading-tight [&_h2]:tracking-tight [&_h3]:text-xl [&_h3]:font-semibold">
-    <section id="contagens" class="border-t border-[var(--color-line)] pt-5" aria-labelledby="counts-title">
+    <section
+      id="contagens"
+      class="border-t border-[var(--color-line)] pt-5"
+      aria-labelledby="counts-title"
+    >
       <h2 id="counts-title">O que contamos</h2>
       <dl class="mt-6 space-y-5">
-        <div><dt class="font-semibold">Anúncios</dt><dd class="mt-1">Observações do Airbnb numa recolha datada (snapshot). Cada anúncio pode representar um alojamento inteiro, um quarto ou uma unidade de um estabelecimento.</dd></div>
-        <div><dt class="font-semibold">Números de registo AL distintos</dt><dd class="mt-1">Identificadores normalizados, contados uma só vez em cada conjunto. Vários anúncios podem declarar o mesmo número. Um número identificável não confirma uma correspondência no RNAL.</dd></div>
-        <div><dt class="font-semibold">Registos oficiais</dt><dd class="mt-1">Entradas no RNAL. A contagem de Lisboa usa o concelho indicado no registo, sem garantir que cada estabelecimento esteja hoje em funcionamento.</dd></div>
-        <div><dt class="font-semibold">Estabelecimentos estimados</dt><dd class="mt-1">Estimativa a partir dos anúncios, depois de agrupar apenas as categorias de menor risco. Não é uma contagem oficial de AL ativos.</dd></div>
+        <div>
+          <dt class="font-semibold">Anúncios</dt>
+          <dd class="mt-1">
+            Observações do Airbnb numa recolha datada (snapshot). Cada anúncio pode representar um
+            alojamento inteiro, um quarto ou uma unidade de um estabelecimento.
+          </dd>
+        </div>
+        <div>
+          <dt class="font-semibold">Números de registo AL distintos</dt>
+          <dd class="mt-1">
+            Identificadores normalizados, contados uma só vez em cada conjunto. Vários anúncios
+            podem declarar o mesmo número. Um número identificável não confirma uma correspondência
+            no RNAL.
+          </dd>
+        </div>
+        <div>
+          <dt class="font-semibold">Registos oficiais</dt>
+          <dd class="mt-1">
+            Entradas no RNAL. A contagem de Lisboa usa o concelho indicado no registo, sem garantir
+            que cada estabelecimento esteja hoje em funcionamento.
+          </dd>
+        </div>
+        <div>
+          <dt class="font-semibold">Estabelecimentos estimados</dt>
+          <dd class="mt-1">
+            Estimativa a partir dos anúncios, depois de agrupar apenas as categorias de menor risco.
+            Não é uma contagem oficial de AL ativos.
+          </dd>
+        </div>
       </dl>
-      <p class="mt-6 text-sm text-[var(--color-ink)]/75">«Anúncios com número identificável» conta anúncios, não números distintos nem correspondências confirmadas no RNAL. Os diagramas contam números distintos e usam o concelho e a freguesia oficiais no RNAL e a freguesia observada no Airbnb. Um número pode aparecer em várias freguesias; não somamos os seus totais para obter Lisboa.</p>
+      <p class="mt-6 text-sm text-[var(--color-ink)]/75">
+        «Anúncios com número identificável» conta anúncios, não números distintos nem
+        correspondências confirmadas no RNAL. Os diagramas contam números distintos e usam o
+        concelho e a freguesia oficiais no RNAL e a freguesia observada no Airbnb. Um número pode
+        aparecer em várias freguesias; não somamos os seus totais para obter Lisboa.
+      </p>
     </section>
 
-    <section id="registo-oficial" class="border-t border-[var(--color-line)] pt-5" aria-labelledby="register-title">
+    <section
+      id="registo-oficial"
+      class="border-t border-[var(--color-line)] pt-5"
+      aria-labelledby="register-title"
+    >
       <h2 id="register-title">Registo oficial</h2>
-      <p>Descarregamos o RNAL do Turismo de Portugal. Para a contagem municipal, selecionamos as entradas cujo campo <strong>Concelho</strong> é <strong>Lisboa</strong>. Para procurar correspondências com os números declarados no Airbnb, usamos o registo nacional, incluindo outros municípios.</p>
-      <p class="text-sm text-[var(--color-ink)]/75"><a class="text-[var(--color-blue)] underline underline-offset-4" href="{{ d.metadata.source_urls.official }}">Consultar a fonte oficial ↗</a> · descarregada em {{ d.metadata.source_dates.official_register_download_date }}.</p>
+      <p>
+        Descarregamos o RNAL do Turismo de Portugal. Para a contagem municipal, selecionamos as
+        entradas cujo campo
+        <strong>Concelho</strong>
+        é
+        <strong>Lisboa</strong>
+        . Para procurar correspondências com os números declarados no Airbnb, usamos o registo
+        nacional, incluindo outros municípios.
+      </p>
+      <p class="text-sm text-[var(--color-ink)]/75">
+        <a
+          class="text-[var(--color-blue)] underline underline-offset-4"
+          href="{{ d.metadata.source_urls.official }}"
+        >
+          Consultar a fonte oficial ↗
+        </a>
+        · descarregada em {{ d.metadata.source_dates.official_register_download_date }}.
+      </p>
     </section>
 
-    <section id="listagens-airbnb" class="border-t border-[var(--color-line)] pt-5" aria-labelledby="listings-title">
+    <section
+      id="listagens-airbnb"
+      class="border-t border-[var(--color-line)] pt-5"
+      aria-labelledby="listings-title"
+    >
       <h2 id="listings-title">Anúncios e agrupamento</h2>
-      <p>Usamos o snapshot de Lisboa do Inside Airbnb de <strong>{{ d.metadata.source_dates.airbnb_snapshot_date }}</strong>, com <strong>{{ s.listings | pt_number }} anúncios</strong>. Esta é a data do arquivo: as datas de recolha de cada anúncio (<code>last_scraped</code>) podem abranger vários dias.</p>
-      <p>A estimativa de <strong>{{ s.establishment_estimate | pt_number }} estabelecimentos</strong> parte destes anúncios. O RNAL é uma fonte separada: ajuda a classificar os números, mas a sua contagem não é o ponto de partida da estimativa.</p>
+      <p>
+        Usamos o snapshot de Lisboa do Inside Airbnb de
+        <strong>{{ d.metadata.source_dates.airbnb_snapshot_date }}</strong>
+        , com
+        <strong>{{ s.listings | pt_number }} anúncios</strong>
+        . Esta é a data do arquivo: as datas de recolha de cada anúncio (
+        <code>last_scraped</code>
+        ) podem abranger vários dias.
+      </p>
+      <p>
+        A estimativa de
+        <strong>{{ s.establishment_estimate | pt_number }} estabelecimentos</strong>
+        parte destes anúncios. O RNAL é uma fonte separada: ajuda a classificar os números, mas a
+        sua contagem não é o ponto de partida da estimativa.
+      </p>
       <h3 class="mt-6">Quando agrupamos anúncios?</h3>
-      <p>Para cada número AL repetido, analisamos a proximidade, os nomes dos anúncios, os tipos de quarto e de propriedade, a modalidade oficial e o concelho do registo. O identificador do anfitrião não é um critério de agrupamento.</p>
-      <p>Na estimativa, cada grupo classificado como <strong>«provável estabelecimento com anúncios múltiplos»</strong> ou <strong>«licença repetida na mesma localização»</strong> conta uma vez. A primeira categoria usa indícios de quartos ou unidades em pelo menos metade dos anúncios, ou uma modalidade oficial de hospedagem, hostel ou quartos.</p>
-      <p>Anúncios sem número identificável, números repetidos em localizações diferentes e registos oficiais fora de Lisboa permanecem separados. Agrupar é uma opção analítica; não confirma que os anúncios pertençam ao mesmo estabelecimento.</p>
+      <p>
+        Para cada número AL repetido, analisamos a proximidade, os nomes dos anúncios, os tipos de
+        quarto e de propriedade, a modalidade oficial e o concelho do registo. O identificador do
+        anfitrião não é um critério de agrupamento.
+      </p>
+      <p>
+        Na estimativa, cada grupo classificado como
+        <strong>«provável estabelecimento com anúncios múltiplos»</strong>
+        ou
+        <strong>«licença repetida na mesma localização»</strong>
+        conta uma vez. A primeira categoria usa indícios de quartos ou unidades em pelo menos metade
+        dos anúncios, ou uma modalidade oficial de hospedagem, hostel ou quartos.
+      </p>
+      <p>
+        Anúncios sem número identificável, números repetidos em localizações diferentes e registos
+        oficiais fora de Lisboa permanecem separados. Agrupar é uma opção analítica; não confirma
+        que os anúncios pertençam ao mesmo estabelecimento.
+      </p>
       <h3 class="mt-6">A regra dos 500 metros</h3>
-      <p>Anúncios com o mesmo número formam um agrupamento espacial quando estão ligados por distâncias até 500 metros. A ligação pode ser em cadeia: dois anúncios do mesmo grupo podem estar a mais de 500 metros entre si. As distâncias em linha reta são calculadas pela fórmula de Haversine, a partir das coordenadas aproximadas do snapshot.</p>
+      <p>
+        Anúncios com o mesmo número formam um agrupamento espacial quando estão ligados por
+        distâncias até 500 metros. A ligação pode ser em cadeia: dois anúncios do mesmo grupo podem
+        estar a mais de 500 metros entre si. As distâncias em linha reta são calculadas pela fórmula
+        de Haversine, a partir das coordenadas aproximadas do snapshot.
+      </p>
     </section>
 
-    <section id="normalizacao" class="border-t border-[var(--color-line)] pt-5" aria-labelledby="licence-title">
+    <section
+      id="normalizacao"
+      class="border-t border-[var(--color-line)] pt-5"
+      aria-labelledby="licence-title"
+    >
       <h2 id="licence-title">Como lemos o número AL</h2>
-      <p>O campo da licença é preenchido no anúncio. Normalizamos de forma conservadora: retiramos espaços exteriores e zeros iniciais, reconhecemos números simples e variantes com AL antes ou depois do número. Também aceitamos formatos antigos com ano entre 2010 e 2029.</p>
+      <p>
+        O campo da licença é preenchido no anúncio. Normalizamos de forma conservadora: retiramos
+        espaços exteriores e zeros iniciais, reconhecemos números simples e variantes com AL antes
+        ou depois do número. Também aceitamos formatos antigos com ano entre 2010 e 2029.
+      </p>
       <table class="my-6 w-full table-fixed border-collapse text-sm [&_th]:normal-case! [&_th]:tracking-normal! [&_th]:text-[length:inherit]! [&_th]:text-[var(--color-ink)]! [&_th]:px-0! [&_td]:px-0! [&_td]:text-left! [&_td:first-child]:pr-4! [&_td]:break-words">
-        <caption class="mb-4 text-left text-sm text-[var(--color-ink)]/75">Exemplos de formatos · comportamento do método atual</caption>
-        <thead><tr class="border-b-2 border-[var(--color-line)]"><th scope="col" class="w-[55%] py-3 text-left font-semibold">Valor no anúncio</th><th scope="col" class="py-3 text-left font-semibold">Número normalizado</th></tr></thead>
+        <caption class="mb-4 text-left text-sm text-[var(--color-ink)]/75">
+          Exemplos de formatos · comportamento do método atual
+        </caption>
+        <thead>
+          <tr class="border-b-2 border-[var(--color-line)]">
+            <th
+              scope="col"
+              class="w-[55%] py-3 text-left font-semibold"
+            >
+              Valor no anúncio
+            </th>
+            <th
+              scope="col"
+              class="py-3 text-left font-semibold"
+            >
+              Número normalizado
+            </th>
+          </tr>
+        </thead>
         <tbody>
-          <tr class="border-b border-[var(--color-line)]"><td class="py-3"><code>81551/AL</code></td><td class="py-3"><code>81551</code></td></tr>
-          <tr class="border-b border-[var(--color-line)]"><td class="py-3"><code>34367</code></td><td class="py-3"><code>34367</code></td></tr>
-          <tr class="border-b border-[var(--color-line)]"><td class="py-3"><code>AL15252</code></td><td class="py-3"><code>15252</code></td></tr>
-          <tr class="border-b border-[var(--color-line)]"><td class="py-3"><code>00123/AL</code></td><td class="py-3"><code>123</code></td></tr>
-          <tr class="border-b border-[var(--color-line)]"><td class="py-3"><code>Registration Number: 12807/AL</code></td><td class="py-3"><code>12807</code></td></tr>
+          <tr class="border-b border-[var(--color-line)]">
+            <td class="py-3"><code>81551/AL</code></td>
+            <td class="py-3"><code>81551</code></td>
+          </tr>
+          <tr class="border-b border-[var(--color-line)]">
+            <td class="py-3"><code>34367</code></td>
+            <td class="py-3"><code>34367</code></td>
+          </tr>
+          <tr class="border-b border-[var(--color-line)]">
+            <td class="py-3"><code>AL15252</code></td>
+            <td class="py-3"><code>15252</code></td>
+          </tr>
+          <tr class="border-b border-[var(--color-line)]">
+            <td class="py-3"><code>00123/AL</code></td>
+            <td class="py-3"><code>123</code></td>
+          </tr>
+          <tr class="border-b border-[var(--color-line)]">
+            <td class="py-3"><code>Registration Number: 12807/AL</code></td>
+            <td class="py-3"><code>12807</code></td>
+          </tr>
         </tbody>
       </table>
-      <p class="text-sm text-[var(--color-ink)]/75">O número normalizado contém apenas algarismos, como o campo <code>NrRNAL</code> da fonte oficial usada nesta análise. Os exemplos explicam formatos, não confirmam registos ou casos individuais. Aceitamos o prefixo exato <code>Registration Number:</code> apenas com um único número seguido de <code>/AL</code>. Outros regimes, como <code>/UT/2017</code>, continuam excluídos.</p>
-      <p>Depois da normalização, procuramos o número no RNAL, incluindo quando o anúncio contém apenas algarismos, como <code>34367</code>. Reconhecer o número não confirma uma correspondência: essa verificação usa a fonte oficial datada desta análise.</p>
-      <p class="text-sm text-[var(--color-ink)]/75">As diferenças contam números: «só no RNAL» é ausência no Airbnb da mesma geografia, não em toda a plataforma. «Só no Airbnb» distingue outra freguesia de Lisboa, outro município, ausência no RNAL nacional e geografia oficial por resolver. Entradas oficiais duplicadas contam uma vez nos conjuntos; continuam separadas na contagem de entradas. Freguesias ausentes ou desconhecidas ficam num agregado próprio e entram no total municipal.</p>
-      <p>Outros regimes, como <code>/UT/AAAA</code>, não são convertidos em números AL. O valor original fica preservado na análise interna para conferência.</p>
+      <p class="text-sm text-[var(--color-ink)]/75">
+        O número normalizado contém apenas algarismos, como o campo
+        <code>NrRNAL</code>
+        da fonte oficial usada nesta análise. Os exemplos explicam formatos, não confirmam registos
+        ou casos individuais. Aceitamos o prefixo exato
+        <code>Registration Number:</code>
+        apenas com um único número seguido de
+        <code>/AL</code>
+        . Outros regimes, como
+        <code>/UT/2017</code>
+        , continuam excluídos.
+      </p>
+      <p>
+        Depois da normalização, procuramos o número no RNAL, incluindo quando o anúncio contém
+        apenas algarismos, como
+        <code>34367</code>
+        . Reconhecer o número não confirma uma correspondência: essa verificação usa a fonte oficial
+        datada desta análise.
+      </p>
+      <p class="text-sm text-[var(--color-ink)]/75">
+        As diferenças contam números: «só no RNAL» é ausência no Airbnb da mesma geografia, não em
+        toda a plataforma. «Só no Airbnb» distingue outra freguesia de Lisboa, outro município,
+        ausência no RNAL nacional e geografia oficial por resolver. Entradas oficiais duplicadas
+        contam uma vez nos conjuntos; continuam separadas na contagem de entradas. Freguesias
+        ausentes ou desconhecidas ficam num agregado próprio e entram no total municipal.
+      </p>
+      <p>
+        Outros regimes, como
+        <code>/UT/AAAA</code>
+        , não são convertidos em números AL. O valor original fica preservado na análise interna
+        para conferência.
+      </p>
     </section>
 
-    <section id="sinais" class="border-t border-[var(--color-line)] pt-5" aria-labelledby="signals-title">
+    <section
+      id="sinais"
+      class="border-t border-[var(--color-line)] pt-5"
+      aria-labelledby="signals-title"
+    >
       <h2 id="signals-title">Definições dos sinais</h2>
-      <p>Os sinais contam anúncios do snapshot de Lisboa. As percentagens de cada sinal no total usam os {{ s.listings | pt_number }} anúncios como denominador. Os gráficos de distância e de região têm unidades próprias, descritas abaixo.</p>
+      <p>
+        Os sinais contam anúncios do snapshot de Lisboa. As percentagens de cada sinal no total usam
+        os {{ s.listings | pt_number }} anúncios como denominador. Os gráficos de distância e de
+        região têm unidades próprias, descritas abaixo.
+      </p>
       <ul class="my-6 grid gap-3 text-sm text-[var(--color-blue)] sm:grid-cols-2 [&_a]:underline [&_a]:underline-offset-4">
         <li><a href="#campo-vazio">Campo da licença vazio</a></li>
         <li><a href="#valor-nao-reconhecido">Valor não reconhecido</a></li>
@@ -82,53 +267,179 @@ title: Metodologia e proveniência
         <li><a href="#fora-de-lisboa">Registo fora de Lisboa</a></li>
       </ul>
       <div class="space-y-8">
-        <section id="campo-vazio" aria-labelledby="empty-title">
+        <section
+          id="campo-vazio"
+          aria-labelledby="empty-title"
+        >
           <h3 id="empty-title">Campo da licença vazio</h3>
-          <p>O valor original está ausente ou contém apenas espaços. A categoria interna «sem licença» descreve esse campo; não demonstra ausência de licença. Na apresentação, «sem número identificável» reúne este sinal e o seguinte.</p>
+          <p>
+            O valor original está ausente ou contém apenas espaços. A categoria interna «sem
+            licença» descreve esse campo; não demonstra ausência de licença. Na apresentação, «sem
+            número identificável» reúne este sinal e o seguinte.
+          </p>
         </section>
-        <section id="valor-nao-reconhecido" aria-labelledby="unrecognised-title">
+        <section
+          id="valor-nao-reconhecido"
+          aria-labelledby="unrecognised-title"
+        >
           <h3 id="unrecognised-title">Valor não reconhecido como número AL</h3>
-          <p>O campo tem um valor, mas o método não o reconhece como número AL. A categoria interna é «sem licença identificável». Um número normalizado sem correspondência no RNAL não entra neste sinal.</p>
+          <p>
+            O campo tem um valor, mas o método não o reconhece como número AL. A categoria interna é
+            «sem licença identificável». Um número normalizado sem correspondência no RNAL não entra
+            neste sinal.
+          </p>
         </section>
-        <section id="localizacoes-diferentes" aria-labelledby="locations-title">
+        <section
+          id="localizacoes-diferentes"
+          aria-labelledby="locations-title"
+        >
           <h3 id="locations-title">Mesmo número, localizações diferentes</h3>
-          <p>O mesmo número aparece em mais de um agrupamento espacial. Contamos os anúncios associados, exceto quando existe um registo oficial fora de Lisboa: essa classificação tem prioridade.</p>
-          <p>O gráfico de distâncias na página inicial conta <strong>números AL distintos</strong>. Cada número entra uma vez, pela maior distância entre dois anúncios de agrupamentos diferentes, mesmo que tenha três ou mais agrupamentos.</p>
-          <p class="text-sm text-[var(--color-ink)]/75">Os intervalos não se sobrepõem: 500 m ≤ distância &lt; 1 km; 1 km ≤ distância &lt; 2 km; 2 km ≤ distância ≤ 5 km; distância &gt; 5 km. São indicadores baseados em posições aproximadas, não medições no terreno.</p>
+          <p>
+            O mesmo número aparece em mais de um agrupamento espacial. Contamos os anúncios
+            associados, exceto quando existe um registo oficial fora de Lisboa: essa classificação
+            tem prioridade.
+          </p>
+          <p>
+            O gráfico de distâncias na página inicial conta
+            <strong>números AL distintos</strong>
+            . Cada número entra uma vez, pela maior distância entre dois anúncios de agrupamentos
+            diferentes, mesmo que tenha três ou mais agrupamentos.
+          </p>
+          <p class="text-sm text-[var(--color-ink)]/75">
+            Os intervalos não se sobrepõem: 500 m ≤ distância &lt; 1 km; 1 km ≤ distância &lt; 2 km;
+            2 km ≤ distância ≤ 5 km; distância &gt; 5 km. São indicadores baseados em posições
+            aproximadas, não medições no terreno.
+          </p>
         </section>
-        <section id="fora-de-lisboa" aria-labelledby="outside-title">
+        <section
+          id="fora-de-lisboa"
+          aria-labelledby="outside-title"
+        >
           <h3 id="outside-title">Licença registada fora de Lisboa</h3>
-          <p>O anúncio pertence ao conjunto de Lisboa, mas o número encontra um registo oficial cujo campo <strong>Concelho</strong> é diferente de Lisboa. Esta divergência exige verificação individual.</p>
-          <p>O gráfico regional conta <strong>anúncios</strong>, agrupados pelo campo <strong>NUTSII</strong> do registo oficial. Mostra todas as regiões presentes. Concelhos vazios ou desconhecidos ficam separados deste sinal, como geografia por resolver; regiões vazias aparecem como «Região não identificada».</p>
-          <p class="text-sm text-[var(--color-ink)]/75">As percentagens regionais usam apenas os anúncios deste sinal como denominador. São arredondadas a uma casa decimal e podem não somar exatamente 100%.</p>
+          <p>
+            O anúncio pertence ao conjunto de Lisboa, mas o número encontra um registo oficial cujo
+            campo
+            <strong>Concelho</strong>
+            é diferente de Lisboa. Esta divergência exige verificação individual.
+          </p>
+          <p>
+            O gráfico regional conta
+            <strong>anúncios</strong>
+            , agrupados pelo campo
+            <strong>NUTSII</strong>
+            do registo oficial. Mostra todas as regiões presentes. Concelhos vazios ou desconhecidos
+            ficam separados deste sinal, como geografia por resolver; regiões vazias aparecem como
+            «Região não identificada».
+          </p>
+          <p class="text-sm text-[var(--color-ink)]/75">
+            As percentagens regionais usam apenas os anúncios deste sinal como denominador. São
+            arredondadas a uma casa decimal e podem não somar exatamente 100%.
+          </p>
         </section>
       </div>
     </section>
 
-    <section id="limites" class="border-t border-[var(--color-line)] pt-5" aria-labelledby="limits-title">
+    <section
+      id="limites"
+      class="border-t border-[var(--color-line)] pt-5"
+      aria-labelledby="limits-title"
+    >
       <h2 id="limits-title">Limitações</h2>
-      <p>Os agrupamentos são transitivos: ligamos anúncios separados por até 500 metros; os extremos de uma cadeia podem estar mais longe. Coordenadas ausentes não permitem agrupar. O concelho fora de Lisboa tem prioridade sobre os sinais de repetição. Números sem correspondência nacional e geografia por resolver ficam separados na estimativa; identificadores de anfitrião não são critérios de agrupamento. Estimativas por freguesia são calculadas independentemente e não se somam necessariamente à estimativa municipal.</p>
-      <p>As fontes têm datas e finalidades diferentes. A presença de um anúncio no snapshot não confirma atividade atual; um registo no RNAL também não confirma que o estabelecimento esteja em funcionamento.</p>
-      <p>As posições Airbnb são aproximadas. Um campo vazio, um formato não reconhecido ou uma divergência geográfica pode ter explicações que estes dados não permitem resolver. Os sinais requerem validação junto das fontes oficiais antes de qualquer conclusão legal.</p>
-      <p>«Licença única em Lisboa» significa que o número aparece num único anúncio da cidade e corresponde a um registo RNAL com concelho Lisboa. Não confirma atividade atual.</p>
-      <p id="o-que-se-diz" class="scroll-mt-24 text-sm text-[var(--color-ink)]/75">Declarações públicas sobre o número de AL dão contexto à investigação; não são contagens produzidas por este projeto.</p>
+      <p>
+        Os agrupamentos são transitivos: ligamos anúncios separados por até 500 metros; os extremos
+        de uma cadeia podem estar mais longe. Coordenadas ausentes não permitem agrupar. O concelho
+        fora de Lisboa tem prioridade sobre os sinais de repetição. Números sem correspondência
+        nacional e geografia por resolver ficam separados na estimativa; identificadores de
+        anfitrião não são critérios de agrupamento. Estimativas por freguesia são calculadas
+        independentemente e não se somam necessariamente à estimativa municipal.
+      </p>
+      <p>
+        As fontes têm datas e finalidades diferentes. A presença de um anúncio no snapshot não
+        confirma atividade atual; um registo no RNAL também não confirma que o estabelecimento
+        esteja em funcionamento.
+      </p>
+      <p>
+        As posições Airbnb são aproximadas. Um campo vazio, um formato não reconhecido ou uma
+        divergência geográfica pode ter explicações que estes dados não permitem resolver. Os sinais
+        requerem validação junto das fontes oficiais antes de qualquer conclusão legal.
+      </p>
+      <p>
+        «Licença única em Lisboa» significa que o número aparece num único anúncio da cidade e
+        corresponde a um registo RNAL com concelho Lisboa. Não confirma atividade atual.
+      </p>
+      <p
+        id="o-que-se-diz"
+        class="scroll-mt-24 text-sm text-[var(--color-ink)]/75"
+      >
+        Declarações públicas sobre o número de AL dão contexto à investigação; não são contagens
+        produzidas por este projeto.
+      </p>
     </section>
 
-    <section id="fontes" class="border-t border-[var(--color-line)] pt-5" aria-labelledby="sources-title">
+    <section
+      id="fontes"
+      class="border-t border-[var(--color-line)] pt-5"
+      aria-labelledby="sources-title"
+    >
       <h2 id="sources-title">Fontes e reprodução</h2>
       <dl class="mt-6 space-y-4 text-sm">
-        <div><dt class="font-semibold">Análise selecionada</dt><dd class="mt-1 break-words">{{ d.run_id }}</dd></div>
-        <div><dt class="font-semibold">Airbnb</dt><dd class="mt-1">Snapshot de {{ d.metadata.source_dates.airbnb_snapshot_date }} · <a class="text-[var(--color-blue)] underline underline-offset-4" href="{{ d.metadata.source_urls.airbnb }}">Inside Airbnb ↗</a></dd></div>
-        <div><dt class="font-semibold">RNAL</dt><dd class="mt-1">Descarregado em {{ d.metadata.source_dates.official_register_download_date }} · <a class="text-[var(--color-blue)] underline underline-offset-4" href="{{ d.metadata.source_urls.official }}">Turismo de Portugal ↗</a></dd></div>
-        <div><dt class="font-semibold">Versões</dt><dd class="mt-1">Metodologia {{ s.methodology_version }} · análise {{ d.metadata.analysis_version }}</dd></div>
+        <div>
+          <dt class="font-semibold">Análise selecionada</dt>
+          <dd class="mt-1 break-words">{{ d.run_id }}</dd>
+        </div>
+        <div>
+          <dt class="font-semibold">Airbnb</dt>
+          <dd class="mt-1">
+            Snapshot de {{ d.metadata.source_dates.airbnb_snapshot_date }} ·
+            <a
+              class="text-[var(--color-blue)] underline underline-offset-4"
+              href="{{ d.metadata.source_urls.airbnb }}"
+            >
+              Inside Airbnb ↗
+            </a>
+          </dd>
+        </div>
+        <div>
+          <dt class="font-semibold">RNAL</dt>
+          <dd class="mt-1">
+            Descarregado em {{ d.metadata.source_dates.official_register_download_date }} ·
+            <a
+              class="text-[var(--color-blue)] underline underline-offset-4"
+              href="{{ d.metadata.source_urls.official }}"
+            >
+              Turismo de Portugal ↗
+            </a>
+          </dd>
+        </div>
+        <div>
+          <dt class="font-semibold">Versões</dt>
+          <dd class="mt-1">
+            Metodologia {{ s.methodology_version }} · análise {{ d.metadata.analysis_version }}
+          </dd>
+        </div>
       </dl>
-      <p>Cada par de datas tem uma análise pública atual; o Git conserva as versões anteriores. As comparações históricas só são feitas entre métricas com a mesma versão da metodologia. O documento de dados regista URLs, datas, hashes SHA-256 das fontes, commit e versões da análise, metodologia e esquema de saída.</p>
-      <p>Os ficheiros públicos contêm apenas dados agregados. Não incluem identificadores de anúncios ou anfitriões, URLs de anúncios, nomes, endereços, coordenadas exatas ou valores originais de licença.</p>
-      {% assign public_data_file = "snapshot.json" %}
-      {% if d.metadata.output_schema_version == "4.0.0" %}{% assign public_data_file = "metadata.json" %}{% endif %}
+      <p>
+        Cada par de datas tem uma análise pública atual; o Git conserva as versões anteriores. As
+        comparações históricas só são feitas entre métricas com a mesma versão da metodologia. O
+        documento de dados regista URLs, datas, hashes SHA-256 das fontes, commit e versões da
+        análise, metodologia e esquema de saída.
+      </p>
+      <p>
+        Os ficheiros públicos contêm apenas dados agregados. Não incluem identificadores de anúncios
+        ou anfitriões, URLs de anúncios, nomes, endereços, coordenadas exatas ou valores originais
+        de licença.
+      </p>
+      {% assign public_data_file = 'snapshot.json' %}
+      {% if d.metadata.output_schema_version == '4.0.0' -%}
+        {%- assign public_data_file = 'metadata.json' -%}
+      {%- endif %}
       <div class="mt-6 flex flex-wrap gap-x-6 gap-y-4 text-sm text-[var(--color-blue)] [&_a]:underline [&_a]:underline-offset-4">
-        <a href="{{ '/runs/' | append: d.run_id | append: '/' | append: public_data_file | relative_url }}">Dados, metadados e hashes →</a>
-        <a href="{{ '/runs/' | append: d.run_id | append: '/report.html' | relative_url }}">Relatório técnico ↗</a>
+        <a href="{{ '/runs/' | append: d.run_id | append: '/' | append: public_data_file | relative_url }}">
+          Dados, metadados e hashes →
+        </a>
+        <a href="{{ '/runs/' | append: d.run_id | append: '/report.html' | relative_url }}">
+          Relatório técnico ↗
+        </a>
       </div>
     </section>
   </div>

@@ -3,67 +3,229 @@ layout: default
 ---
 {% assign district = page.district %}
 {% assign collapsed = district.listings | minus: district.establishments_estimate %}
-<section class="py-14 sm:py-20" aria-labelledby="district-title"><div class="wrap">
-  <a class="text-sm text-[var(--color-blue)] underline underline-offset-4" href="{{ '/freguesias/' | relative_url }}">← Todas as freguesias</a>
-  <div class="mt-8 grid gap-10 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:gap-16 lg:items-start">
-    <div class="min-w-0">
-      <h1 id="district-title" class="font-[family-name:var(--font-serif)] text-[clamp(3.4rem,7vw,7rem)] leading-[.95] tracking-[-.045em]">O alojamento local<br>em {{ district.display_name }}.</h1>
-      <p class="mt-7 max-w-[60ch] text-lg">Dos anúncios Airbnb observados nesta freguesia aos estabelecimentos estimados: o que muda quando agrupamos anúncios que podem pertencer ao mesmo alojamento?</p>
-      <div class="mt-10 grid gap-6 py-6 sm:grid-cols-[minmax(0,1fr)_minmax(0,2.4fr)] sm:gap-8">
-        <div class="min-w-0 border-t-4 border-[var(--color-blue)] pt-4">
-          <h2 class="text-xs font-extrabold uppercase tracking-wider text-[var(--color-blue)]">Registo oficial · RNAL</h2>
-          <strong class="mt-6 block whitespace-nowrap font-[family-name:var(--font-serif)] text-[clamp(3rem,5vw,5rem)] font-normal leading-none tracking-tight text-[var(--color-blue)] tabular-nums">{{ district.metrics.rnal | pt_number }}</strong>
-          <p class="mt-3 text-base">números distintos na freguesia</p>
-        </div>
-        <div class="min-w-0 border-t-4 border-[var(--color-yellow)] pt-4 sm:border-l sm:border-l-[var(--color-line)] sm:pl-6">
-          <h2 class="text-xs font-extrabold uppercase tracking-wider text-[#835f00]">Anúncios no Airbnb</h2>
-          <div class="mt-6 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1.15fr)] items-start gap-3" aria-label="Dos anúncios observados aos estabelecimentos estimados">
-            <div class="min-w-0"><strong class="block whitespace-nowrap font-[family-name:var(--font-serif)] text-[clamp(3rem,5vw,5rem)] font-normal leading-none tracking-tight tabular-nums">{{ district.listings | pt_number }}</strong><p class="mt-3 text-base">anúncios observados</p></div>
-            <span class="pt-4 text-2xl leading-none text-[var(--color-terra)]" aria-hidden="true">→</span>
-            <div class="min-w-0"><strong class="block whitespace-nowrap font-[family-name:var(--font-serif)] text-[clamp(3rem,5vw,5rem)] font-normal leading-none tracking-tight text-[var(--color-blue)] tabular-nums">{{ district.establishments_estimate | pt_number }}</strong><p class="mt-3 text-base">estabelecimentos estimados</p></div>
+<section
+  class="py-14 sm:py-20"
+  aria-labelledby="district-title"
+>
+  <div class="wrap">
+    <a
+      class="text-sm text-[var(--color-blue)] underline underline-offset-4"
+      href="{{ '/freguesias/' | relative_url }}"
+    >
+      ← Todas as freguesias
+    </a>
+    <div class="mt-8 grid gap-10 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] lg:gap-16 lg:items-start">
+      <div class="min-w-0">
+        <h1
+          id="district-title"
+          class="font-[family-name:var(--font-serif)] text-[clamp(3.4rem,7vw,7rem)] leading-[.95] tracking-[-.045em]"
+        >
+          O alojamento local
+          <br>
+          em {{ district.display_name }}.
+        </h1>
+        <p class="mt-7 max-w-[60ch] text-lg">
+          Dos anúncios Airbnb observados nesta freguesia aos estabelecimentos estimados: o que muda
+          quando agrupamos anúncios que podem pertencer ao mesmo alojamento?
+        </p>
+        <div class="mt-10 grid gap-6 py-6 sm:grid-cols-[minmax(0,1fr)_minmax(0,2.4fr)] sm:gap-8">
+          <div class="min-w-0 border-t-4 border-[var(--color-blue)] pt-4">
+            <h2 class="text-xs font-extrabold uppercase tracking-wider text-[var(--color-blue)]">
+              Registo oficial · RNAL
+            </h2>
+            <strong class="mt-6 block whitespace-nowrap font-[family-name:var(--font-serif)] text-[clamp(3rem,5vw,5rem)] font-normal leading-none tracking-tight text-[var(--color-blue)] tabular-nums">
+              {{- district.metrics.rnal | pt_number -}}
+            </strong>
+            <p class="mt-3 text-base">números distintos na freguesia</p>
           </div>
-          <p class="mt-6 max-w-[65ch] text-sm text-[var(--color-ink)]/75">O agrupamento nas categorias de menor risco reduz a contagem em {{ collapsed | pt_number }} anúncios. Os casos de possível reutilização do número em locais diferentes permanecem separados. Esta estimativa não é uma contagem oficial de AL ativos.</p>
-          <a class="inline-block text-sm font-semibold text-[var(--color-blue)] underline underline-offset-4" href="{{ '/metodologia.html#listagens-airbnb' | relative_url }}">Como agrupamos os anúncios →</a>
+          <div class="min-w-0 border-t-4 border-[var(--color-yellow)] pt-4 sm:border-l sm:border-l-[var(--color-line)] sm:pl-6">
+            <h2 class="text-xs font-extrabold uppercase tracking-wider text-[#835f00]">
+              Anúncios no Airbnb
+            </h2>
+            <div
+              class="mt-6 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1.15fr)] items-start gap-3"
+              aria-label="Dos anúncios observados aos estabelecimentos estimados"
+            >
+              <div class="min-w-0">
+                <strong class="block whitespace-nowrap font-[family-name:var(--font-serif)] text-[clamp(3rem,5vw,5rem)] font-normal leading-none tracking-tight tabular-nums">
+                  {{- district.listings | pt_number -}}
+                </strong>
+                <p class="mt-3 text-base">anúncios observados</p>
+              </div>
+              <span
+                class="pt-4 text-2xl leading-none text-[var(--color-terra)]"
+                aria-hidden="true"
+              >
+                →
+              </span>
+              <div class="min-w-0">
+                <strong class="block whitespace-nowrap font-[family-name:var(--font-serif)] text-[clamp(3rem,5vw,5rem)] font-normal leading-none tracking-tight text-[var(--color-blue)] tabular-nums">
+                  {{- district.establishments_estimate | pt_number -}}
+                </strong>
+                <p class="mt-3 text-base">estabelecimentos estimados</p>
+              </div>
+            </div>
+            <p class="mt-6 max-w-[65ch] text-sm text-[var(--color-ink)]/75">
+              O agrupamento nas categorias de menor risco reduz a contagem em
+              {{ collapsed | pt_number }} anúncios. Os casos de possível reutilização do número em
+              locais diferentes permanecem separados. Esta estimativa não é uma contagem oficial de
+              AL ativos.
+            </p>
+            <a
+              class="inline-block text-sm font-semibold text-[var(--color-blue)] underline underline-offset-4"
+              href="{{ '/metodologia.html#listagens-airbnb' | relative_url }}"
+            >
+              Como agrupamos os anúncios →
+            </a>
+          </div>
         </div>
       </div>
+      {% include district-locator.html district=district %}
     </div>
-    {% include district-locator.html district=district %}
   </div>
-</div></section>
+</section>
 
-<section class="border-t border-[var(--color-line)] py-14 sm:py-20" aria-labelledby="district-overlap-title"><div class="wrap grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:items-center lg:gap-16">
-  <div>
-    <h2 id="district-overlap-title" class="font-[family-name:var(--font-serif)] text-[clamp(2.6rem,4vw,4rem)] leading-tight tracking-[-.045em]">Como se cruzam<br>as duas fontes?</h2>
-    <p class="mt-7 max-w-[58ch] text-lg">Comparámos o número de registo AL indicado nos anúncios com o RNAL. Que números aparecem nas duas fontes — e quais aparecem apenas numa?</p>
-    <aside class="mt-7 max-w-[58ch] border-l-2 border-[var(--color-blue)] bg-white/40 p-5 text-sm">
-      <strong class="text-[var(--color-blue)]">O que é o número de registo AL?</strong>
-      <p class="mb-0! text-[var(--color-ink)]/75">É o identificador de uma inscrição no RNAL. Usamos o número declarado no campo da licença do anúncio para procurar o registo correspondente.</p>
-    </aside>
+<section
+  class="border-t border-[var(--color-line)] py-14 sm:py-20"
+  aria-labelledby="district-overlap-title"
+>
+  <div class="wrap grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:items-center lg:gap-16">
+    <div>
+      <h2
+        id="district-overlap-title"
+        class="font-[family-name:var(--font-serif)] text-[clamp(2.6rem,4vw,4rem)] leading-tight tracking-[-.045em]"
+      >
+        Como se cruzam
+        <br>
+        as duas fontes?
+      </h2>
+      <p class="mt-7 max-w-[58ch] text-lg">
+        Comparámos o número de registo AL indicado nos anúncios com o RNAL. Que números aparecem nas
+        duas fontes — e quais aparecem apenas numa?
+      </p>
+      <aside class="mt-7 max-w-[58ch] border-l-2 border-[var(--color-blue)] bg-white/40 p-5 text-sm">
+        <strong class="text-[var(--color-blue)]">O que é o número de registo AL?</strong>
+        <p class="mb-0! text-[var(--color-ink)]/75">
+          É o identificador de uma inscrição no RNAL. Usamos o número declarado no campo da licença
+          do anúncio para procurar o registo correspondente.
+        </p>
+      </aside>
+    </div>
+    {% include district-overlap.html metrics=district.metrics %}
   </div>
-  {% include district-overlap.html metrics=district.metrics %}
-</div></section>
+</section>
 
-<section class="border-t border-[var(--color-line)] bg-white/40 py-14 sm:py-20" aria-labelledby="composition-title"><div class="wrap grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:gap-16">
-  <div>
-    <h2 id="composition-title" class="font-[family-name:var(--font-serif)] text-[clamp(2.6rem,4vw,4rem)] leading-tight tracking-[-.045em]">O que encontrámos?</h2>
-    <p class="mt-6 max-w-[55ch]">{{ district.listings_with_identifiable_licence | pt_number }} dos {{ district.listings | pt_number }} anúncios têm um número de registo AL identificável pelo método. Contamos anúncios, não números distintos: o mesmo número pode aparecer várias vezes.</p>
-    <p class="text-sm text-[var(--color-ink)]/75">Identificar um número não confirma a correspondência com o RNAL. As categorias são indicadores para verificação, não conclusões de ilegalidade.</p>
-    <a class="inline-block text-sm font-semibold text-[var(--color-blue)] underline underline-offset-4" href="{{ '/metodologia.html#sinais' | relative_url }}">Ler as categorias →</a>
+<section
+  class="border-t border-[var(--color-line)] bg-white/40 py-14 sm:py-20"
+  aria-labelledby="composition-title"
+>
+  <div class="wrap grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:gap-16">
+    <div>
+      <h2
+        id="composition-title"
+        class="font-[family-name:var(--font-serif)] text-[clamp(2.6rem,4vw,4rem)] leading-tight tracking-[-.045em]"
+      >
+        O que encontrámos?
+      </h2>
+      <p class="mt-6 max-w-[55ch]">
+        {{ district.listings_with_identifiable_licence | pt_number }} dos
+        {{ district.listings | pt_number }} anúncios têm um número de registo AL identificável pelo
+        método. Contamos anúncios, não números distintos: o mesmo número pode aparecer várias vezes.
+      </p>
+      <p class="text-sm text-[var(--color-ink)]/75">
+        Identificar um número não confirma a correspondência com o RNAL. As categorias são
+        indicadores para verificação, não conclusões de ilegalidade.
+      </p>
+      <a
+        class="inline-block text-sm font-semibold text-[var(--color-blue)] underline underline-offset-4"
+        href="{{ '/metodologia.html#sinais' | relative_url }}"
+      >
+        Ler as categorias →
+      </a>
+    </div>
+    <div class="min-w-0">
+      <table class="w-full border-collapse text-sm sm:text-base [&_th]:normal-case! [&_th]:tracking-normal! [&_th]:text-[length:inherit]! [&_th]:text-[var(--color-ink)]! [&_th]:px-0! [&_td]:px-0!">
+        <caption class="mb-5 text-left text-sm text-[var(--color-ink)]/75">
+          Classificação dos
+          {{ district.listings | pt_number }}
+          anúncios de
+          {{ district.display_name }}
+        </caption>
+        <thead>
+          <tr class="border-b-2 border-[var(--color-line)]">
+            <th
+              scope="col"
+              class="py-3 text-left font-semibold"
+            >
+              Categoria
+            </th>
+            <th
+              scope="col"
+              class="py-3 text-right font-semibold"
+            >
+              Anúncios
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for category in district.categories %}
+            <tr class="border-b border-[var(--color-line)]">
+              <th
+                scope="row"
+                class="py-4! pr-5! text-left font-normal"
+              >
+                {% if category.key == 'sem licença' -%}
+                  Campo da licença vazio
+                {%- else -%}
+                  {{- category.label -}}
+                {%- endif %}
+              </th>
+              <td class="py-4 text-right font-semibold tabular-nums">
+                {{ category.listings | pt_number }}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th
+              scope="row"
+              class="py-4! text-left font-semibold"
+            >
+              Total
+            </th>
+            <td class="py-4 text-right font-semibold tabular-nums">
+              {{ district.listings | pt_number }}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+      <p class="mt-5 text-sm text-[var(--color-ink)]/75">
+        «Licença única em Lisboa» indica um número presente num único anúncio da cidade e encontrado
+        no RNAL com concelho Lisboa. A classificação de números repetidos considera anúncios de toda
+        a cidade.
+      </p>
+    </div>
   </div>
-  <div class="min-w-0">
-    <table class="w-full border-collapse text-sm sm:text-base [&_th]:normal-case! [&_th]:tracking-normal! [&_th]:text-[length:inherit]! [&_th]:text-[var(--color-ink)]! [&_th]:px-0! [&_td]:px-0!">
-      <caption class="mb-5 text-left text-sm text-[var(--color-ink)]/75">Classificação dos {{ district.listings | pt_number }} anúncios de {{ district.display_name }}</caption>
-      <thead><tr class="border-b-2 border-[var(--color-line)]"><th scope="col" class="py-3 text-left font-semibold">Categoria</th><th scope="col" class="py-3 text-right font-semibold">Anúncios</th></tr></thead>
-      <tbody>{% for category in district.categories %}<tr class="border-b border-[var(--color-line)]"><th scope="row" class="py-4! pr-5! text-left font-normal">{% if category.key == 'sem licença' %}Campo da licença vazio{% else %}{{ category.label }}{% endif %}</th><td class="py-4 text-right font-semibold tabular-nums">{{ category.listings | pt_number }}</td></tr>{% endfor %}</tbody>
-      <tfoot><tr><th scope="row" class="py-4! text-left font-semibold">Total</th><td class="py-4 text-right font-semibold tabular-nums">{{ district.listings | pt_number }}</td></tr></tfoot>
-    </table>
-    <p class="mt-5 text-sm text-[var(--color-ink)]/75">«Licença única em Lisboa» indica um número presente num único anúncio da cidade e encontrado no RNAL com concelho Lisboa. A classificação de números repetidos considera anúncios de toda a cidade.</p>
-  </div>
-</div></section>
+</section>
 
-<section class="border-t border-[var(--color-line)] py-8"><div class="wrap flex flex-wrap items-center gap-x-8 gap-y-4 text-sm">
-  {% assign public_data_file = "snapshot.json" %}
-  {% if site.data.site.metadata.output_schema_version == "4.0.0" %}{% assign public_data_file = "metadata.json" %}{% endif %}
-  <a class="font-semibold text-[var(--color-blue)] underline underline-offset-4" href="{{ '/runs/' | append: site.data.site.run_id | append: '/' | append: public_data_file | relative_url }}">Consultar os dados agregados deste snapshot →</a>
-  <a class="text-[var(--color-blue)] underline underline-offset-4" href="{{ '/freguesias/' | relative_url }}">Comparar freguesias →</a>
-</div></section>
+<section class="border-t border-[var(--color-line)] py-8">
+  <div class="wrap flex flex-wrap items-center gap-x-8 gap-y-4 text-sm">
+    {% assign public_data_file = 'snapshot.json' %}
+    {% if site.data.site.metadata.output_schema_version == '4.0.0' -%}
+      {%- assign public_data_file = 'metadata.json' -%}
+    {%- endif %}
+    <a
+      class="font-semibold text-[var(--color-blue)] underline underline-offset-4"
+      href="{{ '/runs/' | append: site.data.site.run_id | append: '/' | append: public_data_file | relative_url }}"
+    >
+      Consultar os dados agregados deste snapshot →
+    </a>
+    <a
+      class="text-[var(--color-blue)] underline underline-offset-4"
+      href="{{ '/freguesias/' | relative_url }}"
+    >
+      Comparar freguesias →
+    </a>
+  </div>
+</section>

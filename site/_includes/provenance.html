@@ -1,6 +1,34 @@
 <div class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-[var(--color-ink)]/75">
-  <span>Dados Airbnb: <time class="whitespace-nowrap" datetime="{{ site.data.site.metadata.source_dates.airbnb_snapshot_date }}">{{ site.data.site.metadata.source_dates.airbnb_snapshot_date }}</time></span>
-  <span>Registo descarregado: <time class="whitespace-nowrap" datetime="{{ site.data.site.metadata.source_dates.official_register_download_date }}">{{ site.data.site.metadata.source_dates.official_register_download_date }}</time></span>
+  <span>
+    Dados Airbnb:
+    <time
+      class="whitespace-nowrap"
+      datetime="{{ site.data.site.metadata.source_dates.airbnb_snapshot_date }}"
+    >
+      {{- site.data.site.metadata.source_dates.airbnb_snapshot_date -}}
+    </time>
+  </span>
+  <span>
+    Registo descarregado:
+    <time
+      class="whitespace-nowrap"
+      datetime="{{ site.data.site.metadata.source_dates.official_register_download_date }}"
+    >
+      {{- site.data.site.metadata.source_dates.official_register_download_date -}}
+    </time>
+  </span>
 </div>
 {% assign newer = site.data.site.newer_snapshot_without_metrics %}
-{% if newer %}<p class="mt-2 text-xs text-[var(--color-ink)]/75">O <a class="underline underline-offset-4" href="{{ '/runs/' | append: newer.run_id | append: '/report.html' | relative_url }}">snapshot de {{ newer.official_date }}</a> ainda não tem métricas de conjuntos. Estas páginas usam as fontes verificadas de {{ site.data.site.metadata.source_dates.official_register_download_date }}.</p>{% endif %}
+{% if newer %}
+  <p class="mt-2 text-xs text-[var(--color-ink)]/75">
+    O
+    <a
+      class="underline underline-offset-4"
+      href="{{ '/runs/' | append: newer.run_id | append: '/report.html' | relative_url }}"
+    >
+      snapshot de {{ newer.official_date }}
+    </a>
+    ainda não tem métricas de conjuntos. Estas páginas usam as fontes verificadas de
+    {{ site.data.site.metadata.source_dates.official_register_download_date }}.
+  </p>
+{% endif %}

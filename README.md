@@ -205,6 +205,20 @@ bundle exec rake site:check
 ruby scripts/audit_publication.rb --artifact _site
 ```
 
+Os templates HTML/Liquid em `site/` usam Prettier com o plugin Liquid,
+indentação de dois espaços e largura preferida de 100 caracteres. Para formatar
+ou verificar a formatação sem alterar ficheiros:
+
+```bash
+npm run site:format
+npm run site:lint
+```
+
+A verificação corre em CI nos pushes, pull requests e builds de publicação.
+Formate os ficheiros fonte; os snapshots arquivados e `_site/` ficam fora deste
+comando. A largura é uma preferência: valores de atributos indivisíveis podem
+continuar numa linha mais longa.
+
 O CSS editável está em `site/assets/css/`: `input.css` importa os tokens e
 estilos existentes. Prefira classes Tailwind e os tokens do projeto nas alterações
 ao site. O CSS gerado fica em `_site/assets/story.css`; `_site/` não é fonte

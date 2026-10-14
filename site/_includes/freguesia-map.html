@@ -1,37 +1,97 @@
 {% assign map = site.data.freguesia_map %}
-  <figure class="m-0 min-w-0" data-parish-map>
-    <svg viewBox="{{ map.view_box }}" class="mx-auto block w-full {{ include.size | default: 'max-w-[440px]' }}" role="group" aria-labelledby="parish-map-title parish-map-description">
-      <title id="parish-map-title">Estabelecimentos estimados por freguesia de Lisboa</title>
-      <desc id="parish-map-description">As cores representam contagens por freguesia, não densidade. Cada freguesia liga à sua página de dados.</desc>
-      {% for district in site.data.site.districts %}
-        {% assign estimate = district.establishments_estimate %}
-        {% if estimate < 200 %}{% assign shade = 'fill-[var(--color-terra)]/15' %}
-        {% elsif estimate < 500 %}{% assign shade = 'fill-[var(--color-terra)]/30' %}
-        {% elsif estimate < 1000 %}{% assign shade = 'fill-[var(--color-terra)]/50' %}
-        {% elsif estimate < 2000 %}{% assign shade = 'fill-[var(--color-terra)]/75' %}
-        {% else %}{% assign shade = 'fill-[var(--color-terra)]' %}{% endif %}
-        <a href="{{ '/freguesias/' | append: district.slug | append: '/' | relative_url }}" class="group" data-parish-name="{{ district.display_name | escape }}" data-parish-estimate="{{ estimate }}" aria-label="{{ district.display_name }}: {{ estimate | pt_number }} estabelecimentos estimados">
-          <title>{{ district.display_name }} · {{ estimate | pt_number }} estabelecimentos estimados</title>
-          <path d="{{ map.paths[district.display_name] }}" fill-rule="evenodd" class="{{ shade }} stroke-[var(--color-paper)] transition-colors group-hover:fill-[var(--color-blue)] group-focus-visible:fill-[var(--color-blue)]" stroke-width="1.5" stroke-linejoin="round" />
-        </a>
-      {% endfor %}
-    </svg>
-    <figcaption class="mt-5 text-xs text-[var(--color-ink)]/75">
-      <strong class="block font-semibold">Estabelecimentos estimados</strong>
-      <ul class="mt-3 grid grid-cols-5 gap-2 text-center" aria-label="Legenda de contagens por freguesia">
-        <li><span class="mb-2 block h-2 bg-[var(--color-terra)]/15" aria-hidden="true"></span>&lt; 200</li>
-        <li><span class="mb-2 block h-2 bg-[var(--color-terra)]/30" aria-hidden="true"></span>200–499</li>
-        <li><span class="mb-2 block h-2 bg-[var(--color-terra)]/50" aria-hidden="true"></span>500–999</li>
-        <li><span class="mb-2 block h-2 bg-[var(--color-terra)]/75" aria-hidden="true"></span>1 000–1 999</li>
-        <li><span class="mb-2 block h-2 bg-[var(--color-terra)]" aria-hidden="true"></span>≥ 2 000</li>
-      </ul>
-      <a class="mt-3 inline-block underline underline-offset-4" href="{{ map.source_url }}">Limites de freguesias: CML ↗</a>
-    </figcaption>
-    <div data-map-tooltip role="tooltip" hidden class="pointer-events-none fixed z-20 max-w-[calc(100vw-24px)] border-l-4 border-[var(--color-yellow)] bg-[var(--color-ink)] px-4 py-3 text-[var(--color-paper)] shadow-xl">
-      <strong data-tooltip-name class="block text-sm font-semibold"></strong>
-      <span data-tooltip-count class="mt-2 block font-[family-name:var(--font-serif)] text-4xl leading-none text-[var(--color-yellow)]"></span>
-      <span class="mt-2 block text-xs text-[var(--color-paper)]/80">estabelecimentos estimados</span>
-    </div>
-  </figure>
+<figure
+  class="m-0 min-w-0"
+  data-parish-map
+>
+  <svg
+    viewBox="{{ map.view_box }}"
+    class="mx-auto block w-full {{ include.size | default: 'max-w-[440px]' }}"
+    role="group"
+    aria-labelledby="parish-map-title parish-map-description"
+  >
+    <title id="parish-map-title">Estabelecimentos estimados por freguesia de Lisboa</title>
+    <desc id="parish-map-description">As cores representam contagens por freguesia, não densidade. Cada freguesia liga à sua página de dados.</desc>
+    {% for district in site.data.site.districts %}
+      {% assign estimate = district.establishments_estimate %}
+      {% if estimate < 200 %}{% assign shade = 'fill-[var(--color-terra)]/15' %}
+      {% elsif estimate < 500 %}{% assign shade = 'fill-[var(--color-terra)]/30' %}
+      {% elsif estimate < 1000 %}{% assign shade = 'fill-[var(--color-terra)]/50' %}
+      {% elsif estimate < 2000 %}{% assign shade = 'fill-[var(--color-terra)]/75' %}
+      {% else %}{% assign shade = 'fill-[var(--color-terra)]' %}{% endif %}
+      <a href="{{ '/freguesias/' | append: district.slug | append: '/' | relative_url }}" class="group" data-parish-name="{{ district.display_name | escape }}" data-parish-estimate="{{ estimate }}" aria-label="{{ district.display_name }}: {{ estimate | pt_number }} estabelecimentos estimados">
+        <title>{{ district.display_name }} · {{ estimate | pt_number }} estabelecimentos estimados</title>
+        <path d="{{ map.paths[district.display_name] }}" fill-rule="evenodd" class="{{ shade }} stroke-[var(--color-paper)] transition-colors group-hover:fill-[var(--color-blue)] group-focus-visible:fill-[var(--color-blue)]" stroke-width="1.5" stroke-linejoin="round" />
+      </a>
+    {% endfor %}
+  </svg>
+  <figcaption class="mt-5 text-xs text-[var(--color-ink)]/75">
+    <strong class="block font-semibold">Estabelecimentos estimados</strong>
+    <ul
+      class="mt-3 grid grid-cols-5 gap-2 text-center"
+      aria-label="Legenda de contagens por freguesia"
+    >
+      <li>
+        <span
+          class="mb-2 block h-2 bg-[var(--color-terra)]/15"
+          aria-hidden="true"
+        ></span>
+        &lt; 200
+      </li>
+      <li>
+        <span
+          class="mb-2 block h-2 bg-[var(--color-terra)]/30"
+          aria-hidden="true"
+        ></span>
+        200–499
+      </li>
+      <li>
+        <span
+          class="mb-2 block h-2 bg-[var(--color-terra)]/50"
+          aria-hidden="true"
+        ></span>
+        500–999
+      </li>
+      <li>
+        <span
+          class="mb-2 block h-2 bg-[var(--color-terra)]/75"
+          aria-hidden="true"
+        ></span>
+        1 000–1 999
+      </li>
+      <li>
+        <span
+          class="mb-2 block h-2 bg-[var(--color-terra)]"
+          aria-hidden="true"
+        ></span>
+        ≥ 2 000
+      </li>
+    </ul>
+    <a
+      class="mt-3 inline-block underline underline-offset-4"
+      href="{{ map.source_url }}"
+    >
+      Limites de freguesias: CML ↗
+    </a>
+  </figcaption>
+  <div
+    data-map-tooltip
+    role="tooltip"
+    hidden
+    class="pointer-events-none fixed z-20 max-w-[calc(100vw-24px)] border-l-4 border-[var(--color-yellow)] bg-[var(--color-ink)] px-4 py-3 text-[var(--color-paper)] shadow-xl"
+  >
+    <strong
+      data-tooltip-name
+      class="block text-sm font-semibold"
+    ></strong>
+    <span
+      data-tooltip-count
+      class="mt-2 block font-[family-name:var(--font-serif)] text-4xl leading-none text-[var(--color-yellow)]"
+    ></span>
+    <span class="mt-2 block text-xs text-[var(--color-paper)]/80">estabelecimentos estimados</span>
+  </div>
+</figure>
 
-<script src="{{ '/assets/js/freguesia-map-tooltip.js' | relative_url }}" defer></script>
+<script
+  src="{{ '/assets/js/freguesia-map-tooltip.js' | relative_url }}"
+  defer
+></script>

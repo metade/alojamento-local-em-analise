@@ -1,11 +1,15 @@
 {
   "private": true,
   "scripts": {
-    "site:css": "tailwindcss -i site/assets/css/input.css -o _site/assets/story.css --minify"
+    "site:css": "tailwindcss -i site/assets/css/input.css -o _site/assets/story.css --minify",
+    "site:format": "prettier --write \"site/**/*.html\"",
+    "site:lint": "prettier --check \"site/**/*.html\""
   },
   "devDependencies": {
+    "@shopify/prettier-plugin-liquid": "^1.11.2",
     "@tailwindcss/cli": "^4.1.13",
     "playwright-core": "^1.64.0",
+    "prettier": "^3.9.10",
     "tailwindcss": "^4.1.13"
   }
 }

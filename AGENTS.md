@@ -136,6 +136,8 @@ Measured overlap metrics live in the `registration_metrics` section of versioned
 
 ### General guidance
 
+- Format source HTML/Liquid templates with `npm run site:format` and check them with `npm run site:lint`. Prettier's Liquid plugin uses two-space indentation and a preferred width of 100 characters. CI checks source templates only; do not format archived snapshots or generated `_site/` files.
+
 - Follow the homepage and freguesia pages for site UX: Tailwind utilities, existing design tokens, concise Portuguese copy, and qualified estimates. Keep the grouping explanation with the Airbnb figures; RNAL registrations are a separate source, not the input to that estimate.
 - The district locator uses CML administrative boundaries from `site/_data/freguesia_map.json`. It highlights the selected freguesia within Lisbon; it does not show announcement locations or density.
 - Preserve methodology anchors linked from other pages when simplifying `site/metodologia.html`.
