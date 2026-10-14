@@ -154,6 +154,9 @@ def audit_artifact(root)
   files.each do |path|
     relative = path.delete_prefix("#{root}/")
     errors << "ficheiro local/bruto no artefacto: #{relative}" if relative.match?(RAW_SOURCE_PATH)
+    if relative.match?(/(?:report_data_local|metadata_local|summary_local|detailed)/)
+      errors << "dados privados no artefacto: #{relative}"
+    end
     text = file_text(path)
     next unless text
 
@@ -173,6 +176,16 @@ def audit_artifact(root)
       rescue JSON::ParserError
         errors << "metadata inválido em #{relative}"
       end
+    end
+  end
+
+  loader = AlojamentoLocal::PublicSnapshot::Loader.new
+  Dir.glob(File.join(root, "runs", "*")).select { |path| File.directory?(path) }.each do |path|
+    begin
+      next unless loader.supported_metrics?(path)
+      loader.load(path)
+    rescue => error
+      errors << "dados inválidos em #{path}: #{error.message}"
     end
   end
 

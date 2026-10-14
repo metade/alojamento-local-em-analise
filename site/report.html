@@ -1,0 +1,441 @@
+---
+layout: null
+---
+{% assign r = page.report | default: site.data.report %}
+{% assign data_file = 'snapshot.json' %}
+{% assign metrics_file = 'snapshot.json' %}
+{% if r.metadata.mode == 'local' %}
+  {% assign data_file = 'snapshot.json' %}
+  {% assign metrics_file = 'snapshot.json' %}
+{% elsif r.metadata.output_schema_version == '4.0.0' %}
+  {% assign data_file = 'metadata.json' %}
+  {% assign metrics_file = 'registration_metrics.json' %}
+{% endif %}
+
+<!doctype html>
+<html lang="pt">
+  <head>
+    <meta charset="utf-8">
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1"
+    >
+    <title>
+      Alojamento Local em Lisboa —
+      {{ r.summary.run_id | escape }}
+    </title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font:
+          16px system-ui,
+          sans-serif;
+        max-width: 1200px;
+        margin: auto;
+        padding: 1rem;
+        color: #243447;
+        overflow-wrap: anywhere;
+      }
+      header {
+        background: #123;
+        padding: 1.5rem;
+        color: white;
+        border-radius: 12px;
+      }
+      section {
+        margin: 1.5rem 0;
+      }
+      .table-container {
+        max-width: 100%;
+        overflow-x: auto;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        min-width: 760px;
+      }
+      .metrics-table {
+        min-width: 1150px;
+      }
+      th,
+      td {
+        padding: 0.5rem;
+        border-bottom: 1px solid #ddd;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: #edf2f7;
+      }
+      .cards {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+      }
+      .card {
+        padding: 1rem;
+        background: #edf2f7;
+        border-radius: 10px;
+        min-width: 145px;
+      }
+      .bar {
+        background: #2878c8;
+        height: 0.5rem;
+        margin: 0.3rem 0;
+        border-radius: 4px;
+      }
+      dt {
+        font-weight: bold;
+      }
+      dd {
+        margin: 0 0 0.75rem;
+      }
+      code {
+        overflow-wrap: anywhere;
+      }
+      @page {
+        size: A4 landscape;
+        margin: 12mm;
+      }
+      @media print {
+        section {
+          margin: 0.75rem 0;
+        }
+        p {
+          margin: 0.5em 0;
+        }
+        .history-section {
+          break-inside: avoid;
+          page-break-inside: avoid;
+        }
+        body {
+          font-size: 10px;
+          max-width: none;
+          padding: 0;
+        }
+        header {
+          print-color-adjust: exact;
+        }
+        thead {
+          display: table-header-group;
+        }
+        tr {
+          break-inside: avoid;
+        }
+        .table-container {
+          overflow: visible;
+        }
+        table,
+        .metrics-table {
+          font-size: 9px;
+          min-width: 0;
+        }
+        th,
+        td {
+          padding: 0.25rem;
+        }
+        .no-print {
+          display: none;
+        }
+        h2 {
+          break-after: avoid;
+        }
+      }
+      @media (max-width: 600px) {
+        .cards {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+        }
+        .card {
+          min-width: 0;
+        }
+        body {
+          font-size: 14px;
+        }
+        header {
+          padding: 1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Alojamento Local em Lisboa</h1>
+      <p>
+        Run {{ r.summary.run_id | escape }} · modo {{ r.summary.mode | escape }} · gerado em
+        {{ r.summary.generated_at | escape }}
+      </p>
+      <p>Indicador para verificação oficial</p>
+    </header>
+    <section>
+      <h2>Resumo</h2>
+      <div class="cards">
+        <div class="card">
+          <b>{{ r.summary.listings | escape }}</b>
+          <br>
+          listagens
+        </div>
+        <div class="card">
+          <b>{{ r.summary.licence_groups | escape }}</b>
+          <br>
+          grupos de licença
+        </div>
+        <div class="card">
+          <b>{{ r.summary.establishment_estimate | escape }}</b>
+          <br>
+          estimativa de estabelecimentos
+        </div>
+      </div>
+      {% for classification in r.summary.classifications %}
+        {% assign width = 0 %}
+        {% if r.summary.licence_groups > 0 %}
+          {% assign width = classification[1]
+            | times: 100
+            | divided_by: r.summary.licence_groups
+            | at_most: 100
+          %}
+        {% endif %}
+        <p>{{ classification[0] | escape }}: {{ classification[1] | escape }}</p>
+        <div
+          class="bar"
+          style="width:{{ width | escape }}%"
+        ></div>
+      {% endfor %}
+    </section>
+    <section>
+      <h2>Grupos de licenças (agregado)</h2>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Classificação</th>
+              <th>Concelho oficial</th>
+              <th>Tipo oficial</th>
+              <th>Grupos</th>
+              <th>Listagens</th>
+              <th>Localizações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in r.licence_group_aggregates %}
+              <tr>
+                <td>{{ row.classification | escape }}</td>
+                <td>{{ row.official_municipality | escape }}</td>
+                <td>{{ row.official_type | escape }}</td>
+                <td>{{ row.licence_groups | escape }}</td>
+                <td>{{ row.announcements | escape }}</td>
+                <td>{{ row.spatial_locations | escape }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <section>
+      <h2>Por freguesia e classificação</h2>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Freguesia</th>
+              <th>Classificação</th>
+              <th>Listagens</th>
+              <th>Licenças identificáveis</th>
+              <th>Estimativa</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in r.announcements_by_parish_and_classification %}
+              <tr>
+                <td>{{ row.freguesia | escape }}</td>
+                <td>{{ row.classification | escape }}</td>
+                <td>{{ row.announcements | escape }}</td>
+                <td>{{ row.announcements_with_identifiable_number | escape }}</td>
+                <td>{{ row.estimated_establishments | escape }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <section>
+      <h2>Exemplos ilustrativos</h2>
+      <p>
+        Os exemplos seguintes são sintéticos e servem apenas para explicar os sinais. Não
+        correspondem a anúncios, operadores, números de licença, endereços ou casos individuais.
+      </p>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Sinal</th>
+              <th>Padrão ilustrativo</th>
+              <th>Leitura prudente</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Sem licença identificável</th>
+              <td>Um anúncio não apresenta um número que possa ser normalizado como registo AL.</td>
+              <td>
+                É um sinal para verificação; pode refletir um campo vazio, uma isenção ou um formato
+                não reconhecido.
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">Provável estabelecimento com anúncios múltiplos</th>
+              <td>
+                Vários anúncios com a mesma licença aparecem agrupados na mesma zona e descrevem
+                quartos ou unidades.
+              </td>
+              <td>
+                Pode corresponder a um único estabelecimento com várias ofertas, não a várias
+                licenças independentes.
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">Licença repetida em várias localizações</th>
+              <td>A mesma licença normalizada surge em agrupamentos espaciais distintos.</td>
+              <td>
+                É uma possível reutilização ou divergência que requer confirmação no registo
+                oficial.
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">Licença oficial fora de Lisboa</th>
+              <td>
+                A licença é encontrada no registo oficial, mas o concelho oficial não é Lisboa.
+              </td>
+              <td>
+                A diferença pode resultar de localização, cobertura do snapshot ou qualidade dos
+                dados; não prova uma infração.
+              </td>
+            </tr>
+            <tr>
+              <th scope="row">Possível divergência de localização</th>
+              <td>
+                A localização aproximada do anúncio não é consistente com a localização indicada no
+                registo.
+              </td>
+              <td>
+                A comparação é indicativa e deve ser validada sem divulgar coordenadas ou endereços.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    <section>
+      <h2>Proveniência e método</h2>
+      <p>
+        Fontes:
+        <a href="{{ r.metadata.source_urls.airbnb | escape }}">Airbnb</a>
+        e
+        <a href="{{ r.metadata.source_urls.official | escape }}">registo oficial</a>
+        . Datas e hashes SHA-256 estão em
+        {% if r.metadata.mode == 'public' -%}
+          <a href="{{ data_file | escape }}">{{ data_file | escape }}</a>
+        {%- else -%}
+          <code>{{ data_file | escape }}</code>
+        {%- endif -%}
+        . Metodologia {{ r.metadata.methodology_version | escape }}; análise
+        {{ r.metadata.analysis_version | escape }}.
+      </p>
+      <dl>
+        {% for date in r.metadata.source_dates %}
+          <dt>{{ date[0] | escape }}</dt>
+          <dd>{{ date[1] | default: 'Não disponível' | escape }}</dd>
+        {% endfor -%}
+        {%- for source in r.metadata.source_files %}
+          <dt>SHA-256 · {{ source[0] | escape }}</dt>
+          <dd>
+            <code>{{ source[1].sha256 | escape }}</code>
+          </dd>
+        {% endfor %}
+        <dt>Git</dt>
+        <dd>
+          {{ r.metadata.git_commit | escape -}}
+          {%- if r.metadata.git_worktree_dirty %}(alterações locais){% endif %}
+        </dd>
+        <dt>Schema</dt>
+        <dd>{{ r.metadata.output_schema_version | escape }}</dd>
+      </dl>
+      <p>
+        As classificações são indicadores analíticos e não conclusões legais. Requerem verificação
+        junto das fontes oficiais.
+      </p>
+    </section>
+    <section>
+      <h2>Números distintos e anúncios</h2>
+      <p>
+        Métricas {{ r.registration_metrics.metric_version | escape }}; unidades e definições em
+        {{ metrics_file | escape }}.
+      </p>
+      <div class="table-container">
+        <table class="metrics-table">
+          <thead>
+            <tr>
+              <th>Geografia</th>
+              {% for column in r.registration_metrics.rows.first %}
+                {% unless column[0] == 'geography' %}
+                  <th>{{ column[0] | escape }}</th>
+                {% endunless %}
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in r.registration_metrics.rows %}
+              <tr>
+                <th>{{ row.geography | escape }}</th>
+                {% for column in r.registration_metrics.rows.first %}
+                  {% assign key = column[0] %}
+                  {% unless key == 'geography' %}
+                    <td>{{ row[key] | escape }}</td>
+                  {% endunless %}
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <dl>
+        {% for definition in r.registration_metrics.definitions %}
+          <dt>{{ definition[0] | escape }}</dt>
+          <dd>{{ definition[1] | escape }}</dd>
+        {% endfor %}
+      </dl>
+    </section>
+    <section class="history-section">
+      <h2>Comparação histórica</h2>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Run</th>
+              <th>Estado</th>
+              <th>Listagens</th>
+              <th>Grupos de licença</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in r.summary.historical_comparisons %}
+              <tr>
+                <td>{{ row.run_id | escape }}</td>
+                <td>{{ row.status | escape }}</td>
+                <td>{{ row.metrics.listings | default: '—' | escape }}</td>
+                <td>{{ row.metrics.licence_groups | default: '—' | escape }}</td>
+              </tr>
+            {% else %}
+              <tr>
+                <td colspan="4">Sem runs anteriores.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p>Comparações incompatíveis são identificadas quando a versão da metodologia muda.</p>
+    </section>
+  </body>
+</html>

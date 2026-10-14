@@ -31,16 +31,14 @@ namespace :analysis do
   desc "Analyse local sources with detailed outputs (no downloads)"
   task :local do
     require_relative "lib/alojamento_local"
-    result = AlojamentoLocal::Analysis.run(mode: "local",
-      generate_pdf: ENV["GENERATE_PDF"] == "1")
+    result = AlojamentoLocal::Analysis.run(mode: "local")
     print_analysis_result(result)
   end
 
   desc "Analyse local sources with public outputs (no downloads)"
   task :public do
     require_relative "lib/alojamento_local"
-    result = AlojamentoLocal::Analysis.run(mode: "public",
-      generate_pdf: ENV["GENERATE_PDF"] == "1")
+    result = AlojamentoLocal::Analysis.run(mode: "public")
     print_analysis_result(result)
   end
 end
@@ -70,5 +68,14 @@ namespace :site do
   desc "Build the site and capture screenshots (optional page path)"
   task :screenshots, [:page] => :build do |_task, args|
     sh "node", "scripts/capture_homepage.mjs", args[:page] || "index.html"
+  end
+end
+
+namespace :report do
+  desc "Build standalone HTML and PDF from a public or local run (DESTINATION overrides output)"
+  task :build, [:run_dir] do |_task, args|
+    require_relative "lib/alojamento_local"
+    raise "Usage: rake 'report:build[run_dir]'" unless args[:run_dir]
+    puts AlojamentoLocal::SiteBuilder.new.build(run_dir: args[:run_dir], destination: ENV["DESTINATION"]).fetch(:path)
   end
 end

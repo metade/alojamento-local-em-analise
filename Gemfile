@@ -7,3 +7,5 @@ gem "standard"
 gem "jekyll"
 gem "rake"
 gem "zeitwerk"
+
+gem "wkhtmltopdf-binary", "~> 0.12.6"

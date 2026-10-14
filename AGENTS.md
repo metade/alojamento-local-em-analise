@@ -43,7 +43,7 @@ data/snapshots/<airbnb-snapshot-date>__<official-download-date>/
 
 Public outputs use one folder per dated source pair. Reanalysis validates new outputs before replacing that folder and its history rows; Git retains previously committed versions. Other date pairs remain unchanged. Local runs remain immutable. Each analysis invocation recalculates. `REUSE_EXISTING` is no longer used. Reanalysis replaces public outputs for the same dated source pair after validation; repeated local analysis creates a preserved sibling rerun. Changed source hashes for an existing public date pair remain rejected.
 
-Local runs use distinct names such as `listings_detailed.csv`, `licence_groups_detailed.csv`, `metadata_local.json`, `summary_local.json`, and `report_local.html`; they may contain diagnostic fields and are ignored by Git. Public runs contain only authoritative `snapshot.json` (schema 6.0.0) and `report.html`. No separate CSV/JSON downloads are generated. The loader also reads consolidated schema 5.0.0 without its former exports and legacy split-file schema 4.0.0 with supported registration metrics; a present consolidated document is always authoritative. Publication validates its schema, provenance and aggregates. Existing public source hashes are verified before replacing a dated run. Set `GENERATE_PDF=1` on either analysis task to create optional `report.pdf` from that run's HTML: `report.html` publicly or `report_local.html` locally. The writer tries `wkhtmltopdf`, then `weasyprint` if needed; install a converter to generate PDFs. Public history in `data/history/` keeps the current summary and auxiliary rows for each dated source pair, replacing only that pair on reanalysis. Local history in `data/private/history/` is append-only.
+Local runs contain the same aggregate `snapshot.json` schema with local mode and rerun IDs, plus `listings_detailed.csv` and `licence_groups_detailed.csv` for diagnostics. Local runs are ignored by Git. Public runs contain only authoritative `snapshot.json` (schema 6.0.0). No separate CSV/JSON downloads are generated. The loader also reads consolidated schema 5.0.0 without its former exports and legacy split-file schema 4.0.0 with supported registration metrics; a present consolidated document is always authoritative. Publication validates its schema, provenance and aggregates. Existing public source hashes are verified before replacing a dated run. Analysis is data-only. `site:build` and `report:build[run_dir]` always generate completed HTML and PDF using the bundled `wkhtmltopdf-binary`; there is no fallback. Standalone outputs default to `tmp/reports/public/<run-id>/` or `tmp/reports/local/<run-id>/`, overridden by `DESTINATION`. Report destinations must be separate output directories. Local input directories remain immutable; older local runs without `snapshot.json` require a new analysis rerun. Public history in `data/history/` keeps the current summary and auxiliary rows for each dated source pair, replacing only that pair on reanalysis. Local history in `data/private/history/` is append-only.
 
 Run the full test suite (`bundle exec rake` also runs it by default):
 
@@ -84,17 +84,33 @@ Historical comparisons are generated only for metrics with the same methodology 
 
 ## Analysis architecture
 
-`Analysis.run` is the orchestration entry point. It validates the mode, prepares sources, selects the destination, calculates results, and generates data, HTML and optional PDF inside the publication step. It returns `{run_id:, path:, summary:}`. Supply both source paths or neither; omitting them selects the latest dated local pair. There is no separate `Runner` or facade for internal helpers.
+`Analysis.run` is the orchestration entry point. It validates the mode, prepares sources, selects the destination, calculates results, and generates data inside the publication step. It returns `{run_id:, path:, summary:}`. Supply both source paths or neither; omitting them selects the latest dated local pair. There is no separate `Runner` or facade for internal helpers.
 
 - `Analysis::PreparedSources::Pair` owns source selection, preparation, dates, URLs, initial hashes, byte-change verification and the base source-date `identifier`. Local rerun suffixes depend on output-directory state and remain in `Analysis`.
 - `Analysis::Classifier` produces detailed classified listing rows from that prepared pair. `Aggregates`, `AnnouncementCounts` and `RegistrationMetrics` calculate their respective aggregates without selecting or downloading sources.
-- `Analysis::Result` takes `sources`, `run_id` and `mode`; it owns classified listings, aggregates, summary and run metadata. Its `public_snapshot` builds and validates the existing immutable `PublicSnapshot` representation. The matched `official_register_date` is derived from classified listings here; the official download date belongs to source provenance.
-- `Analysis::OutputWriter` is an instance holding a result and output path. Its generation methods own mode-specific files, report arguments and PDF input selection; serialization helpers are private.
+- `Analysis::Result` takes `sources`, `run_id` and `mode`; it owns classified listings, aggregates, summary and run metadata. Its `snapshot` builds and validates the existing immutable `PublicSnapshot` representation. The matched `official_register_date` is derived from classified listings here; the official download date belongs to source provenance.
+- `Analysis::OutputWriter` is an instance holding a result and output path. Its generation methods own the shared snapshot document and local diagnostic CSVs; serialization helpers are private.
 - `Analysis::History` owns comparisons and history CSV operations. `Analysis::PublicPublisher` stages and validates the public run and its histories, installs them together, rolls back failures or interruptions, and cleans staging files.
 
 Use the responsible collaborator directly in scripts and focused tests rather than adding forwarding methods to `Analysis`. Keep the high-level sequence readable in `Analysis.run`, with setup details in private helpers. Structural refactors preserve the synthetic fixture's analytical results and output contents.
 
-Reports are still rendered by `Report` in Ruby during analysis. `site:build` copies them into `_site/runs/<run-id>/`; it does not regenerate reports or PDFs and does not modify versioned snapshots. Moving report rendering into shared Jekyll templates is deferred in [TODO.md](TODO.md).
+Reports share the complete Jekyll page `site/report.html`, with `layout: null`.
+Analysis writes the same `snapshot.json` fields and schema for public and local
+runs; local metadata retains local mode and rerun IDs. Only public runs enter the
+site. `SiteBuilder` runs Jekyll using the normal site source; the report generator
+loads snapshots through `PublicSnapshot::Loader` and creates pages before rendering.
+After Jekyll writes HTML, `ReportPdf` converts those files using bundled wkhtmltopdf.
+`report:build` uses the same build path with only report pages enabled. Presentation
+defaults and bar widths belong in the page. `SiteChecker` verifies output files
+and report/download links. Jekyll handles Liquid syntax errors. Data and privacy
+validation belong to the publication audit; report tests cover calculations,
+escaping, historical defaults and equivalent rendering between build modes.
+Builds write directly to their destination; failures abort and may leave partial
+outputs. Source snapshots and histories remain unchanged. Data publication still
+uses `Analysis::PublicPublisher` with validation and rollback. Stored historical
+reports are retained but ignored during builds. Standalone public builds copy
+only allowlisted data files; local builds expose no diagnostic downloads.
+Unsupported archives retain data downloads but require verified reanalysis for reports.
 
 ## Matching and classification
 

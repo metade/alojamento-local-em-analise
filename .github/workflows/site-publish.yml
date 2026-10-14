@@ -31,6 +31,8 @@ jobs:
         with:
           node-version: '22'
           cache: npm
+      - name: Instalar bibliotecas PDF, fontes e ferramentas de inspeção
+        run: sudo apt-get update && sudo apt-get install -y libxrender1 libfontconfig1 libxext6 fonts-dejavu-core poppler-utils
       - name: Instalar ferramentas frontend
         run: npm ci
       - name: Verificar formatação dos templates
@@ -45,6 +47,11 @@ jobs:
         run: bundle exec rake site:check
       - name: Gate do artefacto de publicação
         run: bundle exec ruby scripts/audit_publication.rb --artifact _site
+      - name: Inspecionar PDFs gerados
+        run: |
+          for pdf in _site/runs/*/report.pdf; do
+            pdfinfo "$pdf" > /dev/null
+          done
       - name: Upload do site sanitizado
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
         with:

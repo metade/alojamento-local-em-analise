@@ -64,23 +64,28 @@ data/snapshots/<airbnb-snapshot-date>__<official-download-date>/
 
 Existe uma pasta pública por par de datas. Uma reanálise valida os novos outputs antes de substituir essa pasta e as suas linhas históricas. Os outros pares de datas permanecem iguais; o Git conserva as versões anteriormente commitadas. Os runs locais continuam imutáveis.
 
-Cada novo run público contém apenas:
+Cada novo run público contém apenas `snapshot.json`, o documento agregado
+autoritativo com schema 6.0.0. A análise 3.6.0 usa o mesmo documento agregado nos runs públicos e locais,
+sem alterar metodologia, schema ou valores analíticos. Os HTML/PDF anteriormente
+commitados permanecem no arquivo, mas o site gera sempre relatórios novos.
 
-- `snapshot.json` — documento agregado autoritativo, com schema 6.0.0;
-- `report.html` — relatório autónomo em português.
+Para construir um relatório autónomo, sem descarregar fontes nem recalcular:
 
-O PDF é uma derivação opcional do relatório. CSV e JSON separados não são
-gerados nem publicados nos novos runs. Datas, URLs, hashes e versões ficam no
-campo `metadata` do documento; resumo, grupos, anúncios por freguesia e
-classificação, totais por freguesia e métricas de registo estão no mesmo ficheiro.
+```bash
+bundle exec rake 'report:build[data/snapshots/<run_id>]'
+bundle exec rake 'report:build[data/private/<run_id>]'
+```
 
-Para regenerar apenas o relatório de um snapshot existente, execute
-`bundle exec ruby scripts/regenerate_public_report.rb data/snapshots/<run_id>`.
-O script reutiliza as métricas de registo guardadas, valida-as e verifica a
-proveniência e os totais municipais antes de substituir `report.html`. Não
-descarrega fontes nem recalcula a análise. Snapshots sem métricas compatíveis
-exigem reanálise; a regeneração falha sem alterar o relatório existente. Um PDF
-existente não é atualizado por este comando.
+Os destinos por omissão são `tmp/reports/public/<run_id>/` e
+`tmp/reports/local/<run_id>/`. Use `DESTINATION=...` para escolher outro destino.
+O destino deve ser um diretório de output separado do run de entrada.
+Os builds não alteram snapshots ou históricos. Os diretórios locais permanecem
+imutáveis. Runs locais novos incluem `snapshot.json` com os mesmos campos e
+schema dos públicos, com modo local e, quando necessário, um ID de rerun;
+conservam também os dois CSVs detalhados para diagnóstico. O Jekyll lê apenas
+o snapshot. Runs locais antigos sem `snapshot.json` exigem uma nova análise local.
+Arquivos sem métricas compatíveis exigem reanálise com fontes verificadas e não
+recebem links para relatórios gerados.
 
 A regeneração e a construção do site usam `PublicSnapshot::Loader`, também
 usado para validar os outputs antes da publicação de uma análise. Nos novos
@@ -92,8 +97,7 @@ imutável, com chaves string, independentemente do armazenamento.
 
 A regeneração do relatório e o site leem exclusivamente `snapshot.json` nos runs consolidados.
 A publicação valida o documento, a proveniência e a coerência dos agregados.
-Cada análise pública recalcula os resultados e gera `snapshot.json` e
-`report.html`. Antes de substituir um par já publicado, verifica os hashes
+Cada análise pública recalcula os resultados e gera `snapshot.json`. Antes de substituir um par já publicado, verifica os hashes
 das fontes existentes e valida os novos outputs.
 Um documento inválido ou de versão incompatível faz a leitura falhar; nunca
 se tenta reconstruí-lo de ficheiros separados.
@@ -129,22 +133,23 @@ Os runs de desenvolvimento dos restantes pares e as respetivas linhas de
 histórico foram removidos da árvore atual. As versões commitadas continuam
 recuperáveis pelo Git; as fontes locais e os backups foram preservados.
 
-O histórico público em `data/history/summary.csv` mantém uma linha atual por par de datas. O gráfico de distâncias do site usa `data/history/distance_ranges.csv`: cada run público novo acrescenta quatro contagens agregadas de números de licença, sem coordenadas nem números de licença individuais. Para preencher este agregado num run público anterior sem alterar o snapshot, use `bundle exec ruby scripts/backfill_distance_ranges.rb <run_id>` com os ficheiros fonte originais; o script verifica os hashes do metadata antes de escrever. Uma reanálise substitui apenas as linhas históricas do mesmo par de datas, incluindo os agregados de distâncias e regiões. Para gerar também um PDF derivado, instale `wkhtmltopdf` ou `weasyprint` e execute:
+O histórico público em `data/history/summary.csv` mantém uma linha atual por par de datas. O gráfico de distâncias do site usa `data/history/distance_ranges.csv`: cada run público novo acrescenta quatro contagens agregadas de números de licença, sem coordenadas nem números de licença individuais. Para preencher este agregado num run público anterior sem alterar o snapshot, use `bundle exec ruby scripts/backfill_distance_ranges.rb <run_id>` com os ficheiros fonte originais; o script verifica os hashes do metadata antes de escrever. Uma reanálise substitui apenas as linhas históricas do mesmo par de datas, incluindo os agregados de distâncias e regiões.
 
-```bash
-GENERATE_PDF=1 bundle exec rake analysis:public
-GENERATE_PDF=1 bundle exec rake analysis:local
-```
-
-O PDF chama-se `report.pdf` nos dois modos. No modo público deriva de
-`report.html`; no modo local, de `report_local.html`. O writer tenta
-`wkhtmltopdf` e, se necessário, `weasyprint`.
+Todos os builds de relatórios e do site geram HTML completo e depois PDF.
+`report.html` é o relatório público; `report_local.html` é o local; o PDF é
+sempre `report.pdf`. O conversor `wkhtmltopdf-binary` faz parte do bundle;
+execute `bundle install`. Em Ubuntu, instale `libxrender1`, `libfontconfig1`,
+`libxext6` e fontes (por exemplo, `fonts-dejavu-core`). Não há conversor alternativo.
+Os builds escrevem diretamente no diretório de output. Uma falha interrompe
+o build e pode deixar esse diretório incompleto; execute novamente para o reconstruir.
+Os snapshots e históricos de entrada não são alterados. A publicação dos dados
+pela análise mantém a sua validação e rollback antes da substituição.
 
 ### Organização da análise
 
 `Analysis.run` descreve a sequência: preparar fontes e destino, calcular o
-resultado, gerar dados e relatório, gerar o PDF se pedido e publicar. Recebe
-os dois caminhos de fontes ou nenhum, o modo e as opções de destino/PDF;
+resultado, gerar dados e publicar. Recebe
+os dois caminhos de fontes ou nenhum, o modo e as opções de destino;
 devolve `{run_id:, path:, summary:}`. Sem caminhos explícitos, seleciona o par
 local datado mais recente. Não existe uma classe `Runner` separada.
 
@@ -156,7 +161,7 @@ As responsabilidades estão em objetos e módulos de `Analysis`:
 | `Classifier` | Linhas detalhadas com correspondências e classificações |
 | `Aggregates`, `AnnouncementCounts`, `RegistrationMetrics` | Agregados de anúncios, grupos, freguesias e métricas de conjuntos |
 | `Result` | Resultado calculado, resumo, metadata e construção do `PublicSnapshot` validado |
-| `OutputWriter` | Escrita dos dados, relatório HTML e PDF opcional a partir de um resultado e destino |
+| `OutputWriter` | Escrita do snapshot e dos CSVs detalhados locais a partir de um resultado e destino |
 | `History` | Comparações e linhas históricas |
 | `PublicPublisher` | Staging, validação, instalação conjunta do snapshot e histórico, rollback e limpeza |
 
@@ -171,9 +176,17 @@ A reorganização preserva metodologia, schema, agregados e os outputs da
 fixture sintética. Scripts e testes específicos usam diretamente o componente
 responsável; `Analysis` mantém apenas `run` como interface pública.
 
-Os relatórios ainda são montados por `Report` em Ruby durante a análise. A
-migração para templates Jekyll partilhados entre o site e um build de relatório
-isolado está planeada em [TODO.md](TODO.md).
+O processo dos relatórios tem três passos: a análise escreve `snapshot.json`;
+o gerador Jekyll valida e usa esse documento na página do relatório; após o
+Jekyll escrever o HTML, `ReportPdf` converte esse ficheiro em PDF no mesmo destino.
+`site:build` e `report:build` usam o mesmo `SiteBuilder`, a mesma fonte Jekyll
+e o mesmo gerador. O modo de relatório autónomo publica apenas o relatório e,
+quando público, os downloads agregados; não compila o CSS das páginas editoriais.
+A página Jekyll completa `site/report.html`, com `layout: null`, é partilhada
+pelos builds isolados e pelo site. O CSS está incorporado na página, sem fontes,
+scripts ou imagens externas: o HTML funciona offline. Datas, hashes SHA-256,
+versões e proveniência Git ficam visíveis. O site gera HTML/PDF em
+`_site/runs/<run_id>/`, preservando os URLs publicados e os downloads de dados.
 
 ## Site público
 
@@ -230,11 +243,16 @@ Jekyll escrever as páginas. Assim, `bundle exec jekyll build` e os rebuilds de
 ter Node e as dependências de `npm ci` instalados; uma falha na compilação faz
 falhar o build. `npm run site:css` continua disponível para compilar apenas o CSS.
 
+`site:check` verifica os ficheiros gerados e links para relatórios e downloads.
+O Jekyll verifica a sintaxe Liquid. A auditoria de publicação valida os dados e
+a privacidade; os testes do relatório verificam cálculos, escaping, defaults
+históricos e renderização equivalente entre os modos de build.
+
 O resultado fica em `_site/` e inclui as páginas editoriais e de freguesias,
-`snapshot.json`, relatórios HTML, PDFs existentes, licença e avisos de atribuição.
+`snapshot.json`, relatórios HTML e PDFs gerados, licença e avisos de atribuição.
 As exportações agregadas de snapshots legados mantêm os seus caminhos antigos.
-Os relatórios são copiados para `_site/runs/<run_id>/`, sem regeneração de HTML
-ou PDF e sem alterar snapshots versionados. Datasets brutos,
+O build gera os relatórios em `_site/runs/<run_id>/`, primeiro o HTML e depois
+o PDF, sem alterar snapshots versionados. Datasets brutos,
 resultados locais e caches não são copiados. O diretório `_site/` pode ser usado
 como artefacto de um deployment estático. O workflow mensal constrói e
 valida esse diretório antes de o publicar no GitHub Pages.

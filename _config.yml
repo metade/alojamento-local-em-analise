@@ -5,7 +5,6 @@ destination: _site
 baseurl: ""
 keep_files:
   - assets/story.css
-  - runs
   - LICENSE
   - NOTICE
 exclude:
@@ -14,3 +13,8 @@ exclude:
   - README.md
   - Gemfile
   - Gemfile.lock
+
+strict_front_matter: true
+liquid:
+  error_mode: strict
+  strict_filters: true

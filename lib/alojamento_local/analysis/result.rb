@@ -29,15 +29,11 @@ module AlojamentoLocal
         @licence_group_aggregates = Aggregates.public_group_rows(licence_groups)
       end
 
-      def report_arguments
-        [metadata, summary, licence_group_aggregates, announcements_by_parish_and_classification, registration_metrics]
-      end
-
-      def public_snapshot
+      def snapshot
         inputs = JSON.parse(JSON.generate({metadata: metadata, summary: summary, groups: licence_group_aggregates,
           announcements: announcements_by_parish_and_classification, parishes: parish_totals, metrics: registration_metrics}))
         snapshot = PublicSnapshot.from_legacy(**inputs.transform_keys(&:to_sym))
-        PublicSnapshot::Validator.new.validate!(snapshot, expected_run_id: metadata.fetch(:run_id), schema: PublicSnapshot::SCHEMA_VERSION)
+        PublicSnapshot::Validator.new.validate!(snapshot, expected_run_id: metadata.fetch(:run_id), schema: PublicSnapshot::SCHEMA_VERSION, local: @mode == "local")
         snapshot
       end
 

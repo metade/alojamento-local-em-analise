@@ -3,7 +3,7 @@ require "json"
 require "date"
 
 module AlojamentoLocal
-  # Storage-independent, immutable public data. Aggregate counts are integers;
+  # Storage-independent, immutable aggregate data. Aggregate counts are integers;
   # identifiable announcement counts are separate from distinct number sets.
   class PublicSnapshot
     SCHEMA_VERSION = "6.0.0"
@@ -21,7 +21,7 @@ module AlojamentoLocal
       "listings.csv" => "announcements_by_parish_and_classification",
       "freguesias.csv" => "parish_totals"
     }.freeze
-    REQUIRED_FILES = [FILE, "report.html"].freeze
+    REQUIRED_FILES = [FILE].freeze
     attr_reader(*FIELDS.map(&:to_sym))
 
     def self.rename_counts(rows, mapping = COUNT_NAMES)
@@ -64,13 +64,6 @@ module AlojamentoLocal
 
     def published_announcement_rows
       legacy_rows("announcements_by_parish_and_classification").map { |row| row.transform_values(&:to_s) }
-    end
-
-    def report_arguments
-      [metadata, summary, legacy_rows("licence_group_aggregates"),
-        legacy_rows("announcements_by_parish_and_classification"), registration_metrics].map do |value|
-        JSON.parse(JSON.generate(value), symbolize_names: true)
-      end
     end
 
     private
@@ -124,8 +117,8 @@ module AlojamentoLocal
           Analysis::RegistrationMetrics::SUPPORTED_METHODOLOGY_VERSIONS.include?(data["methodology_version"])
       end
 
-      def load(path, expected_run_id: File.basename(path))
-        @snapshots[[path, expected_run_id]] ||= begin
+      def load(path, expected_run_id: File.basename(path), local: false)
+        @snapshots[[path, expected_run_id, local]] ||= begin
           if File.exist?(File.join(path, FILE))
             data = document(path)
             snapshot = PublicSnapshot.from_document(data)
@@ -134,7 +127,7 @@ module AlojamentoLocal
             snapshot = read_legacy(path)
             schema = LEGACY_SCHEMA_VERSION
           end
-          Validator.new.validate!(snapshot, expected_run_id: expected_run_id, schema: schema)
+          Validator.new.validate!(snapshot, expected_run_id: expected_run_id, schema: schema, local: local)
         end
       end
 
@@ -165,7 +158,7 @@ module AlojamentoLocal
     end
 
     class Validator
-      def validate!(snapshot, expected_run_id:, schema:)
+      def validate!(snapshot, expected_run_id:, schema:, local: false)
         meta, summary, metrics = snapshot.metadata, snapshot.summary, snapshot.registration_metrics
         metadata_fields = %w[run_id source_urls source_dates source_files git_commit analysis_version methodology_version output_schema_version mode]
         summary_fields = %w[run_id source_dates methodology_version listings licence_groups official_registers_lisbon establishment_estimate classifications mode generated_at]
@@ -180,8 +173,12 @@ module AlojamentoLocal
             values.values.all? { |value| value.is_a?(Integer) && value >= 0 }
         end
         raise "Unsupported public output schema" unless meta.fetch("output_schema_version") == schema
-        raise "Invalid public run" unless meta.fetch("run_id") == expected_run_id && expected_run_id.match?(/\A\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}\z/)
-        raise "Invalid public mode" unless meta.fetch("mode") == "public" && summary.fetch("mode") == "public"
+        # Only local reports may use immutable rerun identifiers; public loading
+        # always retains the dated-pair identifier and public mode requirements.
+        base_run_id = local ? expected_run_id.sub(/__rerun-\d{8}T\d{12}(?:-\d+)?\z/, "") : expected_run_id
+        mode = local ? "local" : "public"
+        raise "Invalid snapshot run" unless meta.fetch("run_id") == expected_run_id && base_run_id.match?(/\A\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}\z/)
+        raise "Invalid snapshot mode" unless meta.fetch("mode") == mode && summary.fetch("mode") == mode
         raise "Public metadata contains a local source path" if meta.dig("source_files", "airbnb", "path") || meta.dig("source_files", "official", "path")
         raise "Forbidden field in public output" if meta.to_s.match?(/host_id|listing_url|licensa_raw|latitude|longitude|official_address/i)
         Analysis::RegistrationMetrics.validate!(JSON.parse(JSON.generate(metrics), symbolize_names: true))
@@ -194,7 +191,7 @@ module AlojamentoLocal
         summary.fetch("generated_at")
         dates = meta.fetch("source_dates")
         dates.each_value { |date| Date.iso8601(date) unless date.nil? }
-        raise "Run dates differ" unless expected_run_id == "#{dates.fetch('airbnb_snapshot_date')}__#{dates.fetch('official_register_download_date')}"
+        raise "Run dates differ" unless base_run_id == "#{dates.fetch('airbnb_snapshot_date')}__#{dates.fetch('official_register_download_date')}"
         %w[airbnb official].each { |source| raise "Missing source URL" unless meta.fetch("source_urls").fetch(source).match?(%r{\Ahttps?://}) }
         %w[analysis_version methodology_version].each { |key| Gem::Version.new(meta.fetch(key)) }
         TABLES.each do |file, field|

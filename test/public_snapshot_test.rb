@@ -37,7 +37,7 @@ class PublicSnapshotTest < Minitest::Test
     File.write(File.join(path, file), table.to_csv)
   end
 
-  def test_typed_units_immutable_inputs_and_byte_identical_report
+  def test_typed_units_and_immutable_inputs
     with_snapshot do |_, path|
       loader = AlojamentoLocal::PublicSnapshot::Loader.new
       snapshot = loader.load(path)
@@ -51,7 +51,6 @@ class PublicSnapshotTest < Minitest::Test
       refute_equal 28, snapshot.parish_totals.sum { |row| row.fetch("estimated_establishments") }
       refute_equal snapshot.registration_metrics.fetch("rows").first.fetch("airbnb"), snapshot.registration_metrics.fetch("rows").drop(1).sum { |row| row.fetch("airbnb") }
       assert_raises(FrozenError) { snapshot.registration_metrics.fetch("rows").first["airbnb"] = 0 }
-      assert_equal File.read(File.join(path, "report.html")), AlojamentoLocal::Report.complete_html(*snapshot.report_arguments)
       assert_equal CSV.read(File.join(path, "listings.csv"), headers: true).map(&:to_h), snapshot.published_announcement_rows
     end
   end
@@ -80,9 +79,8 @@ class PublicSnapshotTest < Minitest::Test
         builder = AlojamentoLocal::SiteData.new(snapshots: root)
         site_error = assert_raises(RuntimeError, name) { builder.site_data(builder.public_runs) }
         assert_equal loader_error.message, site_error.message, name
-        output, status = Open3.capture2e(RbConfig.ruby, File.expand_path("../scripts/regenerate_public_report.rb", __dir__), path)
-        refute status.success?, name
-        assert_includes output, loader_error.message, name
+        report_error = assert_raises(RuntimeError, name) { AlojamentoLocal::SiteBuilder.new.build(run_dir: path, destination: File.join(root, "report-output")) }
+        assert_equal loader_error.message, report_error.message
         assert_equal before, Dir.children(path).to_h { |file| [file, File.binread(File.join(path, file))] }, name
       end
     end
@@ -120,26 +118,16 @@ class PublicSnapshotTest < Minitest::Test
       quotes: File.expand_path("fixtures/pipeline/sources/quotes.json", __dir__))
   end
 
-  def test_old_and_new_formats_have_equivalent_report_contents_and_site_data
+  def test_old_and_new_formats_have_equivalent_snapshot_and_site_data
     with_snapshot do |root, path|
       old = AlojamentoLocal::PublicSnapshot::Loader.new.load(path)
       old_site = builder(root).site_data([path])
-      original_report = AlojamentoLocal::Report.complete_html(*old.report_arguments)
       new_snapshot = consolidate(path)
       new_site = builder(root).site_data([path])
       old_site = JSON.parse(JSON.generate(old_site))
       old_site["metadata"]["output_schema_version"] = "6.0.0"
       old_site["metadata"]["analysis_version"] = AlojamentoLocal::ANALYSIS_VERSION
-      # Normalize the intentional version/reference changes, preserving tables.
-      original_report = original_report.sub("análise 3.3.0", "análise #{AlojamentoLocal::ANALYSIS_VERSION}")
-        .sub("<code>metadata.json</code>", "<a href='snapshot.json'>snapshot.json</a>")
-        .sub("unidades e definições em registration_metrics.json", "unidades e definições em snapshot.json")
       assert_equal old_site, new_site
-      assert_equal original_report, AlojamentoLocal::Report.complete_html(*new_snapshot.report_arguments)
-      File.write(File.join(path, "report.html"), "Incomplete report")
-      output, status = Open3.capture2e(RbConfig.ruby, File.expand_path("../scripts/regenerate_public_report.rb", __dir__), path)
-      assert status.success?, output
-      assert_equal original_report, File.read(File.join(path, "report.html"))
       (AlojamentoLocal::PublicSnapshot::FIELDS - ["metadata"]).each do |field|
         assert_equal old.public_send(field), new_snapshot.public_send(field), field
       end
@@ -163,6 +151,8 @@ class PublicSnapshotTest < Minitest::Test
   def test_invalid_consolidated_documents_never_fall_back_to_valid_exports
     mutations = {
       "version" => ->(data) { data["schema_version"] = "99.0.0" },
+      "local mode" => ->(data) { %w[metadata summary].each { |field| data[field]["mode"] = "local" } },
+      "local rerun identifier" => ->(data) { %w[metadata summary registration_metrics].each { |field| data[field]["run_id"] += "__rerun-20241014T123456123456" } },
       "unexpected field" => ->(data) { data["host_id"] = 123 },
       "unexpected summary field" => ->(data) { data["summary"]["name"] = "Private name" },
       "wrong source" => ->(data) { data["registration_metrics"]["source_files"]["official"]["sha256"] = "0" * 64 },
@@ -177,8 +167,10 @@ class PublicSnapshotTest < Minitest::Test
         before = File.binread(File.join(path, "report.html"))
         assert_raises(RuntimeError, name) { AlojamentoLocal::PublicSnapshot::Loader.new.load(path) }
         assert_raises(RuntimeError, name) { builder(root).site_data([path]) }
-        output, status = Open3.capture2e(RbConfig.ruby, File.expand_path("../scripts/regenerate_public_report.rb", __dir__), path)
-        refute status.success?, output
+        # A local snapshot is valid for report:build, but cannot enter the public site.
+        unless name == "local mode"
+          assert_raises(RuntimeError) { AlojamentoLocal::SiteBuilder.new.build(run_dir: path, destination: File.join(root, "report-output")) }
+        end
         assert_equal before, File.binread(File.join(path, "report.html"))
       end
     end
@@ -199,7 +191,7 @@ class PublicSnapshotTest < Minitest::Test
       AlojamentoLocal::Analysis::PublicPublisher.verify_public_sources!(path, hashes)
       FileUtils.rm(File.join(path, "report.html"))
       AlojamentoLocal::Analysis::PublicPublisher.verify_public_sources!(path, hashes)
-      File.write(File.join(path, "report.html"), AlojamentoLocal::Report.complete_html(*snapshot.report_arguments))
+      File.write(File.join(path, "report.html"), "Historical report")
       mutate_json(path, "snapshot.json") { |data| data["summary"]["listings"] += 1 }
       assert_raises(RuntimeError) { AlojamentoLocal::PublicSnapshot::Loader.new.load(path) }
       assert_raises(RuntimeError) { AlojamentoLocal::Analysis::PublicPublisher.verify_public_sources!(path, ["0" * 64, hashes.last]) }

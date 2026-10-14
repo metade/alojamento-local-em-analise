@@ -15,6 +15,7 @@ class DistrictPage < Jekyll::PageWithoutAFile
 end
 
 Jekyll::Hooks.register :site, :post_read do |site|
+  next if site.config["report_only"]
   site.data.fetch("site", {}).fetch("districts", []).each do |district|
     site.pages << DistrictPage.new(site, district)
   end

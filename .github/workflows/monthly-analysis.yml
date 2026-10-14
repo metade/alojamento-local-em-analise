@@ -26,6 +26,8 @@ jobs:
         with:
           node-version: '22'
           cache: npm
+      - name: Instalar bibliotecas PDF, fontes e ferramentas de inspeção
+        run: sudo apt-get update && sudo apt-get install -y libxrender1 libfontconfig1 libxext6 fonts-dejavu-core poppler-utils
       - name: Instalar ferramentas frontend
         run: npm ci
       - name: Verificar formatação dos templates
@@ -83,10 +85,6 @@ jobs:
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add data/snapshots data/history
           bundle exec ruby scripts/audit_publication.rb
-      - name: Registar outputs públicos no histórico Git
-        run: |
-          git diff --cached --quiet || git commit -m "Atualiza análise mensal"
-          git push
       - name: Construir site público
         env:
           JEKYLL_BASEURL: /alojamento-local-em-analise
@@ -96,6 +94,15 @@ jobs:
         run: bundle exec rake site:check
       - name: Gate do artefacto de publicação
         run: bundle exec ruby scripts/audit_publication.rb --artifact _site
+      - name: Inspecionar PDFs gerados
+        run: |
+          for pdf in _site/runs/*/report.pdf; do
+            pdfinfo "$pdf" > /dev/null
+          done
+      - name: Registar outputs públicos no histórico Git
+        run: |
+          git diff --cached --quiet || git commit -m "Atualiza análise mensal"
+          git push
       - name: Upload do site sanitizado
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
         with:

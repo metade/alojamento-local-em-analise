@@ -16,7 +16,7 @@ class PipelineRegressionTest < Minitest::Test
         relative = path.delete_prefix(PipelineFixture::EXPECTED + "/")
         expected[relative] = File.read(path)
       end
-      assert_equal 14, expected.size, "The baseline must contain public, local, history and site outputs"
+      assert_equal 9, expected.size, "The baseline must contain public, local, history and site outputs"
       assert_equal expected.keys.sort, actual.keys.sort, "Output files added or removed"
       expected.each do |path, content|
         assert_equal content, actual.fetch(path), "Pipeline output changed: #{path}"
@@ -71,6 +71,13 @@ class PipelineRegressionTest < Minitest::Test
       FileUtils.cp(File.expand_path("../NOTICE", __dir__), File.join(artifact, "NOTICE"))
       output, status = Open3.capture2e(RbConfig.ruby, File.expand_path("../scripts/audit_publication.rb", __dir__), "--artifact", artifact)
       assert status.success?, output
+
+      private_file = File.join(artifact, "listings_detailed.csv")
+      File.write(private_file, "private diagnostics")
+      output, status = Open3.capture2e(RbConfig.ruby, File.expand_path("../scripts/audit_publication.rb", __dir__), "--artifact", artifact)
+      refute status.success?
+      assert_includes output, "dados privados no artefacto: listings_detailed.csv"
+      File.delete(private_file)
 
       document = File.join(artifact, "snapshot.json")
       data = JSON.parse(File.read(document))
