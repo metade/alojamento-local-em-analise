@@ -3,6 +3,7 @@ require "tmpdir"
 require "fileutils"
 require "open3"
 require_relative "../lib/alojamento_local"
+require_relative "support/jekyll_build"
 
 class PublicSnapshotTest < Minitest::Test
   FIXTURE = File.expand_path("fixtures/pipeline/legacy_public", __dir__)
@@ -79,7 +80,7 @@ class PublicSnapshotTest < Minitest::Test
         builder = AlojamentoLocal::SiteData.new(snapshots: root)
         site_error = assert_raises(RuntimeError, name) { builder.site_data(builder.public_runs) }
         assert_equal loader_error.message, site_error.message, name
-        report_error = assert_raises(RuntimeError, name) { AlojamentoLocal::SiteBuilder.new.build(run_dir: path, destination: File.join(root, "report-output")) }
+        report_error = assert_raises(RuntimeError, name) { JekyllBuild.build(run_dir: path, destination: File.join(root, "report-output")) }
         assert_equal loader_error.message, report_error.message
         assert_equal before, Dir.children(path).to_h { |file| [file, File.binread(File.join(path, file))] }, name
       end
@@ -169,7 +170,7 @@ class PublicSnapshotTest < Minitest::Test
         assert_raises(RuntimeError, name) { builder(root).site_data([path]) }
         # A local snapshot is valid for report:build, but cannot enter the public site.
         unless name == "local mode"
-          assert_raises(RuntimeError) { AlojamentoLocal::SiteBuilder.new.build(run_dir: path, destination: File.join(root, "report-output")) }
+          assert_raises(RuntimeError) { JekyllBuild.build(run_dir: path, destination: File.join(root, "report-output")) }
         end
         assert_equal before, File.binread(File.join(path, "report.html"))
       end

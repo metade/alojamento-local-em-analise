@@ -4,6 +4,7 @@ require "tmpdir"
 require "fileutils"
 require "json"
 require_relative "support/pipeline_fixture"
+require_relative "support/jekyll_build"
 
 class ReportBuildTest < Minitest::Test
   def files(root)
@@ -23,7 +24,7 @@ class ReportBuildTest < Minitest::Test
 
   def build(input, destination)
     AlojamentoLocal::ReportPdf.stub(:convert, method(:fake_pdf)) do
-      AlojamentoLocal::SiteBuilder.new.build(run_dir: input, destination: destination)
+      JekyllBuild.build(run_dir: input, destination: destination)
     end
   end
 
@@ -58,7 +59,7 @@ class ReportBuildTest < Minitest::Test
       before = files(root).reject { |key, _| key.start_with?("standalone/") }
       AlojamentoLocal::SiteData.stub(:new, data_builder) do
         AlojamentoLocal::ReportPdf.stub(:convert, method(:fake_pdf)) do
-          AlojamentoLocal::SiteBuilder.new.build(baseurl: "/different", destination: output)
+          JekyllBuild.build(baseurl: "/different", destination: output)
         end
       end
       assert_equal before, files(root).reject { |key, _| key.start_with?("standalone/", "rendered/") }, "Site builds must preserve snapshot inputs and histories"
@@ -164,7 +165,7 @@ class ReportBuildTest < Minitest::Test
         assert File.file?(html)
         raise "converter failed"
       }) do
-        error = assert_raises(RuntimeError) { AlojamentoLocal::SiteBuilder.new.build(run_dir: public, destination: output) }
+        error = assert_raises(RuntimeError) { JekyllBuild.build(run_dir: public, destination: output) }
         assert_equal "converter failed", error.message
       end
       assert_equal before, files(public)

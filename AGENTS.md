@@ -56,7 +56,8 @@ Ruby syntax checks:
 ```bash
 ruby -c Rakefile
 ruby -c lib/alojamento_local/analysis.rb
-ruby -c lib/alojamento_local/site_builder.rb
+ruby -c site/_plugins/site_data.rb
+ruby -c site/_plugins/report_pages.rb
 ruby -c lib/alojamento_local/site_checker.rb
 ruby -c lib/alojamento_local.rb
 ruby -c lib/alojamento_local/analysis/data.rb
@@ -70,7 +71,7 @@ The GitHub Actions workflow in `.github/workflows/monthly-analysis.yml` runs mon
 
 The `.github/workflows/site-publish.yml` workflow rebuilds and publishes the site on human pushes to `main` and through `workflow_dispatch`. It skips the automated `github-actions[bot]` / `Atualiza análise mensal` push because the monthly workflow already builds and publishes the site in that same run. Site publication is therefore separate from the data-analysis decision, while both use `bundle exec rake site:build` and the publication audit.
 
-Rake is the interface for analysis, site builds and site checks; its tasks require `lib/alojamento_local.rb` inside the task and call `Analysis.run`, `SiteBuilder` or `SiteChecker`. The entry point configures Zeitwerk to load project constants from matching file paths. Keep standard-library and gem requires explicit; do not require individual project files. `public_schema.rb` defines shared constants and is explicitly required outside the loader. `test/alojamento_local_test.rb` checks eager loading for filename/constant consistency. npm provides frontend tooling through `npm run site:css`. Use `bundle exec rake -T` to list tasks. `bundle exec rake site:build` builds from existing public snapshots without running the analysis. `bundle exec rake site:check` checks the generated site. Test files load the application in the separate process launched by `Rake::TestTask`.
+Rake is the interface for analysis, site builds and site checks; its tasks require `lib/alojamento_local.rb` inside the task and call `Analysis.run`, `SiteChecker` or the standard `jekyll build` CLI. The entry point configures Zeitwerk to load project constants from matching file paths. Keep standard-library and gem requires explicit; do not require individual project files. `public_schema.rb` defines shared constants and is explicitly required outside the loader. `test/alojamento_local_test.rb` checks eager loading for filename/constant consistency. npm provides frontend tooling through `npm run site:css`. Use `bundle exec rake -T` to list tasks. `bundle exec rake site:build` builds from existing public snapshots without running the analysis. `bundle exec rake site:check` checks the generated site. Test files load the application in the separate process launched by `Rake::TestTask`.
 
 Before committing changes to `data/snapshots/`, `data/history/`, or publication workflows, run `ruby scripts/audit_publication.rb`. Run `ruby scripts/audit_publication.rb --history` when auditing repository history. A history rewrite requires a recoverable Git backup and coordinated approval before force-pushing.
 
@@ -97,9 +98,11 @@ Use the responsible collaborator directly in scripts and focused tests rather th
 Reports share the complete Jekyll page `site/report.html`, with `layout: null`.
 Analysis writes the same `snapshot.json` fields and schema for public and local
 runs; local metadata retains local mode and rerun IDs. Only public runs enter the
-site. `SiteBuilder` runs Jekyll using the normal site source; the report generator
-loads snapshots through `PublicSnapshot::Loader` and creates pages before rendering.
-After Jekyll writes HTML, `ReportPdf` converts those files using bundled wkhtmltopdf.
+site. Normal Jekyll hooks prepare `site.data.site` in `post_read`; the report
+generator loads snapshots through `PublicSnapshot::Loader` and creates pages
+before rendering. After Jekyll writes HTML, `post_write` copies aggregate downloads
+and calls `ReportPdf` using bundled wkhtmltopdf. Rake invokes `jekyll build`, then
+checks and audits its output. Direct Jekyll builds also generate report PDFs.
 `report:build` uses the same build path with only report pages enabled. Presentation
 defaults and bar widths belong in the page. `SiteChecker` verifies output files
 and report/download links. Jekyll handles Liquid syntax errors. Data and privacy

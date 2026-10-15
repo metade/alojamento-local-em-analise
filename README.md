@@ -179,8 +179,9 @@ responsável; `Analysis` mantém apenas `run` como interface pública.
 O processo dos relatórios tem três passos: a análise escreve `snapshot.json`;
 o gerador Jekyll valida e usa esse documento na página do relatório; após o
 Jekyll escrever o HTML, `ReportPdf` converte esse ficheiro em PDF no mesmo destino.
-`site:build` e `report:build` usam o mesmo `SiteBuilder`, a mesma fonte Jekyll
-e o mesmo gerador. O modo de relatório autónomo publica apenas o relatório e,
+`site:build` e `report:build` invocam `jekyll build` com a mesma fonte e o mesmo
+gerador. Hooks normais do Jekyll preparam os dados em `post_read` e copiam os
+downloads e geram PDFs em `post_write`. O modo de relatório autónomo publica apenas o relatório e,
 quando público, os downloads agregados; não compila o CSS das páginas editoriais.
 A página Jekyll completa `site/report.html`, com `layout: null`, é partilhada
 pelos builds isolados e pelo site. O CSS está incorporado na página, sem fontes,
@@ -200,7 +201,7 @@ bundle exec rake site:build
 As tarefas do projeto são executadas pelo Rake; npm fornece as ferramentas
 frontend, incluindo a compilação de CSS. `bundle exec rake` continua a executar
 os testes por defeito. As tarefas carregam apenas o código necessário e chamam
-`Analysis.run`, `SiteBuilder` e `SiteChecker` em Ruby. O build do site usa os snapshots
+`Analysis.run` e `SiteChecker` em Ruby e `jekyll build` pela CLI. O build do site usa os snapshots
 públicos existentes; não executa a análise nem descarrega fontes.
 
 Scripts e testes carregam `lib/alojamento_local.rb`; o Zeitwerk carrega as
@@ -259,8 +260,9 @@ valida esse diretório antes de o publicar no GitHub Pages.
 
 O site é mantido como um projeto Jekyll em `site/`: layouts e includes
 partilham a estrutura HTML, as páginas Liquid tratam a narrativa editorial e
-`AlojamentoLocal::SiteBuilder` prepara os dados públicos e chama Jekyll através
-da tarefa `site:build`.
+os plugins preparam os dados públicos e os relatórios através dos geradores e
+hooks normais do Jekyll. `bundle exec jekyll build` também gera os downloads,
+CSS e PDFs; `site:build` acrescenta as verificações e a auditoria de publicação.
 
 Para rever alterações localmente, construa o artefacto e sirva `_site/`:
 

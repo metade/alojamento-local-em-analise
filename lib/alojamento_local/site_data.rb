@@ -6,11 +6,9 @@ module AlojamentoLocal
     ROOT = File.expand_path("../..", __dir__)
     SNAPSHOTS = File.join(ROOT, "data", "snapshots")
     SOURCE = File.join(ROOT, "site")
-    SITE = File.join(ROOT, "_site")
     QUOTES = File.join(ROOT, "site_content", "quotes.json")
     DISTANCE_HISTORY = File.join(ROOT, "data", "history", "distance_ranges.csv")
     OUTSIDE_REGION_HISTORY = File.join(ROOT, "data", "history", "outside_regions.csv")
-    PUBLIC_FILES = PublicSnapshot::REQUIRED_FILES
     DISTANCE_LABELS = {
       "500_m_1_km" => "500 m–1 km",
       "1_2_km" => "1–2 km",

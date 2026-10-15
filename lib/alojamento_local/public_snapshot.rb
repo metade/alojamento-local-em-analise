@@ -99,6 +99,9 @@ module AlojamentoLocal
         if File.exist?(File.join(path, FILE))
           document(path).fetch("metadata")
         else
+          if File.file?(File.join(path, "metadata_local.json"))
+            raise "Missing snapshot.json; create a new local analysis rerun to regenerate this report."
+          end
           data = load_json(File.join(path, "metadata.json"))
           raise "Missing authoritative snapshot.json" if DOCUMENT_SCHEMAS.include?(data["output_schema_version"])
           data

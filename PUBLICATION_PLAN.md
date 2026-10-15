@@ -175,7 +175,7 @@ Tarefas:
 
 Implementação concluída:
 
-- [x] `bundle exec rake site:build` chama `SiteBuilder` para montar um site estático a partir dos snapshots públicos versionados.
+- [x] `bundle exec rake site:build` invoca a CLI normal do Jekyll; os plugins preparam o site e os relatórios a partir dos snapshots públicos versionados.
 - [x] A página inicial documenta objetivo, fontes e atribuição, metodologia, limitações, aviso não jurídico, correções e datas dos snapshots.
 - [x] Cada run publicado inclui apenas HTML, CSVs agregados e metadata; `LICENSE` e `NOTICE` acompanham o site.
 - [x] O construtor não copia `data_sources/`, `data/private/` ou caches para o artefacto.

@@ -53,9 +53,12 @@ namespace :site do
   desc "Build and validate the public site from existing snapshots"
   task :build do
     require_relative "lib/alojamento_local"
-    result = AlojamentoLocal::SiteBuilder.new.build(baseurl: ENV["JEKYLL_BASEURL"])
-    warn result[:warning] if result[:warning]
-    puts "Site Jekyll criado em #{result[:path]} (#{result[:districts]} freguesias)."
+    command = ["bundle", "exec", "jekyll", "build"]
+    command.concat(["--baseurl", ENV["JEKYLL_BASEURL"]]) if ENV["JEKYLL_BASEURL"]
+    sh(*command)
+    result = AlojamentoLocal::SiteChecker.check(File.join(__dir__, "_site"))
+    sh "bundle", "exec", "ruby", "scripts/audit_publication.rb", "--artifact", "_site"
+    puts "Site Jekyll criado em _site (#{result[:districts]} freguesias)."
   end
 
   desc "Check the generated site's structure"
@@ -76,6 +79,12 @@ namespace :report do
   task :build, [:run_dir] do |_task, args|
     require_relative "lib/alojamento_local"
     raise "Usage: rake 'report:build[run_dir]'" unless args[:run_dir]
-    puts AlojamentoLocal::SiteBuilder.new.build(run_dir: args[:run_dir], destination: ENV["DESTINATION"]).fetch(:path)
+    input = File.expand_path(args[:run_dir])
+    mode = AlojamentoLocal::PublicSnapshot::Loader.new.metadata(input).fetch("mode")
+    destination = File.expand_path(ENV["DESTINATION"] || File.join("tmp", "reports", mode, File.basename(input)))
+    sh({"REPORT_RUN" => input}, "bundle", "exec", "jekyll", "build", "--destination", destination)
+    html = (mode == "local") ? "report_local.html" : "report.html"
+    AlojamentoLocal::SiteChecker.check(destination, required: [html, "report.pdf"])
+    puts destination
   end
 end
