@@ -85,16 +85,45 @@ class ReportBuildTest < Minitest::Test
     end
   end
 
-  def build_site(root, output, serving: false)
+  def build_site(root, output, serving: false, pdf_converter: method(:fake_pdf))
     builder = AlojamentoLocal::SiteData.new(snapshots: File.join(root, "public"),
       distance_history: File.join(root, "public-history", "distance_ranges.csv"),
       outside_region_history: File.join(root, "public-history", "outside_regions.csv"),
       quotes: File.join(PipelineFixture::SOURCES, "quotes.json"))
     AlojamentoLocal::SiteData.stub(:new, builder) do
-      AlojamentoLocal::ReportPdf.stub(:convert, method(:fake_pdf)) do
+      AlojamentoLocal::ReportPdf.stub(:convert, pdf_converter) do
         JekyllBuild.build(destination: output, baseurl: "/local", serving: serving)
       end
     end
+  end
+
+  def test_pdf_switch_skips_only_serving_and_hides_pdf_links
+    previous = ENV["SKIP_PDF"]
+    ENV["SKIP_PDF"] = "1"
+    with_runs do |root, public, diagnostics|
+      before = files(diagnostics)
+      output = File.join(root, "rendered")
+      build_site(root, output, serving: true)
+      File.write(File.join(output, "runs", PipelineFixture::RUN_ID, "report.pdf"), "%PDF-stale")
+      File.write(File.join(output, "private-reports", PipelineFixture::RUN_ID, "report.pdf"), "%PDF-stale")
+      build_site(root, output, serving: true, pdf_converter: ->(*) { flunk "Serving must skip PDF conversion" })
+      assert_empty Dir.glob(File.join(output, "**", "*.pdf"))
+      %w[index.html metodologia.html].each do |file|
+        refute_includes File.read(File.join(output, file)), "report.pdf"
+      end
+      private_dir = File.join(output, "private-reports", PipelineFixture::RUN_ID)
+      assert_equal %w[licence_groups_detailed.csv listings_detailed.csv report.html snapshot.json], Dir.children(private_dir).sort
+      assert_equal before, files(diagnostics)
+
+      build_site(root, output)
+      assert AlojamentoLocal::ReportPdf.valid?(File.join(output, "runs", PipelineFixture::RUN_ID, "report.pdf"))
+      assert_includes File.read(File.join(output, "index.html")), "report.pdf"
+      standalone = File.join(root, "standalone")
+      build(public, standalone)
+      assert AlojamentoLocal::ReportPdf.valid?(File.join(standalone, "report.pdf"))
+    end
+  ensure
+    ENV["SKIP_PDF"] = previous
   end
 
   def test_serving_generates_both_reports_from_the_shared_template

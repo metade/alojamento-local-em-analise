@@ -203,6 +203,16 @@ Para rever o site com os relatórios privados disponíveis:
 bundle exec jekyll serve
 ```
 
+Para desativar temporariamente os PDFs durante a revisão local:
+
+```bash
+SKIP_PDF=1 bundle exec jekyll serve
+```
+
+O HTML e os CSVs continuam disponíveis; os links para PDF ficam ocultos.
+Reinicie sem `SKIP_PDF=1` para voltar a gerar PDFs. Esta opção aplica-se apenas
+ao servidor local; os builds públicos e autónomos continuam a gerar PDFs.
+
 Abra `http://127.0.0.1:4000` (`--port` altera a porta). O Jekyll ativa
 `site.config["serving"]`: o gerador inclui os relatórios privados quando existem
 os dois CSVs do par de datas. O layout mostra o link «Relatório detalhado · uso

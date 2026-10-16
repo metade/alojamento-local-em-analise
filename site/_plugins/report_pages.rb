@@ -21,6 +21,7 @@ class SnapshotReportGenerator < Jekyll::Generator
     site.pages.delete(template)
     site.config["private_report_runs"] = []
     report_only = ENV["REPORT_RUN"]
+    site.config["skip_report_pdfs"] = !!(site.config["serving"] && !report_only && ENV["SKIP_PDF"] == "1")
     if report_only
       site.pages.clear
       site.static_files.clear
@@ -76,8 +77,14 @@ Jekyll::Hooks.register :site, :post_write, priority: :low do |site|
         FileUtils.cp(File.join(page.data.fetch("diagnostics_dir"), file), destination)
       end
     end
-    Jekyll.logger.info "Report PDF:", html
-    AlojamentoLocal::ReportPdf.convert(html, File.join(destination, "report.pdf"))
+    pdf = File.join(destination, "report.pdf")
+    if site.config["skip_report_pdfs"]
+      FileUtils.rm_f(pdf)
+      Jekyll.logger.info "Report PDF:", "skipped (SKIP_PDF=1): #{html}"
+    else
+      Jekyll.logger.info "Report PDF:", html
+      AlojamentoLocal::ReportPdf.convert(html, pdf)
+    end
   end
   unless ENV["REPORT_RUN"]
     %w[LICENSE NOTICE].each { |file| FileUtils.cp(File.join(AlojamentoLocal::SiteData::ROOT, file), site.dest) }
