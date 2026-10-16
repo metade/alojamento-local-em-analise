@@ -129,6 +129,7 @@ module AlojamentoLocal
       metrics = JSON.parse(JSON.generate(document.fetch("registration_metrics")))
       measures = metrics.fetch("rows").to_h do |row|
         row["geometry"] = Overlap.geometry(row["rnal"], row["airbnb"], row["intersection"])
+        row["overlap_labels"] = Overlap.labels(row["geometry"], row["rnal_only"], row["intersection"], row["airbnb_only"])
         row["unresolved"] = row["empty_licence"] + row["unrecognised_licence"]
         row["bubble_radius"] = row["announcements"].zero? ? 0 : (85*Math.sqrt(row["unresolved"].to_f/row["announcements"])).round(3)
         [row["geography"], row]

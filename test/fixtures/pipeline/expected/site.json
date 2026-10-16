@@ -24,6 +24,35 @@
       "y": 338.784433,
       "distance": 52.380807
     },
+    "overlap_labels": [
+      {
+        "key": "rnal",
+        "title": "Só RNAL",
+        "count": 2,
+        "target": 150.0,
+        "callout": true,
+        "x": 85,
+        "y": 330
+      },
+      {
+        "key": "common",
+        "title": "Nas duas fontes",
+        "count": 13,
+        "target": 305.188,
+        "callout": false,
+        "x": 305.188,
+        "y": 188
+      },
+      {
+        "key": "airbnb",
+        "title": "Só Airbnb",
+        "count": 5,
+        "target": 475.188,
+        "callout": true,
+        "x": 555,
+        "y": 330
+      }
+    ],
     "unresolved": 4,
     "bubble_radius": 29.155,
     "observed_unknown_parish": 1,
@@ -271,6 +300,35 @@
           "y": 473.448276,
           "distance": 306.896552
         },
+        "overlap_labels": [
+          {
+            "key": "rnal",
+            "title": "Só RNAL",
+            "count": 1,
+            "target": 166.552,
+            "callout": false,
+            "x": 166.552,
+            "y": 188
+          },
+          {
+            "key": "common",
+            "title": "Nas duas fontes",
+            "count": 0,
+            "target": 320.0,
+            "callout": true,
+            "x": 320,
+            "y": 385
+          },
+          {
+            "key": "airbnb",
+            "title": "Só Airbnb",
+            "count": 1,
+            "target": 473.448,
+            "callout": false,
+            "x": 473.448,
+            "y": 188
+          }
+        ],
         "unresolved": 0,
         "bubble_radius": 0.0
       },
@@ -315,6 +373,35 @@
           "y": 400,
           "distance": 160
         },
+        "overlap_labels": [
+          {
+            "key": "rnal",
+            "title": "Só RNAL",
+            "count": 0,
+            "target": 240.0,
+            "callout": true,
+            "x": 85,
+            "y": 330
+          },
+          {
+            "key": "common",
+            "title": "Nas duas fontes",
+            "count": 0,
+            "target": 320.0,
+            "callout": true,
+            "x": 320,
+            "y": 385
+          },
+          {
+            "key": "airbnb",
+            "title": "Só Airbnb",
+            "count": 0,
+            "target": 400.0,
+            "callout": true,
+            "x": 555,
+            "y": 330
+          }
+        ],
         "unresolved": 0,
         "bubble_radius": 0
       },
@@ -351,6 +438,35 @@
           "y": 400,
           "distance": 160
         },
+        "overlap_labels": [
+          {
+            "key": "rnal",
+            "title": "Só RNAL",
+            "count": 0,
+            "target": 240.0,
+            "callout": true,
+            "x": 85,
+            "y": 330
+          },
+          {
+            "key": "common",
+            "title": "Nas duas fontes",
+            "count": 0,
+            "target": 320.0,
+            "callout": true,
+            "x": 320,
+            "y": 385
+          },
+          {
+            "key": "airbnb",
+            "title": "Só Airbnb",
+            "count": 0,
+            "target": 400.0,
+            "callout": true,
+            "x": 555,
+            "y": 330
+          }
+        ],
         "unresolved": 0,
         "bubble_radius": 0
       },
@@ -387,6 +503,35 @@
           "y": 400,
           "distance": 160
         },
+        "overlap_labels": [
+          {
+            "key": "rnal",
+            "title": "Só RNAL",
+            "count": 0,
+            "target": 240.0,
+            "callout": true,
+            "x": 85,
+            "y": 330
+          },
+          {
+            "key": "common",
+            "title": "Nas duas fontes",
+            "count": 0,
+            "target": 320.0,
+            "callout": true,
+            "x": 320,
+            "y": 385
+          },
+          {
+            "key": "airbnb",
+            "title": "Só Airbnb",
+            "count": 0,
+            "target": 400.0,
+            "callout": true,
+            "x": 555,
+            "y": 330
+          }
+        ],
         "unresolved": 0,
         "bubble_radius": 0
       },
@@ -423,6 +568,35 @@
           "y": 362.79737,
           "distance": 103.542117
         },
+        "overlap_labels": [
+          {
+            "key": "rnal",
+            "title": "Só RNAL",
+            "count": 4,
+            "target": 150.0,
+            "callout": true,
+            "x": 85,
+            "y": 330
+          },
+          {
+            "key": "common",
+            "title": "Nas duas fontes",
+            "count": 8,
+            "target": 302.053,
+            "callout": false,
+            "x": 302.053,
+            "y": 188
+          },
+          {
+            "key": "airbnb",
+            "title": "Só Airbnb",
+            "count": 7,
+            "target": 472.053,
+            "callout": false,
+            "x": 472.053,
+            "y": 188
+          }
+        ],
         "unresolved": 4,
         "bubble_radius": 31.038
       },
@@ -530,6 +704,35 @@
           "y": 400,
           "distance": 160
         },
+        "overlap_labels": [
+          {
+            "key": "rnal",
+            "title": "Só RNAL",
+            "count": 0,
+            "target": 240.0,
+            "callout": true,
+            "x": 85,
+            "y": 330
+          },
+          {
+            "key": "common",
+            "title": "Nas duas fontes",
+            "count": 0,
+            "target": 320.0,
+            "callout": true,
+            "x": 320,
+            "y": 385
+          },
+          {
+            "key": "airbnb",
+            "title": "Só Airbnb",
+            "count": 0,
+            "target": 400.0,
+            "callout": true,
+            "x": 555,
+            "y": 330
+          }
+        ],
         "unresolved": 0,
         "bubble_radius": 0
       },
@@ -566,6 +769,35 @@
           "y": 400,
           "distance": 160
         },
+        "overlap_labels": [
+          {
+            "key": "rnal",
+            "title": "Só RNAL",
+            "count": 0,
+            "target": 240.0,
+            "callout": true,
+            "x": 85,
+            "y": 330
+          },
+          {
+            "key": "common",
+            "title": "Nas duas fontes",
+            "count": 0,
+            "target": 320.0,
+            "callout": true,
+            "x": 320,
+            "y": 385
+          },
+          {
+            "key": "airbnb",
+            "title": "Só Airbnb",
+            "count": 0,
+            "target": 400.0,
+            "callout": true,
+            "x": 555,
+            "y": 330
+          }
+        ],
         "unresolved": 0,
         "bubble_radius": 0
       },
@@ -602,6 +834,35 @@
           "y": 473.448276,
           "distance": 306.896552
         },
+        "overlap_labels": [
+          {
+            "key": "rnal",
+            "title": "Só RNAL",
+            "count": 2,
+            "target": 166.552,
+            "callout": false,
+            "x": 166.552,
+            "y": 188
+          },
+          {
+            "key": "common",
+            "title": "Nas duas fontes",
+            "count": 0,
+            "target": 320.0,
+            "callout": true,
+            "x": 320,
+            "y": 385
+          },
+          {
+            "key": "airbnb",
+            "title": "Só Airbnb",
+            "count": 2,
+            "target": 473.448,
+            "callout": false,
+            "x": 473.448,
+            "y": 188
+          }
+        ],
         "unresolved": 0,
         "bubble_radius": 0.0
       },
@@ -653,6 +914,35 @@
           "y": 400,
           "distance": 160
         },
+        "overlap_labels": [
+          {
+            "key": "rnal",
+            "title": "Só RNAL",
+            "count": 0,
+            "target": 240.0,
+            "callout": true,
+            "x": 85,
+            "y": 330
+          },
+          {
+            "key": "common",
+            "title": "Nas duas fontes",
+            "count": 0,
+            "target": 320.0,
+            "callout": true,
+            "x": 320,
+            "y": 385
+          },
+          {
+            "key": "airbnb",
+            "title": "Só Airbnb",
+            "count": 0,
+            "target": 400.0,
+            "callout": true,
+            "x": 555,
+            "y": 330
+          }
+        ],
         "unresolved": 0,
         "bubble_radius": 0
       },
@@ -689,6 +979,35 @@
           "y": 400,
           "distance": 160
         },
+        "overlap_labels": [
+          {
+            "key": "rnal",
+            "title": "Só RNAL",
+            "count": 0,
+            "target": 240.0,
+            "callout": true,
+            "x": 85,
+            "y": 330
+          },
+          {
+            "key": "common",
+            "title": "Nas duas fontes",
+            "count": 0,
+            "target": 320.0,
+            "callout": true,
+            "x": 320,
+            "y": 385
+          },
+          {
+            "key": "airbnb",
+            "title": "Só Airbnb",
+            "count": 0,
+            "target": 400.0,
+            "callout": true,
+            "x": 555,
+            "y": 330
+          }
+        ],
         "unresolved": 0,
         "bubble_radius": 0
       },
@@ -725,6 +1044,35 @@
           "y": 400,
           "distance": 160
         },
+        "overlap_labels": [
+          {
+            "key": "rnal",
+            "title": "Só RNAL",
+            "count": 0,
+            "target": 240.0,
+            "callout": true,
+            "x": 85,
+            "y": 330
+          },
+          {
+            "key": "common",
+            "title": "Nas duas fontes",
+            "count": 0,
+            "target": 320.0,
+            "callout": true,
+            "x": 320,
+            "y": 385
+          },
+          {
+            "key": "airbnb",
+            "title": "Só Airbnb",
+            "count": 0,
+            "target": 400.0,
+            "callout": true,
+            "x": 555,
+            "y": 330
+          }
+        ],
         "unresolved": 0,
         "bubble_radius": 0
       },
@@ -761,6 +1109,35 @@
           "y": 400,
           "distance": 160
         },
+        "overlap_labels": [
+          {
+            "key": "rnal",
+            "title": "Só RNAL",
+            "count": 0,
+            "target": 240.0,
+            "callout": true,
+            "x": 85,
+            "y": 330
+          },
+          {
+            "key": "common",
+            "title": "Nas duas fontes",
+            "count": 0,
+            "target": 320.0,
+            "callout": true,
+            "x": 320,
+            "y": 385
+          },
+          {
+            "key": "airbnb",
+            "title": "Só Airbnb",
+            "count": 0,
+            "target": 400.0,
+            "callout": true,
+            "x": 555,
+            "y": 330
+          }
+        ],
         "unresolved": 0,
         "bubble_radius": 0
       },
@@ -797,6 +1174,35 @@
           "y": 400,
           "distance": 160
         },
+        "overlap_labels": [
+          {
+            "key": "rnal",
+            "title": "Só RNAL",
+            "count": 0,
+            "target": 240.0,
+            "callout": true,
+            "x": 85,
+            "y": 330
+          },
+          {
+            "key": "common",
+            "title": "Nas duas fontes",
+            "count": 0,
+            "target": 320.0,
+            "callout": true,
+            "x": 320,
+            "y": 385
+          },
+          {
+            "key": "airbnb",
+            "title": "Só Airbnb",
+            "count": 0,
+            "target": 400.0,
+            "callout": true,
+            "x": 555,
+            "y": 330
+          }
+        ],
         "unresolved": 0,
         "bubble_radius": 0
       },
@@ -833,6 +1239,35 @@
           "y": 400,
           "distance": 160
         },
+        "overlap_labels": [
+          {
+            "key": "rnal",
+            "title": "Só RNAL",
+            "count": 0,
+            "target": 240.0,
+            "callout": true,
+            "x": 85,
+            "y": 330
+          },
+          {
+            "key": "common",
+            "title": "Nas duas fontes",
+            "count": 0,
+            "target": 320.0,
+            "callout": true,
+            "x": 320,
+            "y": 385
+          },
+          {
+            "key": "airbnb",
+            "title": "Só Airbnb",
+            "count": 0,
+            "target": 400.0,
+            "callout": true,
+            "x": 555,
+            "y": 330
+          }
+        ],
         "unresolved": 0,
         "bubble_radius": 0
       },
@@ -869,6 +1304,35 @@
           "y": 400,
           "distance": 160
         },
+        "overlap_labels": [
+          {
+            "key": "rnal",
+            "title": "Só RNAL",
+            "count": 0,
+            "target": 240.0,
+            "callout": true,
+            "x": 85,
+            "y": 330
+          },
+          {
+            "key": "common",
+            "title": "Nas duas fontes",
+            "count": 0,
+            "target": 320.0,
+            "callout": true,
+            "x": 320,
+            "y": 385
+          },
+          {
+            "key": "airbnb",
+            "title": "Só Airbnb",
+            "count": 0,
+            "target": 400.0,
+            "callout": true,
+            "x": 555,
+            "y": 330
+          }
+        ],
         "unresolved": 0,
         "bubble_radius": 0
       },
@@ -905,6 +1369,35 @@
           "y": 400,
           "distance": 160
         },
+        "overlap_labels": [
+          {
+            "key": "rnal",
+            "title": "Só RNAL",
+            "count": 0,
+            "target": 240.0,
+            "callout": true,
+            "x": 85,
+            "y": 330
+          },
+          {
+            "key": "common",
+            "title": "Nas duas fontes",
+            "count": 0,
+            "target": 320.0,
+            "callout": true,
+            "x": 320,
+            "y": 385
+          },
+          {
+            "key": "airbnb",
+            "title": "Só Airbnb",
+            "count": 0,
+            "target": 400.0,
+            "callout": true,
+            "x": 555,
+            "y": 330
+          }
+        ],
         "unresolved": 0,
         "bubble_radius": 0
       },
@@ -941,6 +1434,35 @@
           "y": 400,
           "distance": 160
         },
+        "overlap_labels": [
+          {
+            "key": "rnal",
+            "title": "Só RNAL",
+            "count": 0,
+            "target": 240.0,
+            "callout": true,
+            "x": 85,
+            "y": 330
+          },
+          {
+            "key": "common",
+            "title": "Nas duas fontes",
+            "count": 0,
+            "target": 320.0,
+            "callout": true,
+            "x": 320,
+            "y": 385
+          },
+          {
+            "key": "airbnb",
+            "title": "Só Airbnb",
+            "count": 0,
+            "target": 400.0,
+            "callout": true,
+            "x": 555,
+            "y": 330
+          }
+        ],
         "unresolved": 0,
         "bubble_radius": 0
       },
@@ -977,6 +1499,35 @@
           "y": 400,
           "distance": 160
         },
+        "overlap_labels": [
+          {
+            "key": "rnal",
+            "title": "Só RNAL",
+            "count": 0,
+            "target": 240.0,
+            "callout": true,
+            "x": 85,
+            "y": 330
+          },
+          {
+            "key": "common",
+            "title": "Nas duas fontes",
+            "count": 0,
+            "target": 320.0,
+            "callout": true,
+            "x": 320,
+            "y": 385
+          },
+          {
+            "key": "airbnb",
+            "title": "Só Airbnb",
+            "count": 0,
+            "target": 400.0,
+            "callout": true,
+            "x": 555,
+            "y": 330
+          }
+        ],
         "unresolved": 0,
         "bubble_radius": 0
       },
@@ -1013,6 +1564,35 @@
           "y": 400,
           "distance": 160
         },
+        "overlap_labels": [
+          {
+            "key": "rnal",
+            "title": "Só RNAL",
+            "count": 0,
+            "target": 240.0,
+            "callout": true,
+            "x": 85,
+            "y": 330
+          },
+          {
+            "key": "common",
+            "title": "Nas duas fontes",
+            "count": 0,
+            "target": 320.0,
+            "callout": true,
+            "x": 320,
+            "y": 385
+          },
+          {
+            "key": "airbnb",
+            "title": "Só Airbnb",
+            "count": 0,
+            "target": 400.0,
+            "callout": true,
+            "x": 555,
+            "y": 330
+          }
+        ],
         "unresolved": 0,
         "bubble_radius": 0
       },
@@ -1049,6 +1629,35 @@
           "y": 400,
           "distance": 160
         },
+        "overlap_labels": [
+          {
+            "key": "rnal",
+            "title": "Só RNAL",
+            "count": 0,
+            "target": 240.0,
+            "callout": true,
+            "x": 85,
+            "y": 330
+          },
+          {
+            "key": "common",
+            "title": "Nas duas fontes",
+            "count": 0,
+            "target": 320.0,
+            "callout": true,
+            "x": 320,
+            "y": 385
+          },
+          {
+            "key": "airbnb",
+            "title": "Só Airbnb",
+            "count": 0,
+            "target": 400.0,
+            "callout": true,
+            "x": 555,
+            "y": 330
+          }
+        ],
         "unresolved": 0,
         "bubble_radius": 0
       },
@@ -1085,6 +1694,35 @@
           "y": 400,
           "distance": 160
         },
+        "overlap_labels": [
+          {
+            "key": "rnal",
+            "title": "Só RNAL",
+            "count": 0,
+            "target": 240.0,
+            "callout": true,
+            "x": 85,
+            "y": 330
+          },
+          {
+            "key": "common",
+            "title": "Nas duas fontes",
+            "count": 0,
+            "target": 320.0,
+            "callout": true,
+            "x": 320,
+            "y": 385
+          },
+          {
+            "key": "airbnb",
+            "title": "Só Airbnb",
+            "count": 0,
+            "target": 400.0,
+            "callout": true,
+            "x": 555,
+            "y": 330
+          }
+        ],
         "unresolved": 0,
         "bubble_radius": 0
       },
@@ -1121,6 +1759,35 @@
           "y": 400,
           "distance": 160
         },
+        "overlap_labels": [
+          {
+            "key": "rnal",
+            "title": "Só RNAL",
+            "count": 0,
+            "target": 240.0,
+            "callout": true,
+            "x": 85,
+            "y": 330
+          },
+          {
+            "key": "common",
+            "title": "Nas duas fontes",
+            "count": 0,
+            "target": 320.0,
+            "callout": true,
+            "x": 320,
+            "y": 385
+          },
+          {
+            "key": "airbnb",
+            "title": "Só Airbnb",
+            "count": 0,
+            "target": 400.0,
+            "callout": true,
+            "x": 555,
+            "y": 330
+          }
+        ],
         "unresolved": 0,
         "bubble_radius": 0
       },
@@ -1157,6 +1824,35 @@
           "y": 400,
           "distance": 160
         },
+        "overlap_labels": [
+          {
+            "key": "rnal",
+            "title": "Só RNAL",
+            "count": 0,
+            "target": 240.0,
+            "callout": true,
+            "x": 85,
+            "y": 330
+          },
+          {
+            "key": "common",
+            "title": "Nas duas fontes",
+            "count": 0,
+            "target": 320.0,
+            "callout": true,
+            "x": 320,
+            "y": 385
+          },
+          {
+            "key": "airbnb",
+            "title": "Só Airbnb",
+            "count": 0,
+            "target": 400.0,
+            "callout": true,
+            "x": 555,
+            "y": 330
+          }
+        ],
         "unresolved": 0,
         "bubble_radius": 0
       },
@@ -1193,6 +1889,35 @@
           "y": 400,
           "distance": 160
         },
+        "overlap_labels": [
+          {
+            "key": "rnal",
+            "title": "Só RNAL",
+            "count": 0,
+            "target": 240.0,
+            "callout": true,
+            "x": 85,
+            "y": 330
+          },
+          {
+            "key": "common",
+            "title": "Nas duas fontes",
+            "count": 0,
+            "target": 320.0,
+            "callout": true,
+            "x": 320,
+            "y": 385
+          },
+          {
+            "key": "airbnb",
+            "title": "Só Airbnb",
+            "count": 0,
+            "target": 400.0,
+            "callout": true,
+            "x": 555,
+            "y": 330
+          }
+        ],
         "unresolved": 0,
         "bubble_radius": 0
       },

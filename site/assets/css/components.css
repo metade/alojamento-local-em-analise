@@ -147,3 +147,119 @@ th {
 td {
   text-align: right;
 }
+
+.overlap-label {
+  fill: var(--color-ink);
+  font-size: 22px;
+}
+
+.overlap-label--rnal {
+  fill: var(--color-blue);
+}
+
+.overlap-label--airbnb {
+  fill: var(--color-terra);
+}
+
+.overlap-label path {
+  fill: none;
+  stroke: var(--color-ink);
+  stroke-opacity: .45;
+  stroke-width: 1;
+}
+
+.overlap-label .overlap-value {
+  font-family: var(--font-serif);
+  font-size: 38px;
+}
+
+.overlap-diagram {
+  --overlap-rnal-total: #123f50;
+  --overlap-airbnb-total: #612e22;
+}
+
+.overlap-total {
+  font-size: 22px;
+  fill: var(--overlap-rnal-total);
+  color: var(--overlap-rnal-total);
+}
+
+.overlap-total--airbnb {
+  fill: var(--overlap-airbnb-total);
+  color: var(--overlap-airbnb-total);
+}
+
+.overlap-total-value {
+  font-size: 30px;
+  font-weight: 700;
+}
+
+.overlap-total-leader,
+.overlap-total-arrow {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.overlap-base {
+  stroke-width: 2;
+  pointer-events: none;
+}
+
+.overlap-base--rnal {
+  fill: color-mix(in srgb, var(--color-blue) 10%, transparent);
+  stroke: var(--overlap-rnal-total);
+}
+
+.overlap-base--airbnb {
+  fill: color-mix(in srgb, var(--color-terra) 10%, transparent);
+  stroke: var(--overlap-airbnb-total);
+}
+
+.overlap-region {
+  opacity: 0;
+  pointer-events: all;
+}
+
+.overlap-region--rnal { fill: var(--color-blue); }
+.overlap-region--airbnb { fill: var(--color-terra); }
+.overlap-region--common { fill: var(--color-ink); }
+
+.overlap-diagram :is(.overlap-label, .overlap-total) {
+  cursor: default;
+}
+
+.overlap-diagram :is(.overlap-label, .overlap-total):focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 5px;
+}
+
+.overlap-diagram:has([data-overlap="rnal"]:is(:hover, :focus-visible)) .overlap-region--rnal,
+.overlap-diagram:has([data-overlap="airbnb"]:is(:hover, :focus-visible)) .overlap-region--airbnb,
+.overlap-diagram:has([data-overlap="common"]:is(:hover, :focus-visible)) .overlap-region--common,
+.overlap-diagram:has([data-overlap="rnal-total"]:is(:hover, :focus-visible)) :is(.overlap-region--rnal, .overlap-region--common),
+.overlap-diagram:has([data-overlap="airbnb-total"]:is(:hover, :focus-visible)) :is(.overlap-region--airbnb, .overlap-region--common) {
+  opacity: .22;
+}
+
+.overlap-diagram:has([data-overlap="rnal-total"]:is(:hover, :focus-visible)) .overlap-base--rnal,
+.overlap-diagram:has([data-overlap="airbnb-total"]:is(:hover, :focus-visible)) .overlap-base--airbnb {
+  stroke-width: 4;
+}
+
+.overlap-label--unresolved {
+  fill: #735400;
+}
+
+.overlap-unresolved-bubble {
+  fill: color-mix(in srgb, var(--color-yellow) 15%, transparent);
+  stroke: var(--color-yellow);
+  stroke-width: 2;
+}
+
+.overlap-label--unresolved:is(:hover, :focus-visible) .overlap-unresolved-bubble {
+  fill: color-mix(in srgb, var(--color-yellow) 35%, transparent);
+  stroke: #735400;
+  stroke-width: 3;
+}

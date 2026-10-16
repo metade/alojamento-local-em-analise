@@ -12,6 +12,25 @@ module AlojamentoLocal
           0.5*Math.sqrt([(-d+r+s)*(d+r-s)*(d-r+s)*(d+r+s), 0].max)
       end
 
+      # Label the three measured regions directly. Narrow crescents use leaders
+      # so text stays readable without changing the area-proportional geometry.
+      def self.labels(g, rnal_only, intersection, airbnb_only)
+        left, right = g.fetch("x") - g.fetch("r"), g.fetch("y") + g.fetch("s")
+        common_left = [g.fetch("x") - g.fetch("r"), g.fetch("y") - g.fetch("s")].max
+        common_right = [g.fetch("x") + g.fetch("r"), g.fetch("y") + g.fetch("s")].min
+        regions = [
+          ["rnal", "Só RNAL", rnal_only, left, [common_left, g.fetch("x") + g.fetch("r")].min, 85, 330],
+          ["common", "Nas duas fontes", intersection, common_left, common_right, 320, 385],
+          ["airbnb", "Só Airbnb", airbnb_only, [common_right, g.fetch("y") - g.fetch("s")].max, right, 555, 330]
+        ]
+        regions.map do |key, title, count, start, finish, fallback_x, fallback_y|
+          target = (start + finish) / 2.0
+          callout = finish - start < (key == "common" ? 160 : 110)
+          {"key" => key, "title" => title, "count" => count, "target" => target.round(3),
+           "callout" => callout, "x" => callout ? fallback_x : target.round(3), "y" => callout ? fallback_y : 188}
+        end
+      end
+
       def self.geometry(a, b, intersection)
         raise ArgumentError, "Invalid sets" unless [a,b,intersection].all? { |n| n.is_a?(Numeric) && n >= 0 } && intersection <= [a,b].min
         return {"r" => 0, "s" => 0, "x" => 240, "y" => 400, "distance" => 160} if [a,b].max.zero?
