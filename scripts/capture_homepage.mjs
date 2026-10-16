@@ -8,17 +8,17 @@ import { pathToFileURL } from "node:url";
 const root = resolve(import.meta.dirname, "..");
 const site = join(root, "_site");
 const output = join(root, "tmp", "screenshots");
-const preview = join(site, ".screenshot-preview.html");
-
-if (!existsSync(join(site, "assets", "story.css"))) {
-  throw new Error("CSS gerado em falta. Execute bundle exec rake site:build primeiro.");
-}
+const preview = join(site, `.screenshot-preview-${process.pid}.html`);
 
 // The published site uses a root-relative CSS URL. A temporary copy lets
 // file:// screenshots load that same stylesheet without starting a server.
 const pagePath = process.argv[2] || "index.html";
 const screenshotName = pagePath === "index.html" ? "homepage" : pagePath.split("/").filter(part => part !== "index.html").join("-");
 const html = await readFile(join(site, pagePath), "utf8");
+const embeddedReport = html.includes('<div class="table-container">') && html.includes("<style>");
+if (!embeddedReport && !existsSync(join(site, "assets", "story.css"))) {
+  throw new Error("CSS gerado em falta. Execute bundle exec rake site:build primeiro.");
+}
 await writeFile(preview, html.replace('href="/assets/story.css"', 'href="assets/story.css"'));
 await mkdir(output, { recursive: true });
 
@@ -39,12 +39,14 @@ try {
     });
     try {
       const page = await context.newPage();
+      await page.route("https://**", route => route.abort());
+      await page.route("http://**", route => route.abort());
       await page.goto(pathToFileURL(preview).href, { waitUntil: "load" });
       await page.evaluate(() => document.fonts.ready);
       const metrics = await page.evaluate(() => ({
         inner: window.innerWidth,
         scroll: document.documentElement.scrollWidth,
-        css: [...document.styleSheets].some(sheet => sheet.href?.endsWith("/assets/story.css"))
+        css: [...document.styleSheets].some(sheet => sheet.href?.endsWith("/assets/story.css") || (!sheet.href && document.querySelector(".table-container")))
       }));
       if (!metrics.css) throw new Error(`O CSS não carregou a ${width}px.`);
       if (metrics.inner !== width) throw new Error(`Viewport inesperado: ${metrics.inner}px em vez de ${width}px.`);

@@ -29,11 +29,34 @@ class SiteCheckerTest < Minitest::Test
     end
   end
 
-  def test_rejects_unrendered_liquid_in_a_district_page
+  def test_report_outputs_and_download_links
     with_site do |root|
-      File.write(File.join(root, "freguesias/arroios/index.html"), "{{ district.name }}")
-      error = assert_raises(RuntimeError) { AlojamentoLocal::SiteChecker.check(root) }
-      assert_includes error.message, "Liquid não renderizado"
+      path = File.join(root, "runs", "2024-06-01__2024-07-01")
+      FileUtils.mkdir_p(path)
+      # Data validation and privacy belong to the publication audit.
+      File.write(File.join(path, "snapshot.json"), "{}")
+      File.write(File.join(root, "index.html"), '<a href="/base/runs/2024-06-01__2024-07-01/report.html">report</a>')
+      html = File.join(path, "report.html")
+      assert_raises(RuntimeError) { AlojamentoLocal::SiteChecker.check(root) }
+      File.write(html, '<h1>Any report wording</h1><a href="snapshot.json">Dados</a>')
+      assert_raises(RuntimeError) { AlojamentoLocal::SiteChecker.check(root) }
+      File.write(File.join(path, "report.pdf"), "invalid")
+      assert_raises(RuntimeError) { AlojamentoLocal::SiteChecker.check(root) }
+      File.write(File.join(path, "report.pdf"), "%PDF-test")
+      assert_equal 5, AlojamentoLocal::SiteChecker.check(root).fetch(:html_pages)
+      File.write(File.join(root, "index.html"), '<a href="/base/runs/2024-06-01__2024-07-01/missing.json">download</a>')
+      assert_raises(RuntimeError) { AlojamentoLocal::SiteChecker.check(root) }
+      File.write(File.join(root, "index.html"), "rendered")
+      File.write(html, '<a href="missing.json">Dados</a>')
+      assert_raises(RuntimeError) { AlojamentoLocal::SiteChecker.check(root) }
+    end
+  end
+
+  def test_requires_expected_reports_even_when_no_report_page_was_written
+    with_site do |root|
+      assert_raises(RuntimeError) do
+        AlojamentoLocal::SiteChecker.check(root, required: AlojamentoLocal::SiteChecker::REQUIRED_FILES + ["runs/example/report.html", "runs/example/report.pdf"])
+      end
     end
   end
 end

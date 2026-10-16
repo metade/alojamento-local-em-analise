@@ -17,44 +17,17 @@ module AlojamentoLocal
 
       def generate_data
         FileUtils.mkdir_p(@path)
-        if public?
-          @snapshot = @result.public_snapshot
-          write_json(PublicSnapshot::FILE, @snapshot.to_h)
-        else
-          write_local_outputs
-        end
-      end
-
-      def generate_report
-        arguments = public? ? @snapshot.report_arguments : @result.report_arguments
-        File.write(File.join(@path, report_filename), Report.complete_html(*arguments))
-      end
-
-      def generate_pdf
-        html = File.join(@path, report_filename)
-        pdf = File.join(@path, "report.pdf")
-        system("wkhtmltopdf", "--quiet", html, pdf) || system("weasyprint", html, pdf)
+        write_json(PublicSnapshot::FILE, @result.snapshot.to_h)
+        write_local_outputs if @result.metadata.fetch(:mode) == "local"
       end
 
       private
 
-      def public?
-        @result.metadata.fetch(:mode) == "public"
-      end
-
-      def report_filename
-        public? ? "report.html" : "report_local.html"
-      end
-
       def write_local_outputs
-        write_json("registration_metrics.json", @result.registration_metrics)
         listings = @result.listings.map { |listing| LISTING_HEADERS.to_h { |header| [header, listing[header]] } }
         write_csv("listings_detailed.csv", listings)
         groups = @result.licence_groups.map { |group| group.slice(*GROUP_HEADERS) }
         write_csv("licence_groups_detailed.csv", groups)
-        write_csv("freguesias_summary.csv", @result.parish_totals)
-        write_json("metadata_local.json", @result.metadata)
-        write_json("summary_local.json", @result.summary)
       end
 
       def write_csv(filename, rows)

@@ -68,13 +68,13 @@ arquivo permanente e da integração descrita abaixo.
   Migrar os consumidores para essa interface e testar a equivalência dos
   relatórios e dados do site com a fixture sintética, sem alterar os outputs.
 
-- [ ] Gerar os relatórios por snapshot através de um template e layout próprios
-  do Jekyll, consumindo os dados validados pelo loader partilhado. Incorporar
+- [x] Gerar os relatórios por snapshot através de uma página completa
+  do Jekyll, com `layout: null`, consumindo os dados validados pelo loader partilhado. Incorporar
   estilos e os restantes recursos necessários para manter `report.html`
   autónomo, utilizável offline e como fonte do PDF derivado. Gerar os relatórios
   no build do site, incluindo a publicação no GitHub, e acrescentar uma tarefa
-  Rake que monte uma fonte Jekyll mínima e temporária para gerar apenas o
-  relatório de um snapshot, usando o mesmo template sem construir o site todo.
+  Rake que use a mesma fonte e o mesmo gerador Jekyll para publicar apenas o
+  relatório de um snapshot, sem construir as páginas editoriais.
   Definir o destino do HTML e adaptar a análise, a regeneração, as verificações
   de reutilização e a auditoria à nova etapa de geração; manter os builds do
   site sem alterações aos snapshots versionados. Substituir a montagem HTML

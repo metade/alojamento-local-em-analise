@@ -6,7 +6,7 @@ module AlojamentoLocal
   module Analysis
     module_function
 
-    def run(airbnb_path: nil, official_path: nil, output_root: nil, history_path: nil, generate_pdf: false, mode: "local")
+    def run(airbnb_path: nil, official_path: nil, output_root: nil, history_path: nil, mode: "local")
       raise ArgumentError, "Mode must be public or local" unless %w[public local].include?(mode)
       sources = prepare_sources(airbnb_path: airbnb_path, official_path: official_path)
       run_id, destination, history_path = prepare_destination(sources, mode: mode, output_root: output_root, history_path: history_path)
@@ -15,8 +15,6 @@ module AlojamentoLocal
       publish(result, destination: destination, history_path: history_path, mode: mode) do |path|
         writer = OutputWriter.new(result: result, path: path)
         writer.generate_data
-        writer.generate_report
-        writer.generate_pdf if generate_pdf
       end
       {run_id: run_id, path: destination, summary: result.summary}
     end

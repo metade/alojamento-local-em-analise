@@ -1,21 +1,14 @@
-class DistrictPage < Jekyll::PageWithoutAFile
-  def initialize(site, district)
-    @site = site
-    @base = site.source
-    @dir = File.join("freguesias", district["slug"])
-    @name = "index.html"
-    process(@name)
-    self.data = {
-      "layout" => "district",
-      "title" => "O alojamento local em #{district["display_name"]}",
-      "district" => district
-    }
-    self.content = ""
-  end
-end
+# frozen_string_literal: true
 
 Jekyll::Hooks.register :site, :post_read do |site|
+  next if ENV["REPORT_RUN"]
   site.data.fetch("site", {}).fetch("districts", []).each do |district|
-    site.pages << DistrictPage.new(site, district)
+    page = Jekyll::PageWithoutAFile.new(site, site.source, "freguesias/#{district.fetch("slug")}", "index.html")
+    page.data = {
+      "layout" => "district",
+      "title" => "O alojamento local em #{district.fetch("display_name")}",
+      "district" => district
+    }
+    site.pages << page
   end
 end

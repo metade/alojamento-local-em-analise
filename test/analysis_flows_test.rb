@@ -2,6 +2,8 @@ require "minitest/autorun"
 require "minitest/mock"
 require "tmpdir"
 require "rake"
+require "open3"
+require "open-uri"
 require_relative "../lib/alojamento_local"
 
 class AnalysisFlowsTest < Minitest::Test
@@ -39,7 +41,7 @@ class AnalysisFlowsTest < Minitest::Test
         File.write(File.join(first[:path], "report.html"), "outdated report")
         repeated = AlojamentoLocal::Analysis.run(mode: "public")
         assert_equal first[:path], repeated[:path]
-        assert_includes File.read(File.join(first[:path], "report.html")), "<!doctype html>"
+        refute File.exist?(File.join(first[:path], "report.html"))
         assert_equal 1, CSV.read("data/history/summary.csv", headers: true).length
         before = File.binread(snapshot)
         File.write("data_sources/Estabelecimentos_de_Alojamento_Local-2024-07-01.csv", "changed bytes")
@@ -53,7 +55,7 @@ class AnalysisFlowsTest < Minitest::Test
   def test_each_local_analysis_preserves_previous_runs
     with_sources do
       first = AlojamentoLocal::Analysis.run
-      metadata_path = File.join(first[:path], "metadata_local.json")
+      metadata_path = File.join(first[:path], "snapshot.json")
       before = File.binread(metadata_path)
       rerun = AlojamentoLocal::Analysis.run
       assert_includes rerun[:run_id], "__rerun-"
@@ -111,42 +113,6 @@ class AnalysisFlowsTest < Minitest::Test
   def analysis_files
     Dir.glob("data/**/*", File::FNM_DOTMATCH).select { |path| File.file?(path) }.to_h do |path|
       [path, File.binread(path)]
-    end
-  end
-
-  def test_optional_pdf_uses_the_generated_report_in_both_modes
-    %w[public local].each do |mode|
-      with_sources do
-        commands = []
-        report_filename = (mode == "public") ? "report.html" : "report_local.html"
-        converter = ->(*command) do
-          commands << command.first
-          html, pdf = command.last(2)
-          assert_equal report_filename, File.basename(html)
-          assert File.file?(html), "PDF generation requires the completed report"
-          assert_includes File.read(html), "<!doctype html>"
-          if command.first == "weasyprint"
-            File.write(pdf, "PDF derivative")
-            true
-          else
-            false
-          end
-        end
-        writer_class = AlojamentoLocal::Analysis::OutputWriter
-        new_writer = writer_class.method(:new)
-        build_writer = ->(**arguments) do
-          writer = new_writer.call(**arguments)
-          writer.define_singleton_method(:system) { |*command| converter.call(*command) }
-          writer
-        end
-
-        result = writer_class.stub(:new, build_writer) do
-          AlojamentoLocal::Analysis.run(mode: mode, generate_pdf: true)
-        end
-        assert_equal %w[wkhtmltopdf weasyprint], commands
-        assert_equal "PDF derivative", File.read(File.join(result.fetch(:path), "report.pdf"))
-        assert_empty Dir.glob("data/snapshots/.analysis-*")
-      end
     end
   end
 

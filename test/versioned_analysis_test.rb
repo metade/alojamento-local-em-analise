@@ -1,3 +1,4 @@
+require "liquid"
 require "minitest/autorun"
 require "minitest/mock"
 require "open3"
@@ -63,7 +64,7 @@ class VersionedAnalysisTest < Minitest::Test
       result = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "public", output_root: File.join(dir, "snapshots"), history_path: File.join(dir, "history", "summary.csv"))
       run_dir = result[:path]
       assert_equal "2026-06-23__2026-09-17", result[:run_id]
-      assert_equal %w[snapshot.json report.html].sort, Dir.children(run_dir).sort
+      assert_equal %w[snapshot.json].sort, Dir.children(run_dir).sort
       snapshot = AlojamentoLocal::PublicSnapshot::Loader.new.load(run_dir)
       public_listings = snapshot.published_announcement_rows
       assert_equal 3, public_listings.length
@@ -74,12 +75,6 @@ class VersionedAnalysisTest < Minitest::Test
       assert_equal "6.0.0", snapshot.metadata.fetch("output_schema_version")
       refute JSON.generate(snapshot.to_h).match?(/host_id|listing_url|licensa_raw|latitude|longitude|official_address/i)
       assert_raises(RuntimeError) { AlojamentoLocal::Analysis::History.append_history(File.join(dir, "history", "summary.csv"), result[:summary]) }
-      report = File.read(File.join(run_dir, "report.html"))
-      assert_operator report.length, :>, 1_000
-      assert_includes report, "Exemplos ilustrativos"
-      assert_includes report, "Não correspondem a anúncios"
-      assert_includes report, "Licença repetida em várias localizações"
-      refute report.match?(%r{https?://[^<]+/rooms/|host[_ ]?id|Rua [A-Z]|\b\d{4,}/AL\b}i)
       File.write(File.join(run_dir, "obsolete.pdf"), "obsolete")
       repeated = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "public", output_root: File.join(dir, "snapshots"), history_path: File.join(dir, "history", "summary.csv"))
       assert_equal result[:path], repeated[:path]
@@ -128,12 +123,12 @@ class VersionedAnalysisTest < Minitest::Test
 
       result = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "local", output_root: File.join(dir, "private"), history_path: File.join(dir, "private", "history", "summary.csv"))
       run_dir = result[:path]
-      assert_equal %w[freguesias_summary.csv licence_groups_detailed.csv listings_detailed.csv metadata_local.json report_local.html summary_local.json registration_metrics.json].sort, Dir.children(run_dir).sort
+      assert_equal %w[licence_groups_detailed.csv listings_detailed.csv snapshot.json].sort, Dir.children(run_dir).sort
       detailed = CSV.read(File.join(run_dir, "listings_detailed.csv"), headers: true)
       assert_includes detailed.headers, "host_id"
       assert_includes detailed.headers, "licensa_raw"
       assert_equal "00123/AL", detailed.first["licensa_raw"]
-      assert_equal "local", JSON.parse(File.read(File.join(run_dir, "metadata_local.json"))) ["mode"]
+      assert_equal "local", JSON.parse(File.read(File.join(run_dir, "snapshot.json"))).fetch("metadata").fetch("mode")
       refute Dir.exist?(File.join(dir, "snapshots"))
     end
   end
@@ -158,7 +153,7 @@ class VersionedAnalysisTest < Minitest::Test
       assert_equal 1, rows.sum { |row| row["licence_groups"].to_i }
       assert_equal "1", rows.find { |row| row["range"] == "2_5_km" }["licence_groups"]
       assert_equal 2, AlojamentoLocal::PublicSnapshot::Loader.new.load(result[:path]).published_announcement_rows.sum { |row| row["listings"].to_i }
-      assert_equal %w[snapshot.json report.html].sort, Dir.children(result[:path]).sort
+      assert_equal %w[snapshot.json].sort, Dir.children(result[:path]).sort
       assert_raises(RuntimeError) { AlojamentoLocal::Analysis::History.append_distance_history(File.join(dir, "history", "distance_ranges.csv"), result[:run_id], []) }
     end
   end
@@ -261,7 +256,10 @@ class VersionedAnalysisTest < Minitest::Test
           assert_raises(failure_class) do
             publisher.publish(summary: published.fetch(:summary).merge(generated_at: "replacement"), listings: listings) do |run_dir|
               FileUtils.cp_r(destination, run_dir)
-              File.open(File.join(run_dir, "report.html"), "a") { |file| file.write("<!-- replacement -->") }
+              snapshot_file = File.join(run_dir, "snapshot.json")
+              document = JSON.parse(File.read(snapshot_file))
+              document["summary"]["generated_at"] = "replacement"
+              File.write(snapshot_file, JSON.generate(document))
             end
           end
         end
@@ -277,15 +275,18 @@ require_relative "registration_metrics_test"
 
 class VersionedAnalysisTest
   def test_report_category_bars_use_number_groups_as_denominator
-    summary = {run_id: "test", mode: "public", generated_at: "test", listings: 100,
-               licence_groups: 100, establishment_estimate: 100,
-               classifications: {"licença única em Lisboa" => 75, "licença oficial fora de Lisboa" => 25}}
-    metadata = {source_urls: {airbnb: "https://example.com", official: "https://example.org"}, methodology_version: "2.0.0", analysis_version: "3.0.1"}
-    groups = [{classification: "licença única em Lisboa", licence_groups: 75, listings: 75, spatial_locations: 75},
-              {classification: "licença oficial fora de Lisboa", licence_groups: 25, listings: 25, spatial_locations: 25}]
-    html = AlojamentoLocal::Report.html(metadata, summary, groups, [])
-    assert_includes html, "width:75%"
-    assert_includes html, "width:25%"
+    data = JSON.parse(File.read(File.expand_path("fixtures/pipeline/expected/public/snapshot.json", __dir__)))
+    data["summary"]["licence_groups"] = 100
+    data["summary"]["listings"] = 400
+    data["summary"]["classifications"] = {"unique" => 75, "outside" => 25}
+    source = File.read(File.expand_path("../site/report.html", __dir__)).sub(/\A---.*?---\n/m, "")
+    template = Liquid::Template.parse(source)
+    html = template.render!("page" => {"report" => data})
+    assert_equal ["75", "25"], html.scan(/style="width:(\d+)%"/).flatten
+    data["summary"]["licence_groups"] = 0
+    html = template.render!("page" => {"report" => data})
+    assert_equal ["0", "0"], html.scan(/style="width:(\d+)%"/).flatten
+
   end
 end
 
