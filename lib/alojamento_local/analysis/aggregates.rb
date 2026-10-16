@@ -64,7 +64,7 @@ module AlojamentoLocal
         end.sort_by { |row| row[:freguesia] }
       end
 
-      def summary(listings, groups, dates, run_id, mode, official: {})
+      def summary(listings, groups, dates, run_id, official: {})
         identified_groups = groups.reject { |group| group[:licensa].to_s.empty? }
         counts = identified_groups.group_by { |group| group[:classification] }.transform_values(&:size)
         {
@@ -72,7 +72,7 @@ module AlojamentoLocal
           listings: listings.size, licence_groups: identified_groups.size,
           official_registers_lisbon: official_lisbon_count(official),
           establishment_estimate: AlojamentoLocal.establishment_estimate(listings),
-          classifications: counts, mode: mode, generated_at: Time.now.utc.iso8601
+          classifications: counts, generated_at: Time.now.utc.iso8601
         }
       end
 

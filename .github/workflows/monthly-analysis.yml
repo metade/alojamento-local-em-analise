@@ -77,8 +77,8 @@ jobs:
           path: tmp/source-artifact/*.csv
           if-no-files-found: error
           retention-days: 90
-      - name: Executar análise pública
-        run: bundle exec rake analysis:public
+      - name: Executar análise
+        run: bundle exec rake analysis
       - name: Preparar e validar outputs públicos
         run: |
           git config user.name github-actions[bot]

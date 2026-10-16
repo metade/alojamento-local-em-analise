@@ -16,7 +16,7 @@ class PipelineRegressionTest < Minitest::Test
         relative = path.delete_prefix(PipelineFixture::EXPECTED + "/")
         expected[relative] = File.read(path)
       end
-      assert_equal 9, expected.size, "The baseline must contain public, local, history and site outputs"
+      assert_equal 7, expected.size, "The baseline must contain public, private, history and site outputs"
       assert_equal expected.keys.sort, actual.keys.sort, "Output files added or removed"
       expected.each do |path, content|
         assert_equal content, actual.fetch(path), "Pipeline output changed: #{path}"
@@ -78,6 +78,25 @@ class PipelineRegressionTest < Minitest::Test
       refute status.success?
       assert_includes output, "dados privados no artefacto: listings_detailed.csv"
       File.delete(private_file)
+
+      private_html = File.join(artifact, "innocent.html")
+      File.write(private_html, '<meta name="al-private-report" content="true">')
+      output, status = Open3.capture2e(RbConfig.ruby, File.expand_path("../scripts/audit_publication.rb", __dir__), "--artifact", artifact)
+      refute status.success?
+      assert_includes output, "relatório privado em innocent.html"
+      File.write(private_html, '<a href="/private-reports/run/report.html">Local</a>')
+      output, status = Open3.capture2e(RbConfig.ruby, File.expand_path("../scripts/audit_publication.rb", __dir__), "--artifact", artifact)
+      refute status.success?
+      assert_includes output, "relatório privado em innocent.html"
+      File.delete(private_html)
+
+      private_dir = File.join(artifact, "private-reports", "example")
+      FileUtils.mkdir_p(private_dir)
+      File.write(File.join(private_dir, "report.pdf"), "%PDF-private")
+      output, status = Open3.capture2e(RbConfig.ruby, File.expand_path("../scripts/audit_publication.rb", __dir__), "--artifact", artifact)
+      refute status.success?
+      assert_includes output, "dados privados no artefacto: private-reports/example/report.pdf"
+      FileUtils.rm_rf(File.join(artifact, "private-reports"))
 
       document = File.join(artifact, "snapshot.json")
       data = JSON.parse(File.read(document))

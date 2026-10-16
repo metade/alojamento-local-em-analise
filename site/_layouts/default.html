@@ -102,6 +102,14 @@
           <a href="{{ '/runs/' | append: site.data.site.run_id | append: '/report.pdf' | relative_url }}">
             PDF ↓
           </a>
+          {% if site.private_report_runs contains site.data.site.run_id %}
+            <a
+              class="text-[var(--color-blue)] underline underline-offset-4"
+              href="{{ '/private-reports/' | append: site.data.site.run_id | append: '/report.html' | relative_url }}"
+            >
+              Relatório detalhado · uso local ↗
+            </a>
+          {% endif %}
           <a
             class="text-[var(--color-blue)] underline underline-offset-4"
             href="{{ '/metodologia.html' | relative_url }}"

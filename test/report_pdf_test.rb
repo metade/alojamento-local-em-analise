@@ -6,7 +6,7 @@ require_relative "../lib/alojamento_local"
 class ReportPdfTest < Minitest::Test
   def test_converter_receives_completed_html_and_installs_only_successful_pdf
     Dir.mktmpdir do |root|
-      html = File.join(root, "report_local.html")
+      html = File.join(root, "report.html")
       pdf = File.join(root, "report.pdf")
       File.write(html, "<!doctype html><p>Relatório completo</p>")
       File.write(pdf, "%PDF-previous")
@@ -38,7 +38,7 @@ class ReportPdfTest < Minitest::Test
           end
         end
         assert_equal 1, commands.length
-        assert_equal %w[report.pdf report_local.html], Dir.children(root).sort
+        assert_equal %w[report.html report.pdf], Dir.children(root).sort
       end
     end
   end

@@ -10,8 +10,8 @@ module AlojamentoLocal
   LOADER.ignore(File.join(__dir__, "alojamento_local/public_schema.rb"))
   LOADER.setup
 
-  ANALYSIS_VERSION = "3.6.0"
-  OUTPUT_SCHEMA_VERSION = "6.0.0"
+  ANALYSIS_VERSION = "3.7.0"
+  OUTPUT_SCHEMA_VERSION = "7.0.0"
   METHODOLOGY_VERSION = "2.1.0"
   COLLAPSIBLE_ASSESSMENTS = [
     "provável estabelecimento com anúncios múltiplos",

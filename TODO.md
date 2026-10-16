@@ -50,6 +50,17 @@ arquivo permanente e da integração descrita abaixo.
   run. A preservação de múltiplos resultados por versão fica para a etapa 3;
   um rótulo no metadata, sozinho, não preserva resultados substituídos.
 
+## Pipeline unificado
+
+- [x] Remover os modos local/público da análise. Gerar sempre um snapshot agregado
+  e diagnósticos privados separados. O Jekyll gera ambos os relatórios com o
+  template partilhado. Retirar modo e IDs de rerun
+  do schema 7.0.0; preservar metodologia e resultados em fontes idênticas.
+- [x] Usar o flag nativo `serving` do Jekyll para incluir relatórios privados e
+  links no build local, a partir dos CSVs disponíveis. Builds normais removem e
+  excluem esses outputs; a auditoria rejeita dados/links privados na publicação.
+  Sem servidor próprio, interceptação HTTP ou renderer ERB separado.
+
 ## Outras tarefas
 
 - [ ] Rever a localização de `lib/alojamento_local/overlap.rb`. Este helper calcula a
@@ -83,7 +94,7 @@ arquivo permanente e da integração descrita abaixo.
 
 - [x] Depois do loader partilhado, consolidar os dados do snapshot num ficheiro
   estruturado e versionado que esse loader consuma. Manter a interface do
-  documento para o relatório e o site. Apenas schema 6.0.0: snapshots anteriores
+  documento para o relatório e o site. Apenas schema 7.0.0: snapshots anteriores
   exigem reanálise das fontes verificadas; sem leitores legados ou fallback.
   Validar a estrutura com JSON Schema e a proveniência/contabilidade em Ruby.
   Atualizar a escrita, o schema

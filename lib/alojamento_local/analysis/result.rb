@@ -11,15 +11,14 @@ module AlojamentoLocal
       attr_reader :listings, :licence_groups, :parish_totals, :announcements_by_parish_and_classification,
         :licence_group_aggregates, :metadata, :summary, :registration_metrics
 
-      def initialize(sources:, run_id:, mode:)
+      def initialize(sources:, run_id:)
         @sources = sources
         @run_id = run_id
-        @mode = mode
         @listings, = Classifier.new(sources).classify
         @metadata = build_metadata
         @licence_groups = Aggregates.licence_groups(listings)
         @summary = Aggregates.summary(listings, licence_groups, metadata.fetch(:source_dates),
-          metadata.fetch(:run_id), metadata.fetch(:mode), official: sources.official)
+          metadata.fetch(:run_id), official: sources.official)
         @registration_metrics = RegistrationMetrics.calculate(listings, sources.official).merge(
           run_id: metadata.fetch(:run_id), source_files: metadata.fetch(:source_files),
           methodology_version: metadata.fetch(:methodology_version), source_dates: metadata.fetch(:source_dates)
@@ -34,7 +33,7 @@ module AlojamentoLocal
           metadata: metadata, summary: summary, licence_group_aggregates: licence_group_aggregates,
           announcements_by_parish_and_classification: announcements_by_parish_and_classification,
           parish_totals: parish_totals, registration_metrics: registration_metrics}))
-        PublicSnapshot.validate!(data, expected_run_id: @run_id, allow_local: @mode == "local")
+        PublicSnapshot.validate!(data, expected_run_id: @run_id)
       end
 
       private
@@ -48,7 +47,7 @@ module AlojamentoLocal
           run_id: @run_id,
           **provenance,
           git_commit: commit.strip, git_worktree_dirty: !changes.empty?, analysis_version: ANALYSIS_VERSION,
-          methodology_version: METHODOLOGY_VERSION, output_schema_version: OUTPUT_SCHEMA_VERSION, mode: @mode
+          methodology_version: METHODOLOGY_VERSION, output_schema_version: OUTPUT_SCHEMA_VERSION
         }
       end
     end

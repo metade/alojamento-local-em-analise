@@ -12,13 +12,6 @@ module AlojamentoLocal
 
       module_function
 
-      def verify_local_run!(path, run_id)
-        return unless File.exist?(path)
-        return unless CSV.foreach(path, headers: true).any? { |row| row["run_id"] == run_id }
-
-        raise "History already exists for immutable local run #{run_id}"
-      end
-
       def append_history(path, row, replace: false)
         values = {"source_airbnb_date" => row[:source_dates][:airbnb_snapshot_date], "source_official_register_download_date" => row[:source_dates][:official_register_download_date]}
         fields = SUMMARY_HEADERS.map { |key| row[key.to_sym] || values[key] }

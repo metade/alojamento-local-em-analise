@@ -17,7 +17,7 @@ module AlojamentoLocal
       html_files = Dir.glob(File.join(root, "**", "*.html"))
       html_files.each do |path|
         text = File.read(path)
-        report = %w[report.html report_local.html].include?(File.basename(path))
+        report = File.basename(path) == "report.html"
         if report
           pdf = File.join(File.dirname(path), "report.pdf")
           raise "Missing or invalid report PDF: #{pdf}" unless ReportPdf.valid?(pdf)

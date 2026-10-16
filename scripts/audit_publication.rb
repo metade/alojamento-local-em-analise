@@ -94,6 +94,7 @@ def audit_worktree
     errors << "URL de anúncio em #{path}" if text.match?(LISTING_URL)
     errors << "padrão de identificador em #{path}" if text.match?(AIRBNB_IDENTIFIER)
     errors << "referência a fonte local em #{path}" if text.match?(RAW_SOURCE_PATH)
+    errors << "relatório privado em #{path}" if text.include?('name="al-private-report"') || text.include?("/private-reports/")
 
     errors.concat(audit_snapshot(text, path)) if File.basename(path) == "snapshot.json"
 
@@ -152,7 +153,7 @@ def audit_artifact(root)
   files.each do |path|
     relative = path.delete_prefix("#{root}/")
     errors << "ficheiro local/bruto no artefacto: #{relative}" if relative.match?(RAW_SOURCE_PATH)
-    if relative.match?(/(?:report_data_local|metadata_local|summary_local|detailed)/)
+    if relative.match?(/(?:private-reports|report_data_local|metadata_local|summary_local|detailed)/)
       errors << "dados privados no artefacto: #{relative}"
     end
     text = file_text(path)
@@ -164,6 +165,7 @@ def audit_artifact(root)
     errors << "URL de anúncio em #{relative}" if text.match?(LISTING_URL)
     errors << "padrão de identificador em #{relative}" if text.match?(AIRBNB_IDENTIFIER)
     errors << "referência a fonte local em #{relative}" if text.match?(RAW_SOURCE_PATH)
+    errors << "relatório privado em #{relative}" if text.include?('name="al-private-report"') || text.include?("/private-reports/")
 
     errors.concat(audit_snapshot(text, relative)) if File.basename(path) == "snapshot.json"
 

@@ -1,73 +1,42 @@
 # frozen_string_literal: true
 
-require "time"
-
 module AlojamentoLocal
   module Analysis
     module_function
 
-    def run(airbnb_path: nil, official_path: nil, output_root: nil, history_path: nil, mode: "local")
-      raise ArgumentError, "Mode must be public or local" unless %w[public local].include?(mode)
-      sources = prepare_sources(airbnb_path: airbnb_path, official_path: official_path)
-      run_id, destination, history_path = prepare_destination(sources, mode: mode, output_root: output_root, history_path: history_path)
-      result = prepare_result(sources, run_id: run_id, mode: mode, history_path: history_path)
-
-      publish(result, destination: destination, history_path: history_path, mode: mode) do |path|
-        writer = OutputWriter.new(result: result, path: path)
-        writer.generate_data
-      end
-      {run_id: run_id, path: destination, summary: result.summary}
-    end
-
-    def prepare_sources(airbnb_path:, official_path:)
+    def run(airbnb_path: nil, official_path: nil, output_root: "data/snapshots", history_path: "data/history/summary.csv", private_root: File.join(File.dirname(output_root), "private"))
       sources = PreparedSources::Pair.new(airbnb_path: airbnb_path, official_path: official_path)
       raise "No observed Lisbon announcements" if sources.airbnb.entries.empty?
 
-      sources
-    end
-
-    def prepare_destination(sources, mode:, output_root:, history_path:)
-      output_root ||= (mode == "public") ? "data/snapshots" : "data/private"
-      history_path ||= (mode == "public") ? "data/history/summary.csv" : "data/private/history/summary.csv"
       run_id = sources.identifier
-      run_id = local_run_id(run_id, output_root) if mode == "local"
       destination = File.join(output_root, run_id)
-      PublicPublisher.verify_public_sources!(destination, sources.source_hashes) if mode == "public" && Dir.exist?(destination)
-      [run_id, destination, history_path]
-    end
-
-    def prepare_result(sources, run_id:, mode:, history_path:)
-      result = Result.new(sources: sources, run_id: run_id, mode: mode)
+      private_path = File.join(private_root, run_id)
+      validate_destinations!(output_root, private_root, history_path)
+      PublicPublisher.verify_public_sources!(destination, sources.source_hashes) if Dir.exist?(destination)
+      result = Result.new(sources: sources, run_id: run_id)
       result.summary[:historical_comparisons] = History.historical_comparisons(history_path, result.summary)
       sources.verify_unchanged!
-      History.verify_local_run!(history_path, run_id) if mode == "local"
-      result
+
+      PublicPublisher.new(destination: destination, history_path: history_path, private_path: private_path).publish(
+        summary: result.summary, listings: result.listings
+      ) do |path, diagnostics|
+        OutputWriter.new(result: result, path: path).generate_data
+        OutputWriter.new(result: result, path: diagnostics).generate_diagnostics
+      end
+      {run_id: run_id, path: destination, private_path: private_path, summary: result.summary}
     end
 
-    def publish(result, destination:, history_path:, mode:)
-      if mode == "public"
-        PublicPublisher.new(destination: destination, history_path: history_path).publish(
-          summary: result.summary, listings: result.listings
-        ) { |path| yield path }
-      else
-        yield destination
-        History.append_history(history_path, result.summary)
+    def validate_destinations!(output_root, private_root, history_path)
+      public_paths = [output_root, File.dirname(history_path), "site", "_site", File.expand_path("../../_site", __dir__), File.expand_path("../../site", __dir__)]
+      private_path = File.expand_path(private_root)
+      public_paths.each do |path|
+        path = File.expand_path(path)
+        if path == private_path || path.start_with?(private_path + "/") || private_path.start_with?(path + "/")
+          raise ArgumentError, "Private diagnostics must be separate from snapshots, history and site directories"
+        end
       end
     end
 
-    def local_run_id(base, output_root)
-      return base unless Dir.exist?(File.join(output_root, base))
-
-      rerun = "#{base}__rerun-#{Time.now.utc.strftime("%Y%m%dT%H%M%S%6N")}"
-      candidate = rerun
-      increment = 2
-      while Dir.exist?(File.join(output_root, candidate))
-        candidate = "#{rerun}-#{increment}"
-        increment += 1
-      end
-      candidate
-    end
-
-    private_class_method :prepare_sources, :prepare_destination, :prepare_result, :publish, :local_run_id
+    private_class_method :validate_destinations!
   end
 end

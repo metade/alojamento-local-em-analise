@@ -1,5 +1,5 @@
 {
-  "schema_version": "6.0.0",
+  "schema_version": "7.0.0",
   "metadata": {
     "run_id": "2026-06-23__2026-09-26",
     "source_urls": {
@@ -19,12 +19,11 @@
         "sha256": "1d15ad8e799ea426f2b5a246db4f6b80544d7dbfc5b2d1d67bc5de06fb023fc8"
       }
     },
-    "git_commit": "dd50aab96ce1e30157a205cdb35ddd9f2d5f6c86",
+    "git_commit": "9ba54ebbee23d815d36e0ebcc86a311c70561adc",
     "git_worktree_dirty": true,
-    "analysis_version": "3.4.0",
+    "analysis_version": "3.7.0",
     "methodology_version": "2.1.0",
-    "output_schema_version": "6.0.0",
-    "mode": "public"
+    "output_schema_version": "7.0.0"
   },
   "summary": {
     "run_id": "2026-06-23__2026-09-26",
@@ -46,8 +45,7 @@
       "licença oficial fora de Lisboa": 363,
       "provável estabelecimento com anúncios múltiplos": 768
     },
-    "mode": "public",
-    "generated_at": "2026-10-12T21:16:59Z",
+    "generated_at": "2026-10-16T08:33:31Z",
     "historical_comparisons": [
       {
         "run_id": "2025-09-21__2025-11-25",

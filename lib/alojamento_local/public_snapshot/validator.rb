@@ -5,8 +5,8 @@ module AlojamentoLocal
   module PublicSnapshot
     class Validator
       # JSON Schema checks document structure; Ruby checks relationships between values.
-      def validate!(snapshot, expected_run_id:, allow_local: false)
-        base_run_id = validate_run!(snapshot, expected_run_id: expected_run_id, allow_local: allow_local)
+      def validate!(snapshot, expected_run_id:)
+        base_run_id = validate_run!(snapshot, expected_run_id: expected_run_id)
         validate_provenance!(snapshot, base_run_id)
         validate_tables!(snapshot)
         validate_aggregates!(snapshot)
@@ -15,16 +15,10 @@ module AlojamentoLocal
 
       private
 
-      def validate_run!(snapshot, expected_run_id:, allow_local:)
-        meta, summary = snapshot.fetch("metadata"), snapshot.fetch("summary")
-        # Only local reports may use immutable rerun identifiers; public loading
-        # always retains the dated-pair identifier and public mode requirements.
-        local = allow_local && meta.fetch("mode") == "local"
-        base_run_id = local ? expected_run_id.sub(/__rerun-\d{8}T\d{12}(?:-\d+)?\z/, "") : expected_run_id
-        mode = local ? "local" : "public"
-        raise "Invalid snapshot run" unless meta.fetch("run_id") == expected_run_id && base_run_id.match?(/\A\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}\z/)
-        raise "Invalid snapshot mode" unless meta.fetch("mode") == mode && summary.fetch("mode") == mode
-        base_run_id
+      def validate_run!(snapshot, expected_run_id:)
+        meta = snapshot.fetch("metadata")
+        raise "Invalid snapshot run" unless meta.fetch("run_id") == expected_run_id && expected_run_id.match?(/\A\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}\z/)
+        expected_run_id
       end
 
       def validate_provenance!(snapshot, base_run_id)

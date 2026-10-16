@@ -1,10 +1,10 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Alojamento Local snapshot 6.0.0",
+  "title": "Alojamento Local snapshot 7.0.0",
   "type": "object",
   "properties": {
     "schema_version": {
-      "const": "6.0.0"
+      "const": "7.0.0"
     },
     "metadata": {
       "type": "object",
@@ -51,13 +51,7 @@
           "pattern": "^\\d+\\.\\d+\\.\\d+$"
         },
         "output_schema_version": {
-          "const": "6.0.0"
-        },
-        "mode": {
-          "enum": [
-            "public",
-            "local"
-          ]
+          "const": "7.0.0"
         }
       },
       "required": [
@@ -68,8 +62,7 @@
         "git_commit",
         "analysis_version",
         "methodology_version",
-        "output_schema_version",
-        "mode"
+        "output_schema_version"
       ],
       "additionalProperties": false
     },
@@ -103,12 +96,6 @@
           "additionalProperties": {
             "$ref": "#/$defs/count"
           }
-        },
-        "mode": {
-          "enum": [
-            "public",
-            "local"
-          ]
         },
         "generated_at": {
           "type": "string",
@@ -160,7 +147,6 @@
         "official_registers_lisbon",
         "establishment_estimate",
         "classifications",
-        "mode",
         "generated_at"
       ],
       "additionalProperties": false
@@ -466,7 +452,7 @@
     },
     "run_id": {
       "type": "string",
-      "pattern": "^\\d{4}-\\d{2}-\\d{2}__\\d{4}-\\d{2}-\\d{2}(__rerun-\\d{8}T\\d{12}(-\\d+)?)?$"
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}__\\d{4}-\\d{2}-\\d{2}$"
     },
     "source_dates": {
       "type": "object",

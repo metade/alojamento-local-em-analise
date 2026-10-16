@@ -14,36 +14,55 @@ Install dependencies:
 bundle install
 ```
 
-Update sources, then run the analysis:
+Update sources, then run the single analysis pipeline:
 
 ```bash
 bundle exec rake sources:update
-bundle exec rake analysis:local
+bundle exec rake analysis
 ```
 
-Source updates, analysis and site builds are independent. `sources:update` checks the latest Lisbon Airbnb snapshot and downloads missing files; it refreshes RNAL only when no dated copy exists or its download date is older than the Airbnb snapshot. Analysis tasks select the latest dated local files without network requests. `refresh` runs source updates, public analysis and the site build; `rebuild` runs public analysis and the site build without source updates. The default analysis mode is `local`, creating an immutable detailed run under:
+Source updates, analysis and site builds are independent. `sources:update`
+checks the latest Lisbon snapshot and refreshes RNAL only when needed. Analysis
+always recalculates the latest dated local source pair without network requests.
+`refresh` updates sources, analyses and builds the public site; `rebuild` analyses
+and builds without downloads. `FORCE=1` applies only to source updates.
 
-```text
-data/private/<airbnb-snapshot-date>__<official-download-date>/
-```
+There are no local/public analysis modes, mode metadata or rerun IDs. Every run
+writes aggregate-only `snapshot.json` under `data/snapshots/<source-date-pair>/`
+and detailed CSVs under ignored
+`data/private/<source-date-pair>/`. Reanalysis replaces both outputs and that
+pair's history rows together, with staging, validation and rollback. Other pairs
+remain unchanged. Existing public source hashes must match before replacement.
+No private history is generated. Never add private details to snapshots.
 
-Local runs are immutable. Each repeated local analysis automatically creates a timestamped sibling rerun, preserving previous results. Analysis always recalculates from local sources and has no force or reuse option. `FORCE=1` applies only to `sources:update` (including the source stage of `refresh`), downloading both sources again. `rebuild` never downloads sources, even with `FORCE=1`.
+Preserve existing archived public `report.html` and `report.pdf` when replacing
+a dated snapshot. Analysis does not generate or update these historical copies.
+Site/report builds generate fresh reports and ignore archived copies. Preserve
+only those report filenames, not arbitrary files from the old snapshot folder.
 
-Use the explicit public mode to create sanitised, publishable outputs:
+Only snapshot schema 7.0.0 is supported. Regenerate older documents from verified
+dated sources; no legacy readers or fallback snapshots. `PublicSnapshot.load`
+returns a string-keyed Hash. JSON Schema validates structure; Ruby validates
+provenance and accounting. Analysis 3.7.0 changes output organisation, not the
+2.1.0 methodology or analytical values.
 
-```bash
-bundle exec rake analysis:public
-```
+`site:build` and `report:build[run_dir]` build public HTML/PDF using the complete
+Jekyll page `site/report.html` and bundled wkhtmltopdf, without fallback.
+Standalone outputs default to `tmp/reports/<run-id>/`, overridden by
+`DESTINATION`, separate from the input. Builds leave inputs unchanged.
+Analysis writes data only. Both public and private reports use the canonical
+`site/report.html` Jekyll template and generate HTML/PDF. During
+`bundle exec jekyll serve`, Jekyll sets `site.config["serving"]`; the report
+generator reads the two diagnostic CSVs for each available source pair and adds
+private report pages. Liquid shows links for those pairs. Private reports and
+CSV downloads go into `_site/private-reports/<run-id>/` during local serving.
+There is no custom HTTP handler, private ERB renderer or GitHub-specific flag.
 
-Public runs are created under:
-
-```text
-data/snapshots/<airbnb-snapshot-date>__<official-download-date>/
-```
-
-Public outputs use one folder per dated source pair. Reanalysis validates new outputs before replacing that folder and its history rows; Git retains previously committed versions. Other date pairs remain unchanged. Local runs remain immutable. Each analysis invocation recalculates. `REUSE_EXISTING` is no longer used. Reanalysis replaces public outputs for the same dated source pair after validation; repeated local analysis creates a preserved sibling rerun. Changed source hashes for an existing public date pair remain rejected.
-
-Local runs contain the same aggregate `snapshot.json` schema with local mode and rerun IDs, plus `listings_detailed.csv` and `licence_groups_detailed.csv` for diagnostics. Local runs are ignored by Git. Public runs contain only authoritative `snapshot.json` (schema 6.0.0). No separate CSV/JSON downloads are generated. Only schema 6.0.0 is supported. Regenerate older snapshots from verified dated sources; there are no legacy readers or fallback snapshots. `PublicSnapshot.load` returns the parsed document as a string-keyed Hash. JSON Schema (`schema/snapshot.schema.json`, using `json_schemer`) validates structure; Ruby validates provenance and accounting. Publication validates its schema, provenance and aggregates. Existing public source hashes are verified before replacing a dated run. Analysis is data-only. `site:build` and `report:build[run_dir]` always generate completed HTML and PDF using the bundled `wkhtmltopdf-binary`; there is no fallback. Standalone outputs default to `tmp/reports/public/<run-id>/` or `tmp/reports/local/<run-id>/`, overridden by `DESTINATION`. Report destinations must be separate output directories. Local input directories remain immutable; older local runs without `snapshot.json` require a new analysis rerun. Public history in `data/history/` keeps the current summary and auxiliary rows for each dated source pair, replacing only that pair on reanalysis. Local history in `data/private/history/` is append-only.
+Normal `jekyll build`, `site:build` and standalone `report:build` are public-only.
+A normal build must remove private outputs left by local serving in the same
+destination. Publication audits reject private files, report markers and links.
+Private CSV inputs and snapshots remain unchanged by every build. Reanalysis
+replaces diagnostics; restart Jekyll after updating inputs outside `site/`.
 
 Run the full test suite (`bundle exec rake` also runs it by default):
 
@@ -67,7 +86,7 @@ ruby -c lib/alojamento_local/analysis/data.rb
 
 Raw data under `data_sources/**/*.csv`, detailed local results under `data/private/`, and cached files under `tmp/` are intentionally ignored by Git. Transformed, versioned outputs under `data/snapshots/` and `data/history/` are publishable project outputs and may be committed. Snapshot documents are aggregate-only and must not contain listing/host identifiers, listing URLs, names, addresses, exact coordinates, or raw licence strings. Do not commit large raw upstream datasets.
 
-The GitHub Actions workflow in `.github/workflows/monthly-analysis.yml` runs monthly or through `workflow_dispatch`, tests before source updates and analysis, restores the latest retained `analysis-sources` artifact from a successful default-branch run, runs `sources:update`, archives only the latest dated pair with 90-day retention renewed each run, explicitly selects `analysis:public`, stages and audits only the sanitised `data/snapshots/` and `data/history/` outputs before committing them, builds the site from public snapshots, and publishes the site as a GitHub Pages artifact. Sources may be reused, but analysis always recalculates, even when the dated pair is unchanged. It must never commit local/detailed outputs or the generated site.
+The GitHub Actions workflow in `.github/workflows/monthly-analysis.yml` runs monthly or through `workflow_dispatch`, tests before source updates and analysis, restores the latest retained `analysis-sources` artifact from a successful default-branch run, runs `sources:update`, archives only the latest dated pair with 90-day retention renewed each run, runs `analysis`, stages and audits only the sanitised `data/snapshots/` and `data/history/` outputs before committing them, builds the site from public snapshots, and publishes the site as a GitHub Pages artifact. Sources may be reused, but analysis always recalculates, even when the dated pair is unchanged. It must never commit local/detailed outputs or the generated site.
 
 The `.github/workflows/site-publish.yml` workflow rebuilds and publishes the site on human pushes to `main` and through `workflow_dispatch`. It skips the automated `github-actions[bot]` / `Atualiza análise mensal` push because the monthly workflow already builds and publishes the site in that same run. Site publication is therefore separate from the data-analysis decision, while both use `bundle exec rake site:build` and the publication audit.
 
@@ -85,35 +104,30 @@ Historical comparisons are generated only for metrics with the same methodology 
 
 ## Analysis architecture
 
-`Analysis.run` is the orchestration entry point. It validates the mode, prepares sources, selects the destination, calculates results, and generates data inside the publication step. It returns `{run_id:, path:, summary:}`. Supply both source paths or neither; omitting them selects the latest dated local pair. There is no separate `Runner` or facade for internal helpers.
+`Analysis.run` is the orchestration entry point. It prepares sources, selects the destination, calculates results, and generates data inside the publication step. It returns `{run_id:, path:, private_path:, summary:}`. Supply both source paths or neither; omitting them selects the latest dated local pair. There is no separate `Runner` or facade for internal helpers.
 
-- `Analysis::PreparedSources::Pair` owns source selection, preparation, dates, URLs, initial hashes, byte-change verification and the base source-date `identifier`. Local rerun suffixes depend on output-directory state and remain in `Analysis`.
+- `Analysis::PreparedSources::Pair` owns source selection, preparation, dates, URLs, initial hashes, byte-change verification and the base source-date `identifier`.
 - `Analysis::Classifier` produces detailed classified listing rows from that prepared pair. `Aggregates`, `AnnouncementCounts` and `RegistrationMetrics` calculate their respective aggregates without selecting or downloading sources.
-- `Analysis::Result` takes `sources`, `run_id` and `mode`; it owns classified listings, aggregates, summary and run metadata. Its `snapshot` builds and validates the current snapshot document as a Hash. The matched `official_register_date` is derived from classified listings here; the official download date belongs to source provenance.
-- `Analysis::OutputWriter` is an instance holding a result and output path. Its generation methods own the shared snapshot document and local diagnostic CSVs; serialization helpers are private.
-- `Analysis::History` owns comparisons and history CSV operations. `Analysis::PublicPublisher` stages and validates the public run and its histories, installs them together, rolls back failures or interruptions, and cleans staging files.
+- `Analysis::Result` takes `sources` and `run_id`; it owns classified listings, aggregates, summary and run metadata. Its `snapshot` builds and validates the current snapshot document as a Hash. The matched `official_register_date` is derived from classified listings here; the official download date belongs to source provenance.
+- `Analysis::OutputWriter` is an instance holding a result and output path. Its generation methods own the snapshot document and separate private diagnostics; serialization helpers are private.
+- `Analysis::History` owns comparisons and history CSV operations. `Analysis::PublicPublisher` stages and validates the snapshot, stages private diagnostics and histories, installs them together, rolls back failures or interruptions, and cleans staging files.
 
 Use the responsible collaborator directly in scripts and focused tests rather than adding forwarding methods to `Analysis`. Keep the high-level sequence readable in `Analysis.run`, with setup details in private helpers. Structural refactors preserve the synthetic fixture's analytical results and output contents.
 
-Reports share the complete Jekyll page `site/report.html`, with `layout: null`.
-Analysis writes the same `snapshot.json` fields and schema for public and local
-runs; local metadata retains local mode and rerun IDs. Only public runs enter the
-site. Normal Jekyll hooks prepare `site.data.site` in `post_read`; the report
-generator loads snapshots through `PublicSnapshot.load` and creates pages
-before rendering. After Jekyll writes HTML, `post_write` copies aggregate downloads
-and calls `ReportPdf` using bundled wkhtmltopdf. Rake invokes `jekyll build`, then
-checks and audits its output. Direct Jekyll builds also generate report PDFs.
-`report:build` uses the same build path with only report pages enabled. Presentation
+Public and private reports share the complete Jekyll page `site/report.html`, with
+`layout: null`. `post_read` prepares `site.data.site`; the report generator loads
+validated snapshots and creates pages before rendering. `post_write` copies
+only aggregate downloads and generates PDFs. Rake invokes `jekyll build`, then
+checks and audits output. Direct Jekyll builds also generate public PDFs.
+`report:build` uses the same path with only report pages enabled. Presentation
 defaults and bar widths belong in the page. `SiteChecker` verifies output files
-and report/download links. Jekyll handles Liquid syntax errors. Data and privacy
-validation belong to the publication audit; report tests cover calculations,
-escaping, historical defaults and equivalent rendering between build modes.
-Builds write directly to their destination; failures abort and may leave partial
-outputs. Source snapshots and histories remain unchanged. Data publication still
-uses `Analysis::PublicPublisher` with validation and rollback. Stored historical
-reports are retained but ignored during builds. Standalone public builds copy
-only allowlisted data files; local builds expose no diagnostic downloads.
-Older or incomplete snapshots require verified reanalysis before any site or report build.
+and report/download links. Jekyll handles Liquid syntax; the publication audit
+handles data/privacy validation. Report tests cover calculations, escaping,
+historical defaults and equivalent rendering between standalone and site builds.
+Builds write directly to the destination and may leave partial output on failure.
+Snapshots and histories remain unchanged. Data publication uses
+`Analysis::PublicPublisher` with validation and rollback, including diagnostics.
+Older snapshots require verified reanalysis before building.
 
 ## Matching and classification
 
@@ -150,7 +164,7 @@ Measured overlap metrics live in the `registration_metrics` section of versioned
 
 - Prepare sources once per run with `Analysis::PreparedSources::Pair`; no cache by filename. Preserve every official entry and its raw fields. Derive the classification lookup separately so resolving official conflicts never changes the entries used by metrics.
 - Retain Airbnb rows whose municipality normalizes to Lisboa. Derive reuse counts from those same retained entries; classification, spatial grouping and metrics must use the same population. Preserve original source values internally.
-- Use the synthetic pipeline fixture for full public/local output regression. Update its expected files only for an intentional change, review the diffs and independently check the accounting described in [test/fixtures/pipeline/README.md](test/fixtures/pipeline/README.md).
+- Use the synthetic pipeline fixture for full aggregate/private output regression. Update its expected files only for an intentional change, review the diffs and independently check the accounting described in [test/fixtures/pipeline/README.md](test/fixtures/pipeline/README.md).
 - Record the methodology version on every run and explain changes and measured impact on identical source bytes in README's methodology notes. Keep implementation details that do not change results under the analysis version. Deferred simplification and archive work belongs in TODO.md.
 
 ### General guidance

@@ -4,20 +4,14 @@ All rows are invented. The licence numbers, hosts, names, addresses and
 `example.invalid` URLs are test values, not downloaded or anonymized records.
 The fixture uses known Lisbon geography names to exercise the existing rules.
 
-`PipelineRegressionTest` runs public and local analysis from the dated source
-CSVs, seeds each history with compatible and incompatible runs, and feeds the
-public result and its auxiliary histories into `SiteData`. It compares all 9
-result files against `expected/`, including CSV headers/order, detailed rows,
-metadata, every registration metric/definition/diagnostic, histories,
-and all district data/routes/geometry. Public and local runs share `snapshot.json`.
-The 3.6.0/6.0.0 baseline replaces the local report envelope and duplicate local
-JSON/aggregate CSV exports with this document; local diagnostic CSVs are retained;
-analytical accounting, methodology and histories are unchanged.
-The site consumes the document's integer aggregate rows directly, with no
-legacy count renaming or string conversion. The site expectation omits the
-removed fallback notice and exposes `announcements_by_parish_and_classification`;
-snapshot contents, diagnostic CSVs, analytical accounting and histories stay unchanged.
-Only schema 6.0.0 is supported; tests reject previous formats instead of adapting them.
+`PipelineRegressionTest` runs the single analysis from dated synthetic CSVs,
+seeds the aggregate history with compatible and incompatible runs, and feeds the
+snapshot and auxiliary histories into `SiteData`. It compares 7 result files:
+one public snapshot, two private diagnostic CSVs, three aggregate histories,
+and site data. The 3.7.0/schema 7.0.0 baseline removes
+mode fields, the duplicate local snapshot and private history. Analytical
+accounting, methodology, CSV rows and aggregate histories remain unchanged.
+Only schema 7.0.0 is supported; previous formats require verified reanalysis.
 
 The test does not download sources, use repository snapshots or private caches,
 invoke Jekyll, or create a PDF. Site builds and publication audits remain separate
@@ -86,7 +80,7 @@ Only these volatile values are replaced with explicit placeholders:
   and the consolidated document summary.
 - The current run's `generated_at` column in summary histories; seed dates remain.
 - `git_commit` and `git_worktree_dirty` in metadata, including site metadata
-  and public and local snapshot metadata.
+  and snapshot metadata.
 
 If files are intentionally removed, delete their obsolete expectations explicitly;
 the updater does not delete files and the test rejects unexpected/missing outputs.

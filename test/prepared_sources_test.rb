@@ -128,7 +128,7 @@ class PreparedSourcesTest < Minitest::Test
       end
       with_method(CSV, :foreach, read) do
         with_method(AlojamentoLocal, :parse_al_license, parse) do
-          result = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "public",
+          result = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official,
             output_root: File.join(dir, "snapshots"), history_path: File.join(dir, "history", "summary.csv"))
           assert_equal 8, result[:summary][:official_registers_lisbon]
           assert_equal 10, result[:summary][:listings]
@@ -173,7 +173,7 @@ class PreparedSourcesTest < Minitest::Test
       assert_equal({airbnb_snapshot_date: "2026-06-23",
                     official_register_download_date: "2026-09-26"}, sources.source_dates)
       assert_equal "2026-06-23__2026-09-26", sources.identifier
-      result = AlojamentoLocal::Analysis::Result.new(sources: sources, run_id: "2026-06-23__2026-09-26", mode: "public")
+      result = AlojamentoLocal::Analysis::Result.new(sources: sources, run_id: "2026-06-23__2026-09-26")
       assert_equal({airbnb_snapshot_date: "2026-06-23", official_register_date: "2020-01-01",
                     official_register_download_date: "2026-09-26"}, result.metadata.fetch(:source_dates))
       refute sources.source_dates.key?(:official_register_date), "Result must not modify source provenance"
@@ -197,7 +197,7 @@ class PreparedSourcesTest < Minitest::Test
 
   def test_site_loads_selected_json_once_and_keeps_measured_inputs_unmodified
     with_sources do |dir, airbnb, official|
-      result = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "public",
+      result = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official,
         output_root: File.join(dir, "snapshots"), history_path: File.join(dir, "history", "summary.csv"))
       reads = Hash.new(0)
       original = File.method(:read)
