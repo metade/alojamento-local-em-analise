@@ -132,6 +132,10 @@ class ReportBuildTest < Minitest::Test
       csv = CSV.read(csv_path, headers: true)
       csv.first["nome"] = '<script>alert("private")</script>'
       File.write(csv_path, csv.to_csv)
+      groups_path = File.join(diagnostics, "licence_groups_detailed.csv")
+      groups = CSV.read(groups_path, headers: true)
+      groups.first["licence_raw_examples"] = '<script>alert("private")</script>'
+      File.write(groups_path, groups.to_csv)
       File.write(File.join(diagnostics, "secret.txt"), "Must not be copied")
       before = files(root)
       output = File.join(root, "rendered")
@@ -143,7 +147,8 @@ class ReportBuildTest < Minitest::Test
       assert_includes private_html, 'name="al-private-report"'
       assert_includes private_html, "&lt;script&gt;alert(&quot;private&quot;)&lt;/script&gt;"
       refute_includes private_html, '<script>alert("private")</script>'
-      assert_includes private_html, "licensa_raw"
+      refute_includes private_html, "licensa_raw"
+      assert_equal File.binread(csv_path), File.binread(File.join(private_dir, "listings_detailed.csv"))
       refute_includes public_html, "licensa_raw"
       refute_includes public_html, "al-private-report"
       [private_html, public_html].each { |html| assert_includes html, "34</b>" }
@@ -192,9 +197,13 @@ class ReportBuildTest < Minitest::Test
       assert_includes section, "#{csv.size} linhas no CSV"
       assert_equal File.binread(source), File.binread(File.join(private_dir, "licence_groups_detailed.csv"))
       assert_equal before, files(diagnostics)
-      announcements = html.match(%r{<h2>Anúncios</h2>(.*?)</section>}m)[1]
-      assert_equal CSV.read(File.join(diagnostics, "listings_detailed.csv"), headers: true).size,
-        announcements.scan("<tr>").length - 1
+      refute_includes html, "<h2>Anúncios</h2>"
+      assert_equal 1, html.scan('class="diagnostics-table"').length
+      assert_includes html, '<a href="listings_detailed.csv">Descarregar CSV completo de anúncios</a>'
+      listing_source = File.join(diagnostics, "listings_detailed.csv")
+      listing_count = CSV.read(listing_source, headers: true).size
+      assert_match(%r{Descarregar CSV completo de anúncios</a>\s*· #{listing_count} linhas}, html)
+      assert_equal File.binread(listing_source), File.binread(File.join(private_dir, "listings_detailed.csv"))
     end
   end
 

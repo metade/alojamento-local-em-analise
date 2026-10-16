@@ -222,7 +222,8 @@ local». O HTML/PDF, snapshot agregado e CSVs ficam em
 Na secção «Grupos de licenças», o relatório apresenta apenas casos para
 verificação: omite licenças únicas em Lisboa, prováveis estabelecimentos com
 anúncios múltiplos e repetições na mesma localização. Os CSVs descarregáveis
-mantêm todas as linhas; a tabela de anúncios mantém os detalhes completos.
+mantêm todas as linhas. Os detalhes individuais dos anúncios estão disponíveis
+apenas no CSV, sem tabela no HTML ou PDF.
 
 O build local contém dados privados e permanece ignorado pelo Git. Um
 `jekyll build` normal, incluindo `site:build` e os workflows GitHub Actions,

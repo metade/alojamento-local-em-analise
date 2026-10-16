@@ -444,6 +444,10 @@ layout: null
           Inclui dados individuais para verificação. Estes ficheiros pertencem apenas ao build
           local.
         </p>
+        <p>
+          <a href="listings_detailed.csv">Descarregar CSV completo de anúncios</a>
+          · {{ page.private_listing_count }} linhas
+        </p>
       </section>
       {%- for table in page.private_tables -%}
         <section>
@@ -452,10 +456,8 @@ layout: null
             <a href="{{ table.filename | escape }}">Descarregar CSV detalhado</a>
             · {{ table.total_rows }} linhas no CSV
           </p>
-          {% if table.filtered %}
-            <p>{{ table.rows.size }} grupos para verificação. O CSV inclui todos os grupos.</p>
-          {% endif %}
-          {% if table.filtered and table.rows.size == 0 %}
+          <p>{{ table.rows.size }} grupos para verificação. O CSV inclui todos os grupos.</p>
+          {% if table.rows.size == 0 %}
             <p>Sem grupos para verificação nesta análise.</p>
           {% else %}
             <div class="table-container">

@@ -8,7 +8,6 @@ class SnapshotReportGenerator < Jekyll::Generator
   safe true
 
   DIAGNOSTICS = {"licence_groups_detailed.csv" => "Grupos de licenças", "listings_detailed.csv" => "Anúncios"}.freeze
-
   UNFLAGGED_GROUP_CLASSIFICATIONS = [
     "licença única em Lisboa",
     "provável estabelecimento com anúncios múltiplos",
@@ -39,16 +38,13 @@ class SnapshotReportGenerator < Jekyll::Generator
 
       private_dir = File.join(File.dirname(File.dirname(path)), "private", run_id)
       next unless DIAGNOSTICS.keys.all? { |file| File.file?(File.join(private_dir, file)) }
-      tables = DIAGNOSTICS.map do |file, title|
-        csv = CSV.read(File.join(private_dir, file), headers: true)
-        filtered = file == "licence_groups_detailed.csv"
-        rows = csv.map(&:to_h)
-        rows.reject! { |row| UNFLAGGED_GROUP_CLASSIFICATIONS.include?(row["classification"]) } if filtered
-        {"title" => title, "filename" => file, "headers" => csv.headers,
-         "rows" => rows, "total_rows" => csv.length, "filtered" => filtered}
-      end
+      groups = CSV.read(File.join(private_dir, "licence_groups_detailed.csv"), headers: true)
+      rows = groups.map(&:to_h).reject { |row| UNFLAGGED_GROUP_CLASSIFICATIONS.include?(row["classification"]) }
       page = add_report(site, template, snapshot, path, "private-reports/#{run_id}")
-      page.data["private_tables"] = tables
+      page.data["private_tables"] = [{"title" => DIAGNOSTICS.fetch("licence_groups_detailed.csv"),
+        "filename" => "licence_groups_detailed.csv", "headers" => groups.headers,
+        "rows" => rows, "total_rows" => groups.length}]
+      page.data["private_listing_count"] = CSV.foreach(File.join(private_dir, "listings_detailed.csv"), headers: true).count
       page.data["diagnostics_dir"] = private_dir
       site.config["private_report_runs"] << run_id
     end
