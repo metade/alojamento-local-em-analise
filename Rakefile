@@ -10,6 +10,7 @@ task default: :test
 
 def print_analysis_result(result)
   puts "Run #{result[:run_id]} criado em #{result[:path]}"
+  puts "Diagnósticos privados em #{result[:private_path]}"
   puts JSON.pretty_generate(result[:summary])
 end
 
@@ -27,24 +28,14 @@ namespace :sources do
   end
 end
 
-namespace :analysis do
-  desc "Analyse local sources with detailed outputs (no downloads)"
-  task :local do
-    require_relative "lib/alojamento_local"
-    result = AlojamentoLocal::Analysis.run(mode: "local")
-    print_analysis_result(result)
-  end
-
-  desc "Analyse local sources with public outputs (no downloads)"
-  task :public do
-    require_relative "lib/alojamento_local"
-    result = AlojamentoLocal::Analysis.run(mode: "public")
-    print_analysis_result(result)
-  end
+desc "Analyse local sources into aggregate snapshots and private diagnostics (no downloads)"
+task :analysis do
+  require_relative "lib/alojamento_local"
+  print_analysis_result(AlojamentoLocal::Analysis.run)
 end
 
 desc "Analyse local sources into public outputs, then build the site"
-task rebuild: ["analysis:public", "site:build"]
+task rebuild: [:analysis, "site:build"]
 
 desc "Update sources, analyse into public outputs, then build the site"
 task refresh: ["sources:update", :rebuild]
@@ -75,15 +66,15 @@ namespace :site do
 end
 
 namespace :report do
-  desc "Build standalone HTML and PDF from a public or local run (DESTINATION overrides output)"
+  desc "Build standalone HTML and PDF from an aggregate snapshot (DESTINATION overrides output)"
   task :build, [:run_dir] do |_task, args|
     require_relative "lib/alojamento_local"
     raise "Usage: rake 'report:build[run_dir]'" unless args[:run_dir]
     input = File.expand_path(args[:run_dir])
-    mode = AlojamentoLocal::PublicSnapshot.load(input, allow_local: true).fetch("metadata").fetch("mode")
-    destination = File.expand_path(ENV["DESTINATION"] || File.join("tmp", "reports", mode, File.basename(input)))
+    AlojamentoLocal::PublicSnapshot.load(input)
+    destination = File.expand_path(ENV["DESTINATION"] || File.join("tmp", "reports", File.basename(input)))
     sh({"REPORT_RUN" => input}, "bundle", "exec", "jekyll", "build", "--destination", destination)
-    html = (mode == "local") ? "report_local.html" : "report.html"
+    html = "report.html"
     AlojamentoLocal::SiteChecker.check(destination, required: [html, "report.pdf"])
     puts destination
   end

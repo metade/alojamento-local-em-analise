@@ -12,6 +12,6 @@ official = "data_sources/Estabelecimentos_de_Alojamento_Local-#{dates.fetch('off
 {"airbnb" => airbnb, "official" => official}.each do |key, path|
   raise "Source bytes differ from selected run: #{key}" unless Digest::SHA256.file(path).hexdigest == metadata.fetch("source_files").fetch(key).fetch("sha256")
 end
-result = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "public")
+result = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official)
 puts "Created #{result[:run_id]} from verified sources of #{run_id}"
 puts JSON.pretty_generate(result[:summary])

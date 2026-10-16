@@ -13,6 +13,12 @@ layout: null
       name="viewport"
       content="width=device-width,initial-scale=1"
     >
+    {% if page.private_tables %}
+      <meta
+        name="al-private-report"
+        content="true"
+      >
+    {% endif %}
     <title>
       Alojamento Local em Lisboa —
       {{ r.summary.run_id | escape }}
@@ -37,6 +43,9 @@ layout: null
         color: white;
         border-radius: 12px;
       }
+      header a {
+        color: inherit;
+      }
       section {
         margin: 1.5rem 0;
       }
@@ -48,6 +57,14 @@ layout: null
         border-collapse: collapse;
         width: 100%;
         min-width: 760px;
+      }
+      .long-value {
+        max-height: 12rem;
+        overflow-y: auto;
+      }
+      .diagnostics-table th,
+      .diagnostics-table td {
+        min-width: 120px;
       }
       .metrics-table {
         min-width: 1150px;
@@ -93,6 +110,9 @@ layout: null
         margin: 12mm;
       }
       @media print {
+        header a {
+          color: inherit;
+        }
         section {
           margin: 0.75rem 0;
         }
@@ -121,8 +141,20 @@ layout: null
           overflow: visible;
         }
         table,
+        .long-value {
+          max-height: 12rem;
+          overflow-y: auto;
+        }
+        .diagnostics-table th,
+        .diagnostics-table td {
+          min-width: 120px;
+        }
         .metrics-table {
           font-size: 9px;
+          min-width: 0;
+        }
+        .diagnostics-table th,
+        .diagnostics-table td {
           min-width: 0;
         }
         th,
@@ -157,10 +189,19 @@ layout: null
     <header>
       <h1>Alojamento Local em Lisboa</h1>
       <p>
-        Run {{ r.summary.run_id | escape }} · modo {{ r.summary.mode | escape }} · gerado em
+        Run {{ r.summary.run_id | escape }} · gerado em
         {{ r.summary.generated_at | escape }}
       </p>
       <p>Indicador para verificação oficial</p>
+      {% if page.private_tables %}
+        <p><a href="#diagnosticos">Consultar diagnósticos privados ↓</a></p>
+      {% elsif site.private_report_runs contains r.metadata.run_id %}
+        <p>
+          <a href="{{ '/private-reports/' | append: r.metadata.run_id | append: '/report.html' | relative_url }}">
+            Relatório detalhado · uso local ↗
+          </a>
+        </p>
+      {% endif %}
     </header>
     <section>
       <h2>Resumo</h2>
@@ -328,11 +369,7 @@ layout: null
         e
         <a href="{{ r.metadata.source_urls.official | escape }}">registo oficial</a>
         . Datas e hashes SHA-256 estão em
-        {% if r.metadata.mode == 'public' -%}
-          <a href="{{ data_file | escape }}">{{ data_file | escape }}</a>
-        {%- else -%}
-          <code>{{ data_file | escape }}</code>
-        {%- endif -%}
+        <a href="{{ data_file | escape }}">{{ data_file | escape }}</a>
         . Metodologia {{ r.metadata.methodology_version | escape }}; análise
         {{ r.metadata.analysis_version | escape }}.
       </p>
@@ -400,6 +437,54 @@ layout: null
         {% endfor %}
       </dl>
     </section>
+    {%- if page.private_tables -%}
+      <section id="diagnosticos">
+        <h2>Diagnósticos privados</h2>
+        <p>
+          Inclui dados individuais para verificação. Estes ficheiros pertencem apenas ao build
+          local.
+        </p>
+      </section>
+      {%- for table in page.private_tables -%}
+        <section>
+          <h2>{{ table.title | escape }}</h2>
+          <p>
+            <a href="{{ table.filename | escape }}">Descarregar CSV detalhado</a>
+            · {{ table.rows.size }} linhas
+          </p>
+          <div class="table-container">
+            <table class="diagnostics-table">
+              <thead>
+                <tr>
+                  {%- for header in table.headers -%}
+                    <th>{{ header | escape }}</th>
+                  {%- endfor -%}
+                </tr>
+              </thead>
+              <tbody>
+                {%- for row in table.rows -%}
+                  <tr>
+                    {%- for header in table.headers -%}
+                      {%- assign value = row[header] | default: '' -%}
+                      <td>
+                        {%- if value.size > 200 -%}
+                          <details>
+                            <summary>{{ value | truncate: 100 | escape }}</summary>
+                            <div class="long-value">{{- value | escape -}}</div>
+                          </details>
+                        {%- else -%}
+                          {{- value | escape -}}
+                        {%- endif -%}
+                      </td>
+                    {%- endfor -%}
+                  </tr>
+                {%- endfor -%}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      {%- endfor -%}
+    {%- endif -%}
     <section class="history-section">
       <h2>Comparação histórica</h2>
       <div class="table-container">

@@ -5,11 +5,12 @@ require "tmpdir"
 
 module AlojamentoLocal
   module Analysis
-    # Installs a validated snapshot and its histories as one rollback unit.
+    # Installs a validated snapshot, private diagnostics and histories as one rollback unit.
     class PublicPublisher
-      def initialize(destination:, history_path:)
+      def initialize(destination:, history_path:, private_path:)
         @destination = destination
         @history_path = history_path
+        @private_path = private_path
       end
 
       def publish(summary:, listings:)
@@ -18,10 +19,12 @@ module AlojamentoLocal
         staging = Dir.mktmpdir(".analysis-", root)
         begin
           run_dir = File.join(staging, "snapshot")
-          yield run_dir
+          diagnostics = File.join(staging, "private")
+          yield run_dir, diagnostics
+          preserve_archived_reports(run_dir)
           validate_public_outputs!(run_dir)
           histories = stage_histories(staging, summary, listings)
-          install(run_dir, histories, staging)
+          install(run_dir, {diagnostics => @private_path, **histories}, staging)
         ensure
           FileUtils.rm_rf(staging)
         end
@@ -36,6 +39,13 @@ module AlojamentoLocal
       end
 
       private
+
+      def preserve_archived_reports(run_dir)
+        %w[report.html report.pdf].each do |file|
+          source = File.join(@destination, file)
+          FileUtils.cp(source, File.join(run_dir, file)) if File.file?(source)
+        end
+      end
 
       def validate_public_outputs!(run_dir)
         PublicSnapshot.load(run_dir, expected_run_id: File.basename(@destination))

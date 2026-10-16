@@ -77,7 +77,7 @@ module AlojamentoLocal
         diagnostic_keys = %i[national_entries unparseable_official_numbers duplicate_number_extra_entries official_entries_unresolved_municipality lisbon_entries_unresolved_parish]
         raise "Invalid diagnostics" unless data[:diagnostics].keys == diagnostic_keys && data[:diagnostics].values.all? { |count| count.is_a?(Integer) && count >= 0 }
         if data[:run_id]
-          raise "Invalid metric run" unless data[:run_id].match?(/\A\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}(?:__rerun-\d{8}T\d{12}(?:-\d+)?)?\z/)
+          raise "Invalid metric run" unless data[:run_id].match?(/\A\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}\z/)
           raise "Incompatible metric method" unless data[:methodology_version] == METHODOLOGY_VERSION
           raise "Invalid metric dates" unless data[:source_dates].keys == %i[airbnb_snapshot_date official_register_date official_register_download_date] && data[:source_dates].values.all? { |date| date.nil? || date.match?(/\A\d{4}-\d{2}-\d{2}\z/) }
         end

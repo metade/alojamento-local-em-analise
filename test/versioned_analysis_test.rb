@@ -31,7 +31,7 @@ class VersionedAnalysisTest < Minitest::Test
       official = File.join(dir, "official-2024-07-01.csv")
       FileUtils.cp(File.expand_path("fixtures/pipeline/sources/official-2024-07-01.csv", __dir__), official)
       output_root = File.join(dir, "snapshots")
-      result = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "public",
+      result = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official,
         output_root: output_root, history_path: File.join(dir, "history", "summary.csv"))
       path = result.fetch(:path)
       before = File.binread(File.join(path, "snapshot.json"))
@@ -61,7 +61,7 @@ class VersionedAnalysisTest < Minitest::Test
         csv << ["123", "38.71;-9.14", "2020-01-01", "Casa", "Rua", "Lisboa", "Apartamento", "2"]
       end
 
-      result = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "public", output_root: File.join(dir, "snapshots"), history_path: File.join(dir, "history", "summary.csv"))
+      result = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, output_root: File.join(dir, "snapshots"), history_path: File.join(dir, "history", "summary.csv"))
       run_dir = result[:path]
       assert_equal "2026-06-23__2026-09-17", result[:run_id]
       assert_equal %w[snapshot.json].sort, Dir.children(run_dir).sort
@@ -72,11 +72,11 @@ class VersionedAnalysisTest < Minitest::Test
       assert_equal 1, public_listings.find { |row| row["classification"] == "sem licença identificável" }["announcements"]
       assert_equal 1, snapshot.fetch("summary").fetch("official_registers_lisbon")
       assert_equal "2.1.0", snapshot.fetch("summary").fetch("methodology_version")
-      assert_equal "6.0.0", snapshot.fetch("metadata").fetch("output_schema_version")
+      assert_equal "7.0.0", snapshot.fetch("metadata").fetch("output_schema_version")
       refute JSON.generate(snapshot).match?(/host_id|listing_url|licensa_raw|latitude|longitude|official_address/i)
       assert_raises(RuntimeError) { AlojamentoLocal::Analysis::History.append_history(File.join(dir, "history", "summary.csv"), result[:summary]) }
       File.write(File.join(run_dir, "obsolete.pdf"), "obsolete")
-      repeated = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "public", output_root: File.join(dir, "snapshots"), history_path: File.join(dir, "history", "summary.csv"))
+      repeated = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, output_root: File.join(dir, "snapshots"), history_path: File.join(dir, "history", "summary.csv"))
       assert_equal result[:path], repeated[:path]
       assert_equal [result[:run_id]], Dir.children(File.join(dir, "snapshots"))
       assert_equal 1, CSV.read(File.join(dir, "history", "summary.csv"), headers: true).length
@@ -86,50 +86,20 @@ class VersionedAnalysisTest < Minitest::Test
     end
   end
 
-  def test_repeated_analysis_creates_a_preserved_local_rerun
+  def test_analysis_always_writes_diagnostics_separately
     Dir.mktmpdir do |dir|
-      airbnb = File.join(dir, "listings-2026-06-23.csv")
-      official = File.join(dir, "official-2026-09-17.csv")
-      CSV.open(airbnb, "w", write_headers: true, headers: HEADERS) do |csv|
-        csv << ["Lisboa", "00123/AL", "https://example/1", "Alfama", "Apartment", "38.71", "-9.14", "Entire home/apt", "Apartment", "1", "host-1", "2026-06-23"]
-      end
-      CSV.open(official, "w", write_headers: true, headers: %w[NrRNAL LatLong DataRegisto Denominacao Endereco Concelho Modalidade NrUtentes]) do |csv|
-        csv << ["123", "38.71;-9.14", "2020-01-01", "Casa", "Rua", "Lisboa", "Apartamento", "2"]
-      end
-
-      root = File.join(dir, "private")
-      history = File.join(dir, "private", "history", "summary.csv")
-      first = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "local", output_root: root, history_path: history)
-      rerun = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "local", output_root: root, history_path: history)
-
-      assert_equal "2026-06-23__2026-09-17", first[:run_id]
-      assert_match(/\A2026-06-23__2026-09-17__rerun-\d{8}T\d{12}\z/, rerun[:run_id])
-      assert Dir.exist?(first[:path])
-      assert Dir.exist?(rerun[:path])
-      assert_equal 2, CSV.read(history, headers: true).length
-    end
-  end
-
-  def test_local_mode_writes_diagnostics_to_distinct_local_outputs
-    Dir.mktmpdir do |dir|
-      airbnb = File.join(dir, "listings-2026-06-23.csv")
-      official = File.join(dir, "official-2026-09-17.csv")
-      CSV.open(airbnb, "w", write_headers: true, headers: HEADERS) do |csv|
-        csv << ["Lisboa", "00123/AL", "https://example/1", "Alfama", "Apartment", "38.71", "-9.14", "Entire home/apt", "Apartment", "1", "host-1", "2026-06-23"]
-      end
-      CSV.open(official, "w", write_headers: true, headers: %w[NrRNAL LatLong DataRegisto Denominacao Endereco Concelho Modalidade NrUtentes]) do |csv|
-        csv << ["123", "38.71;-9.14", "2020-01-01", "Casa", "Rua", "Lisboa", "Apartamento", "2"]
-      end
-
-      result = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "local", output_root: File.join(dir, "private"), history_path: File.join(dir, "private", "history", "summary.csv"))
-      run_dir = result[:path]
-      assert_equal %w[licence_groups_detailed.csv listings_detailed.csv snapshot.json].sort, Dir.children(run_dir).sort
-      detailed = CSV.read(File.join(run_dir, "listings_detailed.csv"), headers: true)
+      airbnb = File.expand_path("fixtures/pipeline/sources/listings-2024-06-01.csv", __dir__)
+      official = File.expand_path("fixtures/pipeline/sources/official-2024-07-01.csv", __dir__)
+      result = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official,
+        output_root: File.join(dir, "snapshots"), history_path: File.join(dir, "history", "summary.csv"))
+      assert_equal ["snapshot.json"], Dir.children(result[:path])
+      assert_equal %w[licence_groups_detailed.csv listings_detailed.csv], Dir.children(result[:private_path]).sort
+      detailed = CSV.read(File.join(result[:private_path], "listings_detailed.csv"), headers: true)
       assert_includes detailed.headers, "host_id"
       assert_includes detailed.headers, "licensa_raw"
-      assert_equal "00123/AL", detailed.first["licensa_raw"]
-      assert_equal "local", JSON.parse(File.read(File.join(run_dir, "snapshot.json"))).fetch("metadata").fetch("mode")
-      refute Dir.exist?(File.join(dir, "snapshots"))
+      snapshot = AlojamentoLocal::PublicSnapshot.load(result[:path])
+      refute snapshot.fetch("metadata").key?("mode")
+      refute snapshot.fetch("summary").key?("mode")
     end
   end
 
@@ -146,7 +116,7 @@ class VersionedAnalysisTest < Minitest::Test
         csv << ["123", "38.71;-9.14", "2020-01-01", "Casa", "Rua", "Lisboa", "Apartamento", "2"]
       end
 
-      result = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "public", output_root: File.join(dir, "snapshots"), history_path: history)
+      result = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, output_root: File.join(dir, "snapshots"), history_path: history)
       rows = CSV.read(File.join(dir, "history", "distance_ranges.csv"), headers: true)
 
       assert_equal 4, rows.size
@@ -174,7 +144,7 @@ class VersionedAnalysisTest < Minitest::Test
         csv << ["789", "38.71;-9.14", "2020-01-01", "Casa", "Rua", "Lisboa", "Grande Lisboa", "Apartamento", "2"]
       end
 
-      result = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "public", output_root: File.join(dir, "snapshots"), history_path: history)
+      result = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, output_root: File.join(dir, "snapshots"), history_path: history)
       rows = CSV.read(File.join(dir, "history", "outside_regions.csv"), headers: true)
       counts = rows.to_h { |row| [[row["resolution"], row["official_region"].to_s], row["listings"].to_i] }
 
@@ -229,12 +199,12 @@ class VersionedAnalysisTest < Minitest::Test
       official = File.expand_path("fixtures/pipeline/sources/official-2024-07-01.csv", __dir__)
       output_root = File.join(dir, "snapshots")
       history = File.join(dir, "history", "summary.csv")
-      published = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "public",
+      published = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official,
         output_root: output_root, history_path: history)
       destination = published.fetch(:path)
       sources = AlojamentoLocal::Analysis::PreparedSources::Pair.new(airbnb_path: airbnb, official_path: official)
       listings, = AlojamentoLocal::Analysis::Classifier.new(sources).classify
-      publisher = AlojamentoLocal::Analysis::PublicPublisher.new(destination: destination, history_path: history)
+      publisher = AlojamentoLocal::Analysis::PublicPublisher.new(destination: destination, history_path: history, private_path: published.fetch(:private_path))
       read_files = -> do
         Dir.glob(File.join(dir, "**", "*"), File::FNM_DOTMATCH).select { |path| File.file?(path) }.to_h do |path|
           [path, File.binread(path)]
@@ -254,7 +224,8 @@ class VersionedAnalysisTest < Minitest::Test
         end
         FileUtils.stub(:mv, fail_install) do
           assert_raises(failure_class) do
-            publisher.publish(summary: published.fetch(:summary).merge(generated_at: "2024-08-01T12:00:00Z"), listings: listings) do |run_dir|
+            publisher.publish(summary: published.fetch(:summary).merge(generated_at: "2024-08-01T12:00:00Z"), listings: listings) do |run_dir, diagnostics|
+              FileUtils.cp_r(published.fetch(:private_path), diagnostics)
               FileUtils.cp_r(destination, run_dir)
               snapshot_file = File.join(run_dir, "snapshot.json")
               document = JSON.parse(File.read(snapshot_file))

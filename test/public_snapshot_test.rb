@@ -81,10 +81,8 @@ class PublicSnapshotTest < Minitest::Test
         error = assert_raises(RuntimeError, name) { AlojamentoLocal::PublicSnapshot.load(path) }
         site_error = assert_raises(RuntimeError, name) { builder(root).site_data(builder(root).public_runs) }
         assert_equal error.message, site_error.message, name
-        unless name == "local mode"
-          report_error = assert_raises(RuntimeError, name) { JekyllBuild.build(run_dir: path, destination: File.join(root, "report-output")) }
-          assert_equal error.message, report_error.message, name
-        end
+        report_error = assert_raises(RuntimeError, name) { JekyllBuild.build(run_dir: path, destination: File.join(root, "report-output")) }
+        assert_equal error.message, report_error.message, name
         assert_equal before, File.binread(File.join(path, "snapshot.json")), name
       end
     end
@@ -93,7 +91,7 @@ class PublicSnapshotTest < Minitest::Test
   def test_only_current_schema_is_supported_and_missing_or_broken_documents_fail
     with_snapshot do |root, path|
       original = File.read(File.join(path, "snapshot.json"))
-      %w[4.0.0 5.0.0].each do |version|
+      %w[4.0.0 5.0.0 6.0.0].each do |version|
         File.write(File.join(path, "snapshot.json"), original)
         mutate(path) { |data| data["schema_version"] = data["metadata"]["output_schema_version"] = version }
         assert_raises(RuntimeError) { AlojamentoLocal::PublicSnapshot.load(path) }
@@ -102,7 +100,7 @@ class PublicSnapshotTest < Minitest::Test
       File.write(File.join(path, "snapshot.json"), "{")
       assert_raises(JSON::ParserError) { AlojamentoLocal::PublicSnapshot.load(path) }
       FileUtils.rm(File.join(path, "snapshot.json"))
-      File.write(File.join(path, "metadata.json"), '{}')
+      File.write(File.join(path, "metadata.json"), "{}")
       assert_raises(Errno::ENOENT) { AlojamentoLocal::PublicSnapshot.load(path) }
       assert_raises(Errno::ENOENT) { builder(root).public_runs }
     end

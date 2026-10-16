@@ -13,18 +13,17 @@ module PipelineFixture
 
   def self.outputs(root)
     files = {}
-    %w[public local].each do |mode|
-      history = File.join(root, "#{mode}-history", "summary.csv")
-      FileUtils.mkdir_p(File.dirname(history))
-      FileUtils.cp(File.join(SOURCES, "summary_history.csv"), history)
-      result = AlojamentoLocal::Analysis.run(
-        airbnb_path: File.join(SOURCES, "listings-2024-06-01.csv"),
-        official_path: File.join(SOURCES, "official-2024-07-01.csv"),
-        output_root: File.join(root, mode), history_path: history, mode: mode
-      )
-      collect(files, result.fetch(:path), mode)
-      collect(files, File.dirname(history), "#{mode}-history")
-    end
+    history = File.join(root, "public-history", "summary.csv")
+    FileUtils.mkdir_p(File.dirname(history))
+    FileUtils.cp(File.join(SOURCES, "summary_history.csv"), history)
+    result = AlojamentoLocal::Analysis.run(
+      airbnb_path: File.join(SOURCES, "listings-2024-06-01.csv"),
+      official_path: File.join(SOURCES, "official-2024-07-01.csv"),
+      output_root: File.join(root, "public"), history_path: history
+    )
+    collect(files, result.fetch(:path), "public")
+    collect(files, result.fetch(:private_path), "private")
+    collect(files, File.dirname(history), "public-history")
     builder = AlojamentoLocal::SiteData.new(
       snapshots: File.join(root, "public"),
       distance_history: File.join(root, "public-history", "distance_ranges.csv"),
@@ -37,7 +36,7 @@ module PipelineFixture
 
   def self.collect(files, directory, prefix)
     Dir.glob(File.join(directory, "**", "*"), File::FNM_DOTMATCH).select { |path| File.file?(path) }.sort.each do |path|
-      relative = "#{prefix}/#{path.delete_prefix(directory + '/')}"
+      relative = "#{prefix}/#{path.delete_prefix(directory + "/")}"
       files[relative] = canonical(relative, File.read(path))
     end
   end
@@ -54,8 +53,6 @@ module PipelineFixture
         normalize_summary(data.fetch("summary"))
       end
       JSON.pretty_generate(data) + "\n"
-    elsif path.end_with?(".html")
-      text.sub(/(· gerado em )\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z/, '\1<generated_at>')
     elsif path.end_with?("-history/summary.csv")
       table = CSV.parse(text, headers: true)
       table.each { |row| row["generated_at"] = "<generated_at>" if row["run_id"] == RUN_ID }
