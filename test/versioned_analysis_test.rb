@@ -243,6 +243,7 @@ class VersionedAnalysisTest < Minitest::Test
 end
 
 require_relative "registration_metrics_test"
+require_relative "site_data_overlap_test"
 
 class VersionedAnalysisTest
   def test_report_category_bars_use_number_groups_as_denominator

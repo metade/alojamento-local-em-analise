@@ -165,7 +165,7 @@ Measured overlap metrics live in the `registration_metrics` section of versioned
 - Public run IDs contain only the two source dates. Versions live in metadata. Analysis always recalculates; replacing an existing public pair verifies its source hashes and validates the new schema, provenance and aggregates before installation.
 - To reproduce a prior run with a new methodology from verified local dated sources: `bundle exec rake 'analysis[<prior-public-run-id>]'`. Never relabel an old source as a fresh download.
 - Circle areas and overlap use measured sets, including empty, disjoint, identical and contained sets. Announcement bubbles use a separate fractional scale.
-- Regression metric/geometry tests in `test/registration_metrics_test.rb` also run through `test/versioned_analysis_test.rb`.
+- Regression metric tests in `test/registration_metrics_test.rb` and presentation geometry tests in `test/site_data_overlap_test.rb` also run through `test/versioned_analysis_test.rb`.
 
 ### Source preparation and methodology changes
 

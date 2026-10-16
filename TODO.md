@@ -63,12 +63,10 @@ arquivo permanente e da integração descrita abaixo.
 
 ## Outras tarefas
 
-- [ ] Rever a localização de `lib/alojamento_local/overlap.rb`. Este helper calcula a
-  geometria dos diagramas de Venn da homepage e das freguesias; pertence à
-  apresentação do site. Considerar movê-lo para junto dos helpers de construção
-  do site, atualizando os imports e mantendo os testes de proporções e casos
-  limite. Manter a implementação atual por agora; não está prevista a troca
-  por uma biblioteca de gráficos.
+- [x] Mover o helper de geometria dos diagramas de Venn para
+  `lib/alojamento_local/site_data/overlap.rb`, sob `SiteData::Overlap`.
+  Preservar a implementação e o componente Liquid existente; manter os testes
+  de proporções e casos limite em `test/site_data_overlap_test.rb`.
 
 - [x] Introduzir um loader partilhado de snapshots públicos para a regeneração
   do relatório e a construção do site. Ler os ficheiros atuais e devolver uma

@@ -128,7 +128,7 @@ module AlojamentoLocal
       # Geometry belongs to the site; do not mutate validated source metrics.
       metrics = JSON.parse(JSON.generate(document.fetch("registration_metrics")))
       measures = metrics.fetch("rows").to_h do |row|
-        row["geometry"] = AlojamentoLocal::Overlap.geometry(row["rnal"], row["airbnb"], row["intersection"])
+        row["geometry"] = Overlap.geometry(row["rnal"], row["airbnb"], row["intersection"])
         row["unresolved"] = row["empty_licence"] + row["unrecognised_licence"]
         row["bubble_radius"] = row["announcements"].zero? ? 0 : (85*Math.sqrt(row["unresolved"].to_f/row["announcements"])).round(3)
         [row["geography"], row]
