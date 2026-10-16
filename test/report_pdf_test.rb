@@ -33,13 +33,31 @@ class ReportPdfTest < Minitest::Test
             assert_equal pdf, AlojamentoLocal::ReportPdf.convert(html, pdf)
             assert_equal "%PDF-1.4 converted", File.read(pdf)
           else
-            assert_raises(RuntimeError) { AlojamentoLocal::ReportPdf.convert(html, pdf) }
+            error = assert_raises(RuntimeError) { AlojamentoLocal::ReportPdf.convert(html, pdf) }
+            assert_includes error.message, html
+            assert_includes error.message, "invalid PDF output" if outcome != false
             assert_equal "%PDF-previous", File.read(pdf)
           end
         end
         assert_equal 1, commands.length
         assert_equal %w[report.html report.pdf], Dir.children(root).sort
       end
+    end
+  end
+
+  def test_conversion_failure_identifies_the_report_and_process_exit_status
+    Dir.mktmpdir do |root|
+      html = File.join(root, "report.html")
+      AlojamentoLocal::ReportPdf.stub(:system, ->(*_command) {
+        Kernel.system(RbConfig.ruby, "-e", "exit 23")
+      }) do
+        error = assert_raises(RuntimeError) do
+          AlojamentoLocal::ReportPdf.convert(html, File.join(root, "report.pdf"))
+        end
+        assert_includes error.message, html
+        assert_includes error.message, "exit 23"
+      end
+      assert_empty Dir.children(root)
     end
   end
 

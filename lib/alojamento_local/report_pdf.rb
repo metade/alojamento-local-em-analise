@@ -16,7 +16,11 @@ module AlojamentoLocal
         temporary.close
         executable = Gem.bin_path("wkhtmltopdf-binary", "wkhtmltopdf")
         success = system(RbConfig.ruby, executable, "--quiet", "--keep-relative-links", "--print-media-type", "--orientation", "Landscape", File.expand_path(html), temporary.path)
-        raise "wkhtmltopdf PDF conversion failed or produced an invalid PDF." unless success && valid?(temporary.path)
+        unless success && valid?(temporary.path)
+          status = $?
+          detail = success ? "invalid PDF output" : (status ? status.to_s : "could not start converter")
+          raise "wkhtmltopdf PDF conversion failed for #{File.expand_path(html)} (#{detail})."
+        end
         FileUtils.mv(temporary.path, destination)
         destination
       ensure

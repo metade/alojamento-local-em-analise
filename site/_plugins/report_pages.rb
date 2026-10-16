@@ -66,6 +66,7 @@ Jekyll::Hooks.register :site, :post_write, priority: :low do |site|
         FileUtils.cp(File.join(page.data.fetch("diagnostics_dir"), file), destination)
       end
     end
+    Jekyll.logger.info "Report PDF:", html
     AlojamentoLocal::ReportPdf.convert(html, File.join(destination, "report.pdf"))
   end
   unless ENV["REPORT_RUN"]
