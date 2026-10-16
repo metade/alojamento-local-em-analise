@@ -30,11 +30,11 @@ module AlojamentoLocal
       end
 
       def snapshot
-        inputs = JSON.parse(JSON.generate({metadata: metadata, summary: summary, groups: licence_group_aggregates,
-          announcements: announcements_by_parish_and_classification, parishes: parish_totals, metrics: registration_metrics}))
-        snapshot = PublicSnapshot.from_legacy(**inputs.transform_keys(&:to_sym))
-        PublicSnapshot::Validator.new.validate!(snapshot, expected_run_id: metadata.fetch(:run_id), schema: PublicSnapshot::SCHEMA_VERSION, local: @mode == "local")
-        snapshot
+        data = JSON.parse(JSON.generate({schema_version: OUTPUT_SCHEMA_VERSION,
+          metadata: metadata, summary: summary, licence_group_aggregates: licence_group_aggregates,
+          announcements_by_parish_and_classification: announcements_by_parish_and_classification,
+          parish_totals: parish_totals, registration_metrics: registration_metrics}))
+        PublicSnapshot.validate!(data, expected_run_id: @run_id, allow_local: @mode == "local")
       end
 
       private

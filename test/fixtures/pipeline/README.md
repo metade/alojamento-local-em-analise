@@ -13,10 +13,11 @@ and all district data/routes/geometry. Public and local runs share `snapshot.jso
 The 3.6.0/6.0.0 baseline replaces the local report envelope and duplicate local
 JSON/aggregate CSV exports with this document; local diagnostic CSVs are retained;
 analytical accounting, methodology and histories are unchanged.
-`legacy_public/` preserves the reviewed split-file synthetic fixture with schema
-4.0.0 for compatibility tests, independently of the current output inventory.
-Old/new reader tests normalize only version fields and report data references;
-all tables, report sections and site aggregates must remain equal.
+The site consumes the document's integer aggregate rows directly, with no
+legacy count renaming or string conversion. The site expectation omits the
+removed fallback notice and exposes `announcements_by_parish_and_classification`;
+snapshot contents, diagnostic CSVs, analytical accounting and histories stay unchanged.
+Only schema 6.0.0 is supported; tests reject previous formats instead of adapting them.
 
 The test does not download sources, use repository snapshots or private caches,
 invoke Jekyll, or create a PDF. Site builds and publication audits remain separate

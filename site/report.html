@@ -4,13 +4,6 @@ layout: null
 {% assign r = page.report | default: site.data.report %}
 {% assign data_file = 'snapshot.json' %}
 {% assign metrics_file = 'snapshot.json' %}
-{% if r.metadata.mode == 'local' %}
-  {% assign data_file = 'snapshot.json' %}
-  {% assign metrics_file = 'snapshot.json' %}
-{% elsif r.metadata.output_schema_version == '4.0.0' %}
-  {% assign data_file = 'metadata.json' %}
-  {% assign metrics_file = 'registration_metrics.json' %}
-{% endif %}
 
 <!doctype html>
 <html lang="pt">

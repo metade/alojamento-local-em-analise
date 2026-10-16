@@ -430,9 +430,6 @@ title: Metodologia e proveniência
         de licença.
       </p>
       {% assign public_data_file = 'snapshot.json' %}
-      {% if d.metadata.output_schema_version == '4.0.0' -%}
-        {%- assign public_data_file = 'metadata.json' -%}
-      {%- endif %}
       <div class="mt-6 flex flex-wrap gap-x-6 gap-y-4 text-sm text-[var(--color-blue)] [&_a]:underline [&_a]:underline-offset-4">
         <a href="{{ '/runs/' | append: d.run_id | append: '/' | append: public_data_file | relative_url }}">
           Dados, metadados e hashes →

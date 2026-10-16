@@ -52,7 +52,7 @@ rescue Errno::ENOENT
 end
 
 # Parse the nested document: a CSV-header scan cannot detect nested fields.
-def audit_snapshot(text, label)
+def audit_snapshot(text, label, validate_schema: true)
   errors = []
   begin
     data = JSON.parse(text)
@@ -67,9 +67,7 @@ def audit_snapshot(text, label)
       end
     end
     inspect_keys.call(data)
-    snapshot = AlojamentoLocal::PublicSnapshot.from_document(data)
-    AlojamentoLocal::PublicSnapshot::Validator.new.validate!(snapshot,
-      expected_run_id: snapshot.run_id, schema: data.fetch("schema_version"))
+    AlojamentoLocal::PublicSnapshot.validate!(data, expected_run_id: data.fetch("metadata").fetch("run_id")) if validate_schema
   rescue => error
     errors << "snapshot inválido em #{label}: #{error.message}"
   end
@@ -133,7 +131,7 @@ def audit_history
       text, text_status = Open3.capture2("git", "show", "#{commit}:#{path}")
       next unless text_status.success?
 
-      errors.concat(audit_snapshot(text, "#{commit[0, 12]} #{path}")) if File.basename(path) == "snapshot.json"
+      errors.concat(audit_snapshot(text, "#{commit[0, 12]} #{path}", validate_schema: false)) if File.basename(path) == "snapshot.json"
 
       header = text.lines.first.to_s.split(",").map { |value| value.strip.downcase }
       fields = FORBIDDEN_PUBLIC_FIELDS & header
@@ -179,11 +177,9 @@ def audit_artifact(root)
     end
   end
 
-  loader = AlojamentoLocal::PublicSnapshot::Loader.new
   Dir.glob(File.join(root, "runs", "*")).select { |path| File.directory?(path) }.each do |path|
     begin
-      next unless loader.supported_metrics?(path)
-      loader.load(path)
+      AlojamentoLocal::PublicSnapshot.load(path)
     rescue => error
       errors << "dados inválidos em #{path}: #{error.message}"
     end

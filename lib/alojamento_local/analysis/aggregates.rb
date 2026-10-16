@@ -35,9 +35,9 @@ module AlojamentoLocal
             official_municipality: municipality,
             official_type: type,
             licence_groups: rows.count { |row| !row[:licensa].to_s.empty? },
-            listings: rows.sum { |row| row[:listings].to_i },
+            announcements: rows.sum { |row| row[:listings].to_i },
             spatial_locations: rows.sum { |row| row[:spatial_locations].to_i },
-            establishments_estimate: rows.sum { |row| row[:establishment_estimate].to_i }
+            estimated_establishments: rows.sum { |row| row[:establishment_estimate].to_i }
           }
         end.sort_by { |row| [row[:classification], row[:official_municipality], row[:official_type]] }
       end
@@ -78,9 +78,9 @@ module AlojamentoLocal
 
       def announcement_totals(rows)
         {
-          listings: rows.size,
-          identifiable_licences: AnnouncementCounts.calculate(rows)[:identifiable_number],
-          establishments_estimate: AlojamentoLocal.establishment_estimate(rows)
+          announcements: rows.size,
+          announcements_with_identifiable_number: AnnouncementCounts.calculate(rows)[:identifiable_number],
+          estimated_establishments: AlojamentoLocal.establishment_estimate(rows)
         }
       end
 

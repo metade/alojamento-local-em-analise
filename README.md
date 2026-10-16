@@ -84,32 +84,27 @@ imutáveis. Runs locais novos incluem `snapshot.json` com os mesmos campos e
 schema dos públicos, com modo local e, quando necessário, um ID de rerun;
 conservam também os dois CSVs detalhados para diagnóstico. O Jekyll lê apenas
 o snapshot. Runs locais antigos sem `snapshot.json` exigem uma nova análise local.
-Arquivos sem métricas compatíveis exigem reanálise com fontes verificadas e não
-recebem links para relatórios gerados.
+Snapshots de formatos anteriores exigem reanálise com fontes verificadas antes do build.
 
-A regeneração e a construção do site usam `PublicSnapshot::Loader`, também
-usado para validar os outputs antes da publicação de uma análise. Nos novos
-runs, `snapshot.json` é a única fonte de verdade. O documento tem
-`schema_version` 6.0.0 e os campos `metadata`, `summary`,
+A regeneração e a construção do site usam `PublicSnapshot.load`, que lê apenas
+`snapshot.json` do schema 6.0.0 e devolve diretamente o documento como um Hash
+com chaves string. O documento contém `metadata`, `summary`,
 `licence_group_aggregates`, `announcements_by_parish_and_classification`,
-`parish_totals` e `registration_metrics`. O loader mantém a mesma interface
-imutável, com chaves string, independentemente do armazenamento.
+`parish_totals` e `registration_metrics`.
 
-A regeneração do relatório e o site leem exclusivamente `snapshot.json` nos runs consolidados.
-A publicação valida o documento, a proveniência e a coerência dos agregados.
-Cada análise pública recalcula os resultados e gera `snapshot.json`. Antes de substituir um par já publicado, verifica os hashes
-das fontes existentes e valida os novos outputs.
-Um documento inválido ou de versão incompatível faz a leitura falhar; nunca
-se tenta reconstruí-lo de ficheiros separados.
+O [JSON Schema](schema/snapshot.schema.json), validado por `json_schemer`, define
+os campos obrigatórios, tipos, versões e propriedades permitidas. Ruby verifica
+as relações entre valores: proveniência, identificador do run, somas e coerência
+dos agregados. A análise, o site, os relatórios e a auditoria de publicação usam
+a mesma validação. O site seleciona o snapshot mais recente; dados inválidos
+fazem o build falhar, sem fallback para outro run ou formato.
 
-Para compatibilidade, o loader lê documentos do schema 5.0.0 sem depender das
-suas antigas exportações. Também lê os ficheiros separados do schema 4.0.0,
-com métricas 1.0.0 e metodologias 2.0.0/2.1.0, adaptando-os antes da mesma
-validação. Runs antigos sem métricas suportadas podem permanecer no arquivo;
-a seleção do site conserva essa compatibilidade. Uma reanálise com fontes
-datadas e hashes verificados substitui apenas o par escolhido pelo formato
-atual. A leitura de um formato anterior não evita a reanálise. O formato
-dos outputs locais mantém-se.
+Cada análise pública recalcula os resultados. Antes de substituir um par já
+publicado, verifica os hashes das fontes existentes e valida os novos outputs.
+Não há leitores de CSVs agregados, schemas antigos ou adaptação de nomes.
+Para recuperar um snapshot antigo, executar novamente a análise a partir das
+fontes datadas e verificadas. Os outputs locais usam o mesmo documento, com modo
+local e os dois CSVs detalhados para diagnóstico.
 
 Nos agregados, as contagens são inteiros: `announcements` conta anúncios,
 `announcements_with_identifiable_number` conta anúncios com número identificável
@@ -160,7 +155,7 @@ As responsabilidades estão em objetos e módulos de `Analysis`:
 | `PreparedSources::Pair` | Seleção e preparação das fontes, datas, URLs, hashes, verificação dos bytes e identificador do par |
 | `Classifier` | Linhas detalhadas com correspondências e classificações |
 | `Aggregates`, `AnnouncementCounts`, `RegistrationMetrics` | Agregados de anúncios, grupos, freguesias e métricas de conjuntos |
-| `Result` | Resultado calculado, resumo, metadata e construção do `PublicSnapshot` validado |
+| `Result` | Resultado calculado, resumo, metadata e construção do documento de snapshot validado |
 | `OutputWriter` | Escrita do snapshot e dos CSVs detalhados locais a partir de um resultado e destino |
 | `History` | Comparações e linhas históricas |
 | `PublicPublisher` | Staging, validação, instalação conjunta do snapshot e histórico, rollback e limpeza |

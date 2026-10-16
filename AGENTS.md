@@ -43,7 +43,7 @@ data/snapshots/<airbnb-snapshot-date>__<official-download-date>/
 
 Public outputs use one folder per dated source pair. Reanalysis validates new outputs before replacing that folder and its history rows; Git retains previously committed versions. Other date pairs remain unchanged. Local runs remain immutable. Each analysis invocation recalculates. `REUSE_EXISTING` is no longer used. Reanalysis replaces public outputs for the same dated source pair after validation; repeated local analysis creates a preserved sibling rerun. Changed source hashes for an existing public date pair remain rejected.
 
-Local runs contain the same aggregate `snapshot.json` schema with local mode and rerun IDs, plus `listings_detailed.csv` and `licence_groups_detailed.csv` for diagnostics. Local runs are ignored by Git. Public runs contain only authoritative `snapshot.json` (schema 6.0.0). No separate CSV/JSON downloads are generated. The loader also reads consolidated schema 5.0.0 without its former exports and legacy split-file schema 4.0.0 with supported registration metrics; a present consolidated document is always authoritative. Publication validates its schema, provenance and aggregates. Existing public source hashes are verified before replacing a dated run. Analysis is data-only. `site:build` and `report:build[run_dir]` always generate completed HTML and PDF using the bundled `wkhtmltopdf-binary`; there is no fallback. Standalone outputs default to `tmp/reports/public/<run-id>/` or `tmp/reports/local/<run-id>/`, overridden by `DESTINATION`. Report destinations must be separate output directories. Local input directories remain immutable; older local runs without `snapshot.json` require a new analysis rerun. Public history in `data/history/` keeps the current summary and auxiliary rows for each dated source pair, replacing only that pair on reanalysis. Local history in `data/private/history/` is append-only.
+Local runs contain the same aggregate `snapshot.json` schema with local mode and rerun IDs, plus `listings_detailed.csv` and `licence_groups_detailed.csv` for diagnostics. Local runs are ignored by Git. Public runs contain only authoritative `snapshot.json` (schema 6.0.0). No separate CSV/JSON downloads are generated. Only schema 6.0.0 is supported. Regenerate older snapshots from verified dated sources; there are no legacy readers or fallback snapshots. `PublicSnapshot.load` returns the parsed document as a string-keyed Hash. JSON Schema (`schema/snapshot.schema.json`, using `json_schemer`) validates structure; Ruby validates provenance and accounting. Publication validates its schema, provenance and aggregates. Existing public source hashes are verified before replacing a dated run. Analysis is data-only. `site:build` and `report:build[run_dir]` always generate completed HTML and PDF using the bundled `wkhtmltopdf-binary`; there is no fallback. Standalone outputs default to `tmp/reports/public/<run-id>/` or `tmp/reports/local/<run-id>/`, overridden by `DESTINATION`. Report destinations must be separate output directories. Local input directories remain immutable; older local runs without `snapshot.json` require a new analysis rerun. Public history in `data/history/` keeps the current summary and auxiliary rows for each dated source pair, replacing only that pair on reanalysis. Local history in `data/private/history/` is append-only.
 
 Run the full test suite (`bundle exec rake` also runs it by default):
 
@@ -65,7 +65,7 @@ ruby -c lib/alojamento_local/analysis/data.rb
 
 ## Data and reproducibility
 
-Raw data under `data_sources/**/*.csv`, detailed local results under `data/private/`, and cached files under `tmp/` are intentionally ignored by Git. Transformed, versioned outputs under `data/snapshots/` and `data/history/` are publishable project outputs and may be committed. Snapshot documents and legacy CSVs are aggregate-only and must not contain listing/host identifiers, listing URLs, names, addresses, exact coordinates, or raw licence strings. Do not commit large raw upstream datasets.
+Raw data under `data_sources/**/*.csv`, detailed local results under `data/private/`, and cached files under `tmp/` are intentionally ignored by Git. Transformed, versioned outputs under `data/snapshots/` and `data/history/` are publishable project outputs and may be committed. Snapshot documents are aggregate-only and must not contain listing/host identifiers, listing URLs, names, addresses, exact coordinates, or raw licence strings. Do not commit large raw upstream datasets.
 
 The GitHub Actions workflow in `.github/workflows/monthly-analysis.yml` runs monthly or through `workflow_dispatch`, tests before source updates and analysis, restores the latest retained `analysis-sources` artifact from a successful default-branch run, runs `sources:update`, archives only the latest dated pair with 90-day retention renewed each run, explicitly selects `analysis:public`, stages and audits only the sanitised `data/snapshots/` and `data/history/` outputs before committing them, builds the site from public snapshots, and publishes the site as a GitHub Pages artifact. Sources may be reused, but analysis always recalculates, even when the dated pair is unchanged. It must never commit local/detailed outputs or the generated site.
 
@@ -89,7 +89,7 @@ Historical comparisons are generated only for metrics with the same methodology 
 
 - `Analysis::PreparedSources::Pair` owns source selection, preparation, dates, URLs, initial hashes, byte-change verification and the base source-date `identifier`. Local rerun suffixes depend on output-directory state and remain in `Analysis`.
 - `Analysis::Classifier` produces detailed classified listing rows from that prepared pair. `Aggregates`, `AnnouncementCounts` and `RegistrationMetrics` calculate their respective aggregates without selecting or downloading sources.
-- `Analysis::Result` takes `sources`, `run_id` and `mode`; it owns classified listings, aggregates, summary and run metadata. Its `snapshot` builds and validates the existing immutable `PublicSnapshot` representation. The matched `official_register_date` is derived from classified listings here; the official download date belongs to source provenance.
+- `Analysis::Result` takes `sources`, `run_id` and `mode`; it owns classified listings, aggregates, summary and run metadata. Its `snapshot` builds and validates the current snapshot document as a Hash. The matched `official_register_date` is derived from classified listings here; the official download date belongs to source provenance.
 - `Analysis::OutputWriter` is an instance holding a result and output path. Its generation methods own the shared snapshot document and local diagnostic CSVs; serialization helpers are private.
 - `Analysis::History` owns comparisons and history CSV operations. `Analysis::PublicPublisher` stages and validates the public run and its histories, installs them together, rolls back failures or interruptions, and cleans staging files.
 
@@ -99,7 +99,7 @@ Reports share the complete Jekyll page `site/report.html`, with `layout: null`.
 Analysis writes the same `snapshot.json` fields and schema for public and local
 runs; local metadata retains local mode and rerun IDs. Only public runs enter the
 site. Normal Jekyll hooks prepare `site.data.site` in `post_read`; the report
-generator loads snapshots through `PublicSnapshot::Loader` and creates pages
+generator loads snapshots through `PublicSnapshot.load` and creates pages
 before rendering. After Jekyll writes HTML, `post_write` copies aggregate downloads
 and calls `ReportPdf` using bundled wkhtmltopdf. Rake invokes `jekyll build`, then
 checks and audits its output. Direct Jekyll builds also generate report PDFs.
@@ -113,7 +113,7 @@ outputs. Source snapshots and histories remain unchanged. Data publication still
 uses `Analysis::PublicPublisher` with validation and rollback. Stored historical
 reports are retained but ignored during builds. Standalone public builds copy
 only allowlisted data files; local builds expose no diagnostic downloads.
-Unsupported archives retain data downloads but require verified reanalysis for reports.
+Older or incomplete snapshots require verified reanalysis before any site or report build.
 
 ## Matching and classification
 

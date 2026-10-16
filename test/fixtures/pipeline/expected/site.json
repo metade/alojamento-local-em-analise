@@ -1,6 +1,5 @@
 {
   "run_id": "2024-06-01__2024-07-01",
-  "newer_snapshot_without_metrics": null,
   "metrics": {
     "geography": "Lisboa",
     "rnal": 15,
@@ -103,104 +102,104 @@
     "mode": "public"
   },
   "official_count": 19,
-  "listings": [
+  "announcements_by_parish_and_classification": [
     {
       "freguesia": "Ajuda",
       "classification": "geografia oficial não identificada",
-      "listings": "1",
-      "identifiable_licences": "1",
-      "establishments_estimate": "1"
+      "announcements": 1,
+      "announcements_with_identifiable_number": 1,
+      "estimated_establishments": 1
     },
     {
       "freguesia": "Arroios",
       "classification": "geografia oficial não identificada",
-      "listings": "4",
-      "identifiable_licences": "4",
-      "establishments_estimate": "4"
+      "announcements": 4,
+      "announcements_with_identifiable_number": 4,
+      "estimated_establishments": 4
     },
     {
       "freguesia": "Arroios",
       "classification": "licença oficial fora de Lisboa",
-      "listings": "3",
-      "identifiable_licences": "3",
-      "establishments_estimate": "3"
+      "announcements": 3,
+      "announcements_with_identifiable_number": 3,
+      "estimated_establishments": 3
     },
     {
       "freguesia": "Arroios",
       "classification": "licença repetida em várias localizações",
-      "listings": "4",
-      "identifiable_licences": "4",
-      "establishments_estimate": "4"
+      "announcements": 4,
+      "announcements_with_identifiable_number": 4,
+      "estimated_establishments": 4
     },
     {
       "freguesia": "Arroios",
       "classification": "licença repetida na mesma localização",
-      "listings": "5",
-      "identifiable_licences": "5",
-      "establishments_estimate": "2"
+      "announcements": 5,
+      "announcements_with_identifiable_number": 5,
+      "estimated_establishments": 2
     },
     {
       "freguesia": "Arroios",
       "classification": "licença única em Lisboa",
-      "listings": "3",
-      "identifiable_licences": "3",
-      "establishments_estimate": "3"
+      "announcements": 3,
+      "announcements_with_identifiable_number": 3,
+      "estimated_establishments": 3
     },
     {
       "freguesia": "Arroios",
       "classification": "localização observada não identificada",
-      "listings": "2",
-      "identifiable_licences": "2",
-      "establishments_estimate": "2"
+      "announcements": 2,
+      "announcements_with_identifiable_number": 2,
+      "estimated_establishments": 2
     },
     {
       "freguesia": "Arroios",
       "classification": "número sem correspondência no RNAL",
-      "listings": "2",
-      "identifiable_licences": "2",
-      "establishments_estimate": "2"
+      "announcements": 2,
+      "announcements_with_identifiable_number": 2,
+      "estimated_establishments": 2
     },
     {
       "freguesia": "Arroios",
       "classification": "provável estabelecimento com anúncios múltiplos",
-      "listings": "3",
-      "identifiable_licences": "3",
-      "establishments_estimate": "1"
+      "announcements": 3,
+      "announcements_with_identifiable_number": 3,
+      "estimated_establishments": 1
     },
     {
       "freguesia": "Arroios",
       "classification": "sem licença",
-      "listings": "2",
-      "identifiable_licences": "0",
-      "establishments_estimate": "2"
+      "announcements": 2,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 2
     },
     {
       "freguesia": "Arroios",
       "classification": "sem licença identificável",
-      "listings": "2",
-      "identifiable_licences": "0",
-      "establishments_estimate": "2"
+      "announcements": 2,
+      "announcements_with_identifiable_number": 0,
+      "estimated_establishments": 2
     },
     {
       "freguesia": "Belém",
       "classification": "geografia oficial não identificada",
-      "listings": "1",
-      "identifiable_licences": "1",
-      "establishments_estimate": "1"
+      "announcements": 1,
+      "announcements_with_identifiable_number": 1,
+      "estimated_establishments": 1
     },
     {
       "freguesia": "Belém",
       "classification": "provável estabelecimento com anúncios múltiplos",
-      "listings": "1",
-      "identifiable_licences": "1",
-      "establishments_estimate": "1"
+      "announcements": 1,
+      "announcements_with_identifiable_number": 1,
+      "estimated_establishments": 1
     },
     {
       "freguesia": "Geografia não identificada",
       "classification": "licença única em Lisboa",
-      "listings": "1",
-      "identifiable_licences": "1",
-      "establishments_estimate": "1"
+      "announcements": 1,
+      "announcements_with_identifiable_number": 1,
+      "estimated_establishments": 1
     }
   ],
   "repeated_listings": 4,

@@ -1,0 +1,534 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Alojamento Local snapshot 6.0.0",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": "6.0.0"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "run_id": {
+          "$ref": "#/$defs/run_id"
+        },
+        "source_urls": {
+          "type": "object",
+          "properties": {
+            "airbnb": {
+              "type": "string",
+              "pattern": "^https?://"
+            },
+            "official": {
+              "type": "string",
+              "pattern": "^https?://"
+            }
+          },
+          "required": [
+            "airbnb",
+            "official"
+          ],
+          "additionalProperties": false
+        },
+        "source_dates": {
+          "$ref": "#/$defs/source_dates"
+        },
+        "source_files": {
+          "$ref": "#/$defs/source_files"
+        },
+        "git_commit": {
+          "type": "string"
+        },
+        "git_worktree_dirty": {
+          "type": "boolean"
+        },
+        "analysis_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "methodology_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "output_schema_version": {
+          "const": "6.0.0"
+        },
+        "mode": {
+          "enum": [
+            "public",
+            "local"
+          ]
+        }
+      },
+      "required": [
+        "run_id",
+        "source_urls",
+        "source_dates",
+        "source_files",
+        "git_commit",
+        "analysis_version",
+        "methodology_version",
+        "output_schema_version",
+        "mode"
+      ],
+      "additionalProperties": false
+    },
+    "summary": {
+      "type": "object",
+      "properties": {
+        "run_id": {
+          "$ref": "#/$defs/run_id"
+        },
+        "source_dates": {
+          "$ref": "#/$defs/source_dates"
+        },
+        "methodology_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "listings": {
+          "$ref": "#/$defs/count"
+        },
+        "licence_groups": {
+          "$ref": "#/$defs/count"
+        },
+        "official_registers_lisbon": {
+          "$ref": "#/$defs/count"
+        },
+        "establishment_estimate": {
+          "$ref": "#/$defs/count"
+        },
+        "classifications": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/count"
+          }
+        },
+        "mode": {
+          "enum": [
+            "public",
+            "local"
+          ]
+        },
+        "generated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "historical_comparisons": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "run_id": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "metrics": {
+                "type": "object",
+                "properties": {
+                  "listings": {
+                    "$ref": "#/$defs/count"
+                  },
+                  "licence_groups": {
+                    "$ref": "#/$defs/count"
+                  },
+                  "establishment_estimate": {
+                    "$ref": "#/$defs/count"
+                  }
+                },
+                "required": [],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "run_id",
+              "status",
+              "metrics"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "run_id",
+        "source_dates",
+        "methodology_version",
+        "listings",
+        "licence_groups",
+        "official_registers_lisbon",
+        "establishment_estimate",
+        "classifications",
+        "mode",
+        "generated_at"
+      ],
+      "additionalProperties": false
+    },
+    "licence_group_aggregates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "classification": {
+            "$ref": "#/$defs/dimension"
+          },
+          "official_municipality": {
+            "$ref": "#/$defs/dimension"
+          },
+          "official_type": {
+            "$ref": "#/$defs/dimension"
+          },
+          "licence_groups": {
+            "$ref": "#/$defs/count"
+          },
+          "announcements": {
+            "$ref": "#/$defs/count"
+          },
+          "spatial_locations": {
+            "$ref": "#/$defs/count"
+          },
+          "estimated_establishments": {
+            "$ref": "#/$defs/count"
+          }
+        },
+        "required": [
+          "classification",
+          "official_municipality",
+          "official_type",
+          "licence_groups",
+          "announcements",
+          "spatial_locations",
+          "estimated_establishments"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "announcements_by_parish_and_classification": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "freguesia": {
+            "$ref": "#/$defs/dimension"
+          },
+          "classification": {
+            "$ref": "#/$defs/dimension"
+          },
+          "announcements": {
+            "$ref": "#/$defs/count"
+          },
+          "announcements_with_identifiable_number": {
+            "$ref": "#/$defs/count"
+          },
+          "estimated_establishments": {
+            "$ref": "#/$defs/count"
+          }
+        },
+        "required": [
+          "freguesia",
+          "classification",
+          "announcements",
+          "announcements_with_identifiable_number",
+          "estimated_establishments"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "parish_totals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "freguesia": {
+            "$ref": "#/$defs/dimension"
+          },
+          "announcements": {
+            "$ref": "#/$defs/count"
+          },
+          "announcements_with_identifiable_number": {
+            "$ref": "#/$defs/count"
+          },
+          "estimated_establishments": {
+            "$ref": "#/$defs/count"
+          }
+        },
+        "required": [
+          "freguesia",
+          "announcements",
+          "announcements_with_identifiable_number",
+          "estimated_establishments"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "registration_metrics": {
+      "type": "object",
+      "properties": {
+        "metric_version": {
+          "const": "1.0.0"
+        },
+        "definitions": {
+          "type": "object",
+          "properties": {
+            "sets": {
+              "type": "string"
+            },
+            "differences": {
+              "type": "string"
+            },
+            "difference_priority": {
+              "type": "string"
+            },
+            "announcements": {
+              "type": "string"
+            },
+            "entries": {
+              "type": "string"
+            },
+            "geography": {
+              "type": "string"
+            },
+            "denominators": {
+              "type": "string"
+            },
+            "classification": {
+              "type": "string"
+            },
+            "estimate": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "sets",
+            "differences",
+            "difference_priority",
+            "announcements",
+            "entries",
+            "geography",
+            "denominators",
+            "classification",
+            "estimate"
+          ],
+          "additionalProperties": false
+        },
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "geography": {
+                "$ref": "#/$defs/dimension"
+              },
+              "rnal": {
+                "$ref": "#/$defs/count"
+              },
+              "airbnb": {
+                "$ref": "#/$defs/count"
+              },
+              "intersection": {
+                "$ref": "#/$defs/count"
+              },
+              "rnal_only": {
+                "$ref": "#/$defs/count"
+              },
+              "airbnb_only": {
+                "$ref": "#/$defs/count"
+              },
+              "another_lisbon_parish": {
+                "$ref": "#/$defs/count"
+              },
+              "another_municipality": {
+                "$ref": "#/$defs/count"
+              },
+              "no_national_match": {
+                "$ref": "#/$defs/count"
+              },
+              "unresolved_official_geography": {
+                "$ref": "#/$defs/count"
+              },
+              "announcements": {
+                "$ref": "#/$defs/count"
+              },
+              "empty_licence": {
+                "$ref": "#/$defs/count"
+              },
+              "unrecognised_licence": {
+                "$ref": "#/$defs/count"
+              },
+              "identifiable_number": {
+                "$ref": "#/$defs/count"
+              },
+              "confirmed_rnal_match": {
+                "$ref": "#/$defs/count"
+              },
+              "official_entries": {
+                "$ref": "#/$defs/count"
+              }
+            },
+            "required": [
+              "geography",
+              "rnal",
+              "airbnb",
+              "intersection",
+              "rnal_only",
+              "airbnb_only",
+              "another_lisbon_parish",
+              "another_municipality",
+              "no_national_match",
+              "unresolved_official_geography",
+              "announcements",
+              "empty_licence",
+              "unrecognised_licence",
+              "identifiable_number",
+              "confirmed_rnal_match",
+              "official_entries"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "diagnostics": {
+          "type": "object",
+          "properties": {
+            "national_entries": {
+              "$ref": "#/$defs/count"
+            },
+            "unparseable_official_numbers": {
+              "$ref": "#/$defs/count"
+            },
+            "duplicate_number_extra_entries": {
+              "$ref": "#/$defs/count"
+            },
+            "official_entries_unresolved_municipality": {
+              "$ref": "#/$defs/count"
+            },
+            "lisbon_entries_unresolved_parish": {
+              "$ref": "#/$defs/count"
+            }
+          },
+          "required": [
+            "national_entries",
+            "unparseable_official_numbers",
+            "duplicate_number_extra_entries",
+            "official_entries_unresolved_municipality",
+            "lisbon_entries_unresolved_parish"
+          ],
+          "additionalProperties": false
+        },
+        "run_id": {
+          "$ref": "#/$defs/run_id"
+        },
+        "source_files": {
+          "$ref": "#/$defs/source_files"
+        },
+        "methodology_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$"
+        },
+        "source_dates": {
+          "$ref": "#/$defs/source_dates"
+        }
+      },
+      "required": [
+        "metric_version",
+        "definitions",
+        "rows",
+        "diagnostics",
+        "run_id",
+        "source_files",
+        "methodology_version",
+        "source_dates"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schema_version",
+    "metadata",
+    "summary",
+    "licence_group_aggregates",
+    "announcements_by_parish_and_classification",
+    "parish_totals",
+    "registration_metrics"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "dimension": {
+      "type": "string",
+      "minLength": 1,
+      "not": {
+        "pattern": "[hH][tT][tT][pP][sS]?://|[wW][wW][wW]\\.|/[rR][oO][oO][mM][sS]/"
+      }
+    },
+    "run_id": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}__\\d{4}-\\d{2}-\\d{2}(__rerun-\\d{8}T\\d{12}(-\\d+)?)?$"
+    },
+    "source_dates": {
+      "type": "object",
+      "properties": {
+        "airbnb_snapshot_date": {
+          "type": "string",
+          "format": "date"
+        },
+        "official_register_date": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date"
+        },
+        "official_register_download_date": {
+          "type": "string",
+          "format": "date"
+        }
+      },
+      "required": [
+        "airbnb_snapshot_date",
+        "official_register_date",
+        "official_register_download_date"
+      ],
+      "additionalProperties": false
+    },
+    "source_files": {
+      "type": "object",
+      "properties": {
+        "airbnb": {
+          "type": "object",
+          "properties": {
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "sha256"
+          ],
+          "additionalProperties": false
+        },
+        "official": {
+          "type": "object",
+          "properties": {
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            }
+          },
+          "required": [
+            "sha256"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "airbnb",
+        "official"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

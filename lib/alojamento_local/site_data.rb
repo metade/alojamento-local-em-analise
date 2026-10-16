@@ -33,7 +33,7 @@ module AlojamentoLocal
       @distance_history = distance_history
       @outside_region_history = outside_region_history
       @quotes = quotes
-      @snapshot_loader = PublicSnapshot::Loader.new
+      @documents = {}
     end
 
     def pretty(value)
@@ -49,8 +49,8 @@ module AlojamentoLocal
       end
     end
 
-    def load_json(path)
-      @snapshot_loader.load_json(path)
+    def snapshot(path)
+      @documents[path] ||= PublicSnapshot.load(path)
     end
 
     def public_runs
@@ -58,7 +58,7 @@ module AlojamentoLocal
         path = File.join(@snapshots, name)
         path if File.directory?(path) && name.match?(/\A\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}\z/)
       end.sort_by do |path|
-        metadata = @snapshot_loader.metadata(path)
+        metadata = snapshot(path).fetch("metadata")
         [metadata.fetch("source_dates").fetch("airbnb_snapshot_date"), metadata.fetch("source_dates").fetch("official_register_download_date"), Gem::Version.new(metadata.fetch("methodology_version")), Gem::Version.new(metadata.fetch("analysis_version"))]
       end.reverse
     end
@@ -114,25 +114,19 @@ module AlojamentoLocal
       {"rows" => chart, "total" => expected, "unresolved_municipality" => unresolved_municipality, "unresolved_region" => unresolved_region}
     end
 
-    def measured_run(runs)
-      runs.find { |path| @snapshot_loader.supported_metrics?(path) } ||
-        raise("No snapshot has supported measured registration metrics")
-    end
-
     def site_data(runs)
-      run_dir = measured_run(runs)
-      snapshot = @snapshot_loader.load(run_dir)
-      run_id = snapshot.run_id
-      summary = snapshot.summary
-      metadata = snapshot.metadata
-      announcements = snapshot.announcements_by_parish_and_classification
-      listings = snapshot.published_announcement_rows
-      freguesias = snapshot.parish_totals
+      run_dir = runs.first || raise("No public snapshots")
+      document = snapshot(run_dir)
+      run_id = document.fetch("metadata").fetch("run_id")
+      summary = document.fetch("summary")
+      metadata = document.fetch("metadata")
+      announcements = document.fetch("announcements_by_parish_and_classification")
+      freguesias = document.fetch("parish_totals")
       grouped = announcements.group_by { |row| row["freguesia"] }.transform_values { |rows| counts(rows) }
       ranges = distance_ranges(run_id, summary)
       regions = outside_regions(run_id, announcements)
       # Geometry belongs to the site; do not mutate validated source metrics.
-      metrics = JSON.parse(JSON.generate(snapshot.registration_metrics))
+      metrics = JSON.parse(JSON.generate(document.fetch("registration_metrics")))
       measures = metrics.fetch("rows").to_h do |row|
         row["geometry"] = AlojamentoLocal::Overlap.geometry(row["rnal"], row["airbnb"], row["intersection"])
         row["unresolved"] = row["empty_licence"] + row["unrecognised_licence"]
@@ -163,15 +157,11 @@ module AlojamentoLocal
 
       {
         "run_id" => run_id,
-        "newer_snapshot_without_metrics" => run_dir == runs.first ? nil : {
-          "run_id" => File.basename(runs.first),
-          "official_date" => @snapshot_loader.metadata(runs.first).fetch("source_dates").fetch("official_register_download_date")
-        },
         "metrics" => measures.fetch("Lisboa"),
         "summary" => summary,
         "metadata" => metadata,
         "official_count" => summary["official_registers_lisbon"],
-        "listings" => listings,
+        "announcements_by_parish_and_classification" => announcements,
         "repeated_listings" => announcements.select { |row| row["classification"] == "licença repetida em várias localizações" }.sum { |row| row.fetch("announcements") },
         "distance_ranges" => ranges,
         "distance_total" => ranges.sum { |range| range["count"] },

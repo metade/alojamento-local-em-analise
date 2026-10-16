@@ -28,8 +28,7 @@ module AlojamentoLocal
       end
 
       def self.verify_public_sources!(path, hashes)
-        loader = PublicSnapshot::Loader.new
-        metadata = loader.metadata(path)
+        metadata = PublicSnapshot.load(path).fetch("metadata")
         expected = {"airbnb" => hashes[0], "official" => hashes[1]}
         unless expected.all? { |key, hash| metadata.dig("source_files", key, "sha256") == hash }
           raise "Source hashes differ for existing dated snapshot: #{path}"
@@ -39,8 +38,7 @@ module AlojamentoLocal
       private
 
       def validate_public_outputs!(run_dir)
-        loader = PublicSnapshot::Loader.new
-        loader.load(run_dir, expected_run_id: loader.metadata(run_dir).fetch("run_id"))
+        PublicSnapshot.load(run_dir, expected_run_id: File.basename(@destination))
       end
 
       def install(staged_run, histories, staging)

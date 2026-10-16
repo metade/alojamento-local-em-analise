@@ -17,20 +17,16 @@ class SnapshotReportGenerator < Jekyll::Generator
       site.config["report_runs"] = [File.expand_path(report_only)]
     end
 
-    loader = AlojamentoLocal::PublicSnapshot::Loader.new
     site.config.fetch("report_runs").each do |path|
       if report_only
-        local = loader.metadata(path).fetch("mode") == "local"
-        raise "Unsupported archive: verified reanalysis is required to build a report." unless local || loader.supported_metrics?(path)
         raise "Report destination must be separate from its input" if site.dest == path || site.dest.start_with?(path + "/") || path.start_with?(site.dest + "/")
-      else
-        next unless loader.supported_metrics?(path)
       end
-      snapshot = loader.load(path, local: local == true)
-      folder = report_only ? "" : "runs/#{snapshot.run_id}"
+      snapshot = AlojamentoLocal::PublicSnapshot.load(path, allow_local: !!report_only)
+      local = snapshot.fetch("metadata").fetch("mode") == "local"
+      folder = report_only ? "" : "runs/#{snapshot.fetch('metadata').fetch('run_id')}"
       name = local ? "report_local.html" : "report.html"
       page = Jekyll::PageWithoutAFile.new(site, site.source, folder, name)
-      page.data = template.data.merge("layout" => nil, "report" => snapshot.to_h)
+      page.data = template.data.merge("layout" => nil, "report" => snapshot)
       page.content = template.content
       site.pages << page
     end
@@ -46,13 +42,7 @@ Jekyll::Hooks.register :site, :post_write, priority: :low do |site|
     next if local_report
     destination = report_only ? site.dest : File.join(site.dest, "runs", File.basename(source))
     FileUtils.mkdir_p(destination)
-    files = if File.file?(File.join(source, "snapshot.json"))
-      ["snapshot.json"]
-    else
-      %w[metadata.json summary.json listings.csv licence_groups.csv freguesias.csv registration_metrics.json]
-        .select { |file| File.file?(File.join(source, file)) }
-    end
-    files.each { |file| FileUtils.cp(File.join(source, file), destination) }
+    FileUtils.cp(File.join(source, "snapshot.json"), destination)
   end
   reports.each do |page|
     html = page.destination(site.dest)

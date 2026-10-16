@@ -68,25 +68,6 @@ class ReportBuildTest < Minitest::Test
     end
   end
 
-  def test_schema_four_and_five_reports_preserve_tables_and_definitions
-    Dir.mktmpdir do |root|
-      input = File.join(root, PipelineFixture::RUN_ID)
-      FileUtils.cp_r(File.join(PipelineFixture::ROOT, "legacy_public"), input)
-      legacy = File.join(root, "legacy")
-      build(input, legacy)
-      assert_equal %w[freguesias.csv licence_groups.csv listings.csv metadata.json registration_metrics.json report.html report.pdf summary.json], Dir.children(legacy).sort
-      data = JSON.parse(JSON.generate(AlojamentoLocal::PublicSnapshot::Loader.new.load(input).to_h))
-      data["schema_version"] = data["metadata"]["output_schema_version"] = "5.0.0"
-      File.write(File.join(input, "snapshot.json"), JSON.generate(data))
-      %w[metadata.json summary.json registration_metrics.json listings.csv licence_groups.csv freguesias.csv].each { |name| FileUtils.rm(File.join(input, name)) }
-      previous = File.join(root, "previous")
-      build(input, previous)
-      old_html = File.read(File.join(legacy, "report.html")).gsub("metadata.json", "snapshot.json").gsub("registration_metrics.json", "snapshot.json").sub("<dd>4.0.0</dd>", "<dd>5.0.0</dd>")
-      assert_equal old_html, File.read(File.join(previous, "report.html"))
-      assert_equal %w[report.html report.pdf snapshot.json], Dir.children(previous).sort
-    end
-  end
-
   def test_local_snapshot_and_rerun_reports_never_read_diagnostics_or_mutate_inputs
     with_runs do |root, _, local|
       source = File.join(PipelineFixture::SOURCES, "listings-2024-06-01.csv")
@@ -105,8 +86,7 @@ class ReportBuildTest < Minitest::Test
       assert_raises(RuntimeError) { build(local, local) }
       FileUtils.rm(File.join(local, "snapshot.json"))
       File.write(File.join(local, "metadata_local.json"), "{}")
-      error = assert_raises(RuntimeError) { build(local, output) }
-      assert_includes error.message, "new local analysis rerun"
+      assert_raises(Errno::ENOENT) { build(local, output) }
     end
   end
 
@@ -141,18 +121,6 @@ class ReportBuildTest < Minitest::Test
       assert_includes html, "Sem runs anteriores."
       assert_includes html, "&lt;script&gt;alert(&quot;example&quot;)&lt;/script&gt;"
       refute_includes html, "<script>"
-    end
-  end
-
-  def test_unsupported_archive_keeps_existing_report_and_downloads
-    Dir.mktmpdir do |root|
-      input = File.join(root, PipelineFixture::RUN_ID)
-      FileUtils.cp_r(File.join(PipelineFixture::ROOT, "legacy_public"), input)
-      FileUtils.rm(File.join(input, "registration_metrics.json"))
-      before = files(input)
-      error = assert_raises(RuntimeError) { build(input, input) }
-      assert_includes error.message, "verified reanalysis"
-      assert_equal before, files(input)
     end
   end
 

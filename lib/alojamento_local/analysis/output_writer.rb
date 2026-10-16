@@ -17,7 +17,7 @@ module AlojamentoLocal
 
       def generate_data
         FileUtils.mkdir_p(@path)
-        write_json(PublicSnapshot::FILE, @result.snapshot.to_h)
+        write_json(PublicSnapshot::FILE, @result.snapshot)
         write_local_outputs if @result.metadata.fetch(:mode) == "local"
       end
 
@@ -25,13 +25,12 @@ module AlojamentoLocal
 
       def write_local_outputs
         listings = @result.listings.map { |listing| LISTING_HEADERS.to_h { |header| [header, listing[header]] } }
-        write_csv("listings_detailed.csv", listings)
+        write_csv("listings_detailed.csv", listings, LISTING_HEADERS)
         groups = @result.licence_groups.map { |group| group.slice(*GROUP_HEADERS) }
-        write_csv("licence_groups_detailed.csv", groups)
+        write_csv("licence_groups_detailed.csv", groups, GROUP_HEADERS)
       end
 
-      def write_csv(filename, rows)
-        headers = rows.empty? ? PUBLIC_CSV_SCHEMAS.fetch(filename, []) : rows.first.keys
+      def write_csv(filename, rows, headers)
         CSV.open(File.join(@path, filename), "w", write_headers: true, headers: headers) do |csv|
           rows.each { |row| csv << headers.map { |header| row[header] } }
         end

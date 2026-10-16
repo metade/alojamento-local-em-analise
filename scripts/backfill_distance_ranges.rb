@@ -3,20 +3,15 @@
 
 # Adds only the public aggregate for an existing immutable run. Raw sources
 # must match the hashes already recorded in that run's metadata.
-require "csv"
 require "digest"
-require "json"
 require_relative "../lib/alojamento_local"
 
 root = File.expand_path("..", __dir__)
 run_id = ARGV.fetch(0)
 run_dir = File.join(root, "data", "snapshots", run_id)
-loader = AlojamentoLocal::PublicSnapshot::Loader.new
-metadata = loader.metadata(run_dir)
-snapshot = loader.load(run_dir) if %w[4.0.0 5.0.0 6.0.0].include?(metadata.fetch("output_schema_version"))
-# Unmeasured historical schemas predate the shared loader; keep this archive
-# utility available for them without consulting exports of consolidated runs.
-summary = snapshot ? snapshot.summary : JSON.parse(File.read(File.join(run_dir, "summary.json")))
+snapshot = AlojamentoLocal::PublicSnapshot.load(run_dir)
+metadata = snapshot.fetch("metadata")
+summary = snapshot.fetch("summary")
 raise "Run ID mismatch" unless metadata.fetch("run_id") == run_id && summary.fetch("run_id") == run_id
 
 airbnb_date = metadata.dig("source_dates", "airbnb_snapshot_date")
@@ -31,10 +26,10 @@ end
 sources = AlojamentoLocal::Analysis::PreparedSources::Pair.new(airbnb_path: airbnb, official_path: official)
 listings, = AlojamentoLocal::Analysis::Classifier.new(sources).classify
 repeated = listings.select { |row| row[:license_group_assessment] == "licença repetida em várias localizações" }
-public_rows = snapshot ? snapshot.published_announcement_rows : CSV.read(File.join(run_dir, "listings.csv"), headers: true)
+public_rows = snapshot.fetch("announcements_by_parish_and_classification")
 public_count = public_rows
   .select { |row| row["classification"] == "licença repetida em várias localizações" }
-  .sum { |row| row["listings"].to_i }
+  .sum { |row| row.fetch("announcements") }
 raise "Announcement count mismatch" unless repeated.size == public_count
 
 counts = AlojamentoLocal::Analysis::History.distance_range_counts(listings)

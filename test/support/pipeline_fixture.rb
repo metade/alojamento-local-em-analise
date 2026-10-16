@@ -49,10 +49,6 @@ module PipelineFixture
       when "snapshot.json"
         normalize_metadata(data.fetch("metadata"))
         normalize_summary(data.fetch("summary"))
-      when "metadata.json", "metadata_local.json"
-        normalize_metadata(data)
-      when "summary.json", "summary_local.json"
-        normalize_summary(data)
       when "site.json"
         normalize_metadata(data.fetch("metadata"))
         normalize_summary(data.fetch("summary"))

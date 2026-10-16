@@ -2,216 +2,124 @@ require "minitest/autorun"
 require "tmpdir"
 require "fileutils"
 require "open3"
-require_relative "../lib/alojamento_local"
+require_relative "support/pipeline_fixture"
 require_relative "support/jekyll_build"
 
 class PublicSnapshotTest < Minitest::Test
-  FIXTURE = File.expand_path("fixtures/pipeline/legacy_public", __dir__)
-  RUN_ID = "2024-06-01__2024-07-01"
+  RUN_ID = PipelineFixture::RUN_ID
 
   def with_snapshot
     Dir.mktmpdir("public-snapshot-") do |root|
       path = File.join(root, RUN_ID)
-      FileUtils.cp_r(FIXTURE, path)
-      FileUtils.rm_f(File.join(path, "snapshot.json"))
-      metadata_path = File.join(path, "metadata.json")
-      metadata = JSON.parse(File.read(metadata_path))
-      metadata["output_schema_version"] = "4.0.0"
-      File.write(metadata_path, JSON.pretty_generate(metadata) + "\n")
-      %w[summary.json report.html].each do |file|
-        target = File.join(path, file)
-        File.write(target, File.read(target).gsub("<generated_at>", "2024-07-01T12:00:00Z"))
-      end
+      FileUtils.mkdir_p(path)
+      data = JSON.parse(File.read(File.join(PipelineFixture::EXPECTED, "public", "snapshot.json")))
+      data.fetch("metadata")["git_worktree_dirty"] = false
+      data.fetch("summary")["generated_at"] = "2024-07-01T12:00:00Z"
+      File.write(File.join(path, "snapshot.json"), JSON.generate(data))
       yield root, path
     end
   end
 
-  def mutate_json(path, file)
-    data = JSON.parse(File.read(File.join(path, file)))
+  def mutate(path)
+    file = File.join(path, "snapshot.json")
+    data = JSON.parse(File.read(file))
     yield data
-    File.write(File.join(path, file), JSON.generate(data))
-  end
-
-  def mutate_csv(path, file)
-    table = CSV.read(File.join(path, file), headers: true)
-    yield table
-    File.write(File.join(path, file), table.to_csv)
-  end
-
-  def test_typed_units_and_immutable_inputs
-    with_snapshot do |_, path|
-      loader = AlojamentoLocal::PublicSnapshot::Loader.new
-      snapshot = loader.load(path)
-      assert_same snapshot, loader.load(path)
-      assert_equal RUN_ID, snapshot.run_id
-      assert_equal 34, snapshot.announcements_by_parish_and_classification.sum { |row| row.fetch("announcements") }
-      assert_equal 30, snapshot.parish_totals.sum { |row| row.fetch("announcements_with_identifiable_number") }
-      assert_equal 18, snapshot.licence_group_aggregates.sum { |row| row.fetch("licence_groups") }
-      # Parish estimates and distinct numbers are intentionally nonadditive.
-      assert_equal 28, snapshot.summary.fetch("establishment_estimate")
-      refute_equal 28, snapshot.parish_totals.sum { |row| row.fetch("estimated_establishments") }
-      refute_equal snapshot.registration_metrics.fetch("rows").first.fetch("airbnb"), snapshot.registration_metrics.fetch("rows").drop(1).sum { |row| row.fetch("airbnb") }
-      assert_raises(FrozenError) { snapshot.registration_metrics.fetch("rows").first["airbnb"] = 0 }
-      assert_equal CSV.read(File.join(path, "listings.csv"), headers: true).map(&:to_h), snapshot.published_announcement_rows
-    end
-  end
-
-  def test_consumers_reject_schema_provenance_and_aggregate_corruption
-    mutations = {
-      "schema version" => ->(path) { mutate_json(path, "metadata.json") { |data| data["output_schema_version"] = "99.0.0" } },
-      "summary dates" => ->(path) { mutate_json(path, "summary.json") { |data| data["source_dates"]["official_register_date"] = "2020-02-01" } },
-      "metric dates" => ->(path) { mutate_json(path, "registration_metrics.json") { |data| data["source_dates"]["airbnb_snapshot_date"] = "2024-06-02" } },
-      "summary counts" => ->(path) { mutate_json(path, "summary.json") { |data| data["licence_groups"] += 1 } },
-      "classifications" => ->(path) { mutate_json(path, "summary.json") { |data| data["classifications"]["sem licença"] = 1 } },
-      "CSV header" => ->(path) { file = File.join(path, "listings.csv"); File.write(file, File.read(file).sub("identifiable_licences", "distinct_licences")) },
-      "noninteger count" => ->(path) { mutate_csv(path, "listings.csv") { |table| table[0]["listings"] = "1.5" } },
-      "negative count" => ->(path) { mutate_csv(path, "licence_groups.csv") { |table| table[0]["licence_groups"] = "-1" } },
-      "duplicate aggregate" => ->(path) { mutate_csv(path, "freguesias.csv") { |table| table << table[0] } },
-      "parish totals" => ->(path) { mutate_csv(path, "freguesias.csv") { |table| table[0]["listings"] = "99" } },
-      "classification announcements" => ->(path) { mutate_csv(path, "listings.csv") { |table| table[0]["classification"] = "sem licença" } },
-      "city estimate" => ->(path) { mutate_json(path, "summary.json") { |data| data["establishment_estimate"] += 1 } },
-      "official entries" => ->(path) { mutate_json(path, "registration_metrics.json") { |data| data["rows"][1]["official_entries"] += 1 } }
-    }
-    mutations.each do |name, mutate|
-      with_snapshot do |root, path|
-        mutate.call(path)
-        before = Dir.children(path).to_h { |file| [file, File.binread(File.join(path, file))] }
-        loader_error = assert_raises(RuntimeError, name) { AlojamentoLocal::PublicSnapshot::Loader.new.load(path) }
-        builder = AlojamentoLocal::SiteData.new(snapshots: root)
-        site_error = assert_raises(RuntimeError, name) { builder.site_data(builder.public_runs) }
-        assert_equal loader_error.message, site_error.message, name
-        report_error = assert_raises(RuntimeError, name) { JekyllBuild.build(run_dir: path, destination: File.join(root, "report-output")) }
-        assert_equal loader_error.message, report_error.message
-        assert_equal before, Dir.children(path).to_h { |file| [file, File.binread(File.join(path, file))] }, name
-      end
-    end
-  end
-
-  def test_discovery_skips_unsupported_metrics_but_does_not_hide_corrupt_supported_runs
-    with_snapshot do |root, path|
-      newer = File.join(root, "2024-06-01__2024-08-01")
-      FileUtils.cp_r(path, newer)
-      mutate_json(newer, "metadata.json") { |data| data["source_dates"]["official_register_download_date"] = "2024-08-01" }
-      FileUtils.rm(File.join(newer, "registration_metrics.json"))
-      builder = AlojamentoLocal::SiteData.new(snapshots: root)
-      assert_equal path, builder.measured_run(builder.public_runs)
-      FileUtils.cp(File.join(path, "registration_metrics.json"), newer)
-      builder = AlojamentoLocal::SiteData.new(snapshots: root)
-      assert_equal newer, builder.measured_run(builder.public_runs)
-      assert_raises(RuntimeError) { builder.site_data(builder.public_runs) }
-    end
-  end
-  def consolidate(path)
-    legacy = AlojamentoLocal::PublicSnapshot::Loader.new.load(path)
-    data = JSON.parse(JSON.generate(legacy.to_h))
-    data["metadata"]["output_schema_version"] = "6.0.0"
-    data["metadata"]["analysis_version"] = AlojamentoLocal::ANALYSIS_VERSION
-    snapshot = AlojamentoLocal::PublicSnapshot.from_document(data)
-    File.write(File.join(path, "snapshot.json"), JSON.pretty_generate(data) + "\n")
-    File.write(File.join(path, "metadata.json"), JSON.pretty_generate(data.fetch("metadata")) + "\n")
-    snapshot
+    File.write(file, JSON.generate(data))
   end
 
   def builder(root)
-    history = File.expand_path("fixtures/pipeline/expected/public-history", __dir__)
+    history = File.join(PipelineFixture::EXPECTED, "public-history")
     AlojamentoLocal::SiteData.new(snapshots: root,
-      distance_history: File.join(history, "distance_ranges.csv"), outside_region_history: File.join(history, "outside_regions.csv"),
-      quotes: File.expand_path("fixtures/pipeline/sources/quotes.json", __dir__))
+      distance_history: File.join(history, "distance_ranges.csv"),
+      outside_region_history: File.join(history, "outside_regions.csv"),
+      quotes: File.join(PipelineFixture::SOURCES, "quotes.json"))
   end
 
-  def test_old_and_new_formats_have_equivalent_snapshot_and_site_data
-    with_snapshot do |root, path|
-      old = AlojamentoLocal::PublicSnapshot::Loader.new.load(path)
-      old_site = builder(root).site_data([path])
-      new_snapshot = consolidate(path)
-      new_site = builder(root).site_data([path])
-      old_site = JSON.parse(JSON.generate(old_site))
-      old_site["metadata"]["output_schema_version"] = "6.0.0"
-      old_site["metadata"]["analysis_version"] = AlojamentoLocal::ANALYSIS_VERSION
-      assert_equal old_site, new_site
-      (AlojamentoLocal::PublicSnapshot::FIELDS - ["metadata"]).each do |field|
-        assert_equal old.public_send(field), new_snapshot.public_send(field), field
+  def test_load_returns_the_document_with_integer_counts
+    with_snapshot do |_, path|
+      document = AlojamentoLocal::PublicSnapshot.load(path)
+      assert_equal JSON.parse(File.read(File.join(path, "snapshot.json"))), document
+      assert_equal 34, document.fetch("announcements_by_parish_and_classification").sum { |row| row.fetch("announcements") }
+      assert_equal 30, document.fetch("parish_totals").sum { |row| row.fetch("announcements_with_identifiable_number") }
+      assert_equal 18, document.fetch("licence_group_aggregates").sum { |row| row.fetch("licence_groups") }
+      assert_equal 28, document.fetch("summary").fetch("establishment_estimate")
+      refute_equal 28, document.fetch("parish_totals").sum { |row| row.fetch("estimated_establishments") }
+    end
+  end
+
+  def test_consumers_reject_schema_provenance_and_accounting_corruption
+    mutations = {
+      "version" => ->(d) { d["schema_version"] = "99.0.0" },
+      "metadata version" => ->(d) { d["metadata"]["output_schema_version"] = "5.0.0" },
+      "local mode" => ->(d) { %w[metadata summary].each { |key| d[key]["mode"] = "local" } },
+      "local rerun identifier" => ->(d) { %w[metadata summary registration_metrics].each { |key| d[key]["run_id"] += "__rerun-20241014T123456123456" } },
+      "unexpected field" => ->(d) { d["host_id"] = 123 },
+      "nested private field" => ->(d) { d["parish_totals"][0]["licensa_raw"] = "123/AL" },
+      "summary private field" => ->(d) { d["summary"]["name"] = "Private name" },
+      "local source path" => ->(d) { d["metadata"]["source_files"]["airbnb"]["path"] = "/tmp/source.csv" },
+      "source hash" => ->(d) { d["registration_metrics"]["source_files"]["official"]["sha256"] = "0" * 64 },
+      "summary dates" => ->(d) { d["summary"]["source_dates"]["official_register_date"] = "2020-02-01" },
+      "invalid date" => ->(d) { d["metadata"]["source_dates"]["airbnb_snapshot_date"] = "2024-02-31" },
+      "old methodology" => ->(d) { %w[metadata summary registration_metrics].each { |key| d[key]["methodology_version"] = "2.0.0" } },
+      "summary counts" => ->(d) { d["summary"]["licence_groups"] += 1 },
+      "classifications" => ->(d) { d["summary"]["classifications"]["sem licença"] = 1 },
+      "noninteger count" => ->(d) { d["licence_group_aggregates"][0]["announcements"] = "6" },
+      "negative count" => ->(d) { d["licence_group_aggregates"][0]["licence_groups"] = -1 },
+      "duplicate aggregate" => ->(d) { d["parish_totals"] << d["parish_totals"][0] },
+      "parish totals" => ->(d) { d["parish_totals"][0]["announcements"] += 1 },
+      "classification announcements" => ->(d) { d["announcements_by_parish_and_classification"][0]["classification"] = "sem licença" },
+      "city estimate" => ->(d) { d["summary"]["establishment_estimate"] += 1 },
+      "official entries" => ->(d) { d["registration_metrics"]["rows"][1]["official_entries"] += 1 },
+      "missing metric field" => ->(d) { d["registration_metrics"]["rows"][0].delete("rnal") },
+      "uppercase URL" => ->(d) { d["licence_group_aggregates"][0]["official_type"] = "HTTPS://example.invalid/ROOMS/123" },
+      "listing URL" => ->(d) { d["licence_group_aggregates"][0]["official_type"] = "https://example.invalid/rooms/123" }
+    }
+    mutations.each do |name, change|
+      with_snapshot do |root, path|
+        mutate(path, &change)
+        before = File.binread(File.join(path, "snapshot.json"))
+        error = assert_raises(RuntimeError, name) { AlojamentoLocal::PublicSnapshot.load(path) }
+        site_error = assert_raises(RuntimeError, name) { builder(root).site_data(builder(root).public_runs) }
+        assert_equal error.message, site_error.message, name
+        unless name == "local mode"
+          report_error = assert_raises(RuntimeError, name) { JekyllBuild.build(run_dir: path, destination: File.join(root, "report-output")) }
+          assert_equal error.message, report_error.message, name
+        end
+        assert_equal before, File.binread(File.join(path, "snapshot.json")), name
       end
     end
   end
 
-  def test_consolidated_document_and_report_are_sufficient_for_publication
+  def test_only_current_schema_is_supported_and_missing_or_broken_documents_fail
     with_snapshot do |root, path|
-      snapshot = consolidate(path)
-      expected = builder(root).site_data([path])
-      %w[metadata.json summary.json registration_metrics.json listings.csv licence_groups.csv freguesias.csv].each { |file| FileUtils.rm(File.join(path, file)) }
-      assert_equal %w[report.html snapshot.json], Dir.children(path).sort
-      assert_equal expected, builder(root).site_data([path])
-      assert_equal snapshot.to_h, AlojamentoLocal::PublicSnapshot::Loader.new.load(path).to_h
+      original = File.read(File.join(path, "snapshot.json"))
+      %w[4.0.0 5.0.0].each do |version|
+        File.write(File.join(path, "snapshot.json"), original)
+        mutate(path) { |data| data["schema_version"] = data["metadata"]["output_schema_version"] = version }
+        assert_raises(RuntimeError) { AlojamentoLocal::PublicSnapshot.load(path) }
+        assert_raises(RuntimeError) { builder(root).public_runs }
+      end
+      File.write(File.join(path, "snapshot.json"), "{")
+      assert_raises(JSON::ParserError) { AlojamentoLocal::PublicSnapshot.load(path) }
+      FileUtils.rm(File.join(path, "snapshot.json"))
+      File.write(File.join(path, "metadata.json"), '{}')
+      assert_raises(Errno::ENOENT) { AlojamentoLocal::PublicSnapshot.load(path) }
+      assert_raises(Errno::ENOENT) { builder(root).public_runs }
+    end
+  end
+
+  def test_publication_needs_only_snapshot_and_source_hash_guard_remains
+    with_snapshot do |_, path|
+      snapshot = AlojamentoLocal::PublicSnapshot.load(path)
+      hashes = %w[airbnb official].map { |source| snapshot.fetch("metadata").fetch("source_files").fetch(source).fetch("sha256") }
+      assert_equal ["snapshot.json"], Dir.children(path)
+      AlojamentoLocal::Analysis::PublicPublisher.verify_public_sources!(path, hashes)
+      assert_raises(RuntimeError) { AlojamentoLocal::Analysis::PublicPublisher.verify_public_sources!(path, ["0" * 64, hashes.last]) }
       FileUtils.cp(File.expand_path("../NOTICE", __dir__), File.join(path, "NOTICE"))
       output, status = Open3.capture2e(RbConfig.ruby, File.expand_path("../scripts/audit_publication.rb", __dir__), "--artifact", path)
       assert status.success?, output
+      mutate(path) { |data| data["summary"]["listings"] += 1 }
+      assert_raises(RuntimeError) { AlojamentoLocal::Analysis::PublicPublisher.verify_public_sources!(path, hashes) }
     end
   end
-
-  def test_invalid_consolidated_documents_never_fall_back_to_valid_exports
-    mutations = {
-      "version" => ->(data) { data["schema_version"] = "99.0.0" },
-      "local mode" => ->(data) { %w[metadata summary].each { |field| data[field]["mode"] = "local" } },
-      "local rerun identifier" => ->(data) { %w[metadata summary registration_metrics].each { |field| data[field]["run_id"] += "__rerun-20241014T123456123456" } },
-      "unexpected field" => ->(data) { data["host_id"] = 123 },
-      "unexpected summary field" => ->(data) { data["summary"]["name"] = "Private name" },
-      "wrong source" => ->(data) { data["registration_metrics"]["source_files"]["official"]["sha256"] = "0" * 64 },
-      "invalid aggregate" => ->(data) { data["parish_totals"][0]["announcements"] += 1 },
-      "integer type" => ->(data) { data["licence_group_aggregates"][0]["announcements"] = "6" },
-      "raw nested field" => ->(data) { data["announcements_by_parish_and_classification"][0]["licensa_raw"] = "123/AL" }
-    }
-    mutations.each do |name, mutate|
-      with_snapshot do |root, path|
-        consolidate(path)
-        mutate_json(path, "snapshot.json", &mutate)
-        before = File.binread(File.join(path, "report.html"))
-        assert_raises(RuntimeError, name) { AlojamentoLocal::PublicSnapshot::Loader.new.load(path) }
-        assert_raises(RuntimeError, name) { builder(root).site_data([path]) }
-        # A local snapshot is valid for report:build, but cannot enter the public site.
-        unless name == "local mode"
-          assert_raises(RuntimeError) { JekyllBuild.build(run_dir: path, destination: File.join(root, "report-output")) }
-        end
-        assert_equal before, File.binread(File.join(path, "report.html"))
-      end
-    end
-    with_snapshot do |_, path|
-      consolidate(path)
-      File.write(File.join(path, "snapshot.json"), "{")
-      assert_raises(JSON::ParserError) { AlojamentoLocal::PublicSnapshot::Loader.new.load(path) }
-      FileUtils.rm(File.join(path, "snapshot.json"))
-      assert_raises(RuntimeError) { AlojamentoLocal::PublicSnapshot::Loader.new.load(path) }
-    end
-  end
-
-  def test_source_hash_guard_uses_authoritative_document_without_exports_or_report
-    with_snapshot do |_, path|
-      snapshot = consolidate(path)
-      hashes = %w[airbnb official].map { |source| snapshot.metadata.fetch("source_files").fetch(source).fetch("sha256") }
-      %w[metadata.json summary.json registration_metrics.json listings.csv licence_groups.csv freguesias.csv].each { |file| FileUtils.rm(File.join(path, file)) }
-      AlojamentoLocal::Analysis::PublicPublisher.verify_public_sources!(path, hashes)
-      FileUtils.rm(File.join(path, "report.html"))
-      AlojamentoLocal::Analysis::PublicPublisher.verify_public_sources!(path, hashes)
-      File.write(File.join(path, "report.html"), "Historical report")
-      mutate_json(path, "snapshot.json") { |data| data["summary"]["listings"] += 1 }
-      assert_raises(RuntimeError) { AlojamentoLocal::PublicSnapshot::Loader.new.load(path) }
-      assert_raises(RuntimeError) { AlojamentoLocal::Analysis::PublicPublisher.verify_public_sources!(path, ["0" * 64, hashes.last]) }
-    end
-  end
-
-  def test_previous_consolidated_schema_loads_without_its_exports
-    with_snapshot do |_, path|
-      snapshot = consolidate(path)
-      data = JSON.parse(JSON.generate(snapshot.to_h))
-      data["schema_version"] = data["metadata"]["output_schema_version"] = "5.0.0"
-      File.write(File.join(path, "snapshot.json"), JSON.generate(data))
-      %w[metadata.json summary.json registration_metrics.json listings.csv licence_groups.csv freguesias.csv].each { |file| FileUtils.rm(File.join(path, file)) }
-      loaded = AlojamentoLocal::PublicSnapshot::Loader.new.load(path)
-      assert_equal data, loaded.to_h
-      assert_equal snapshot.registration_metrics, loaded.registration_metrics
-      hashes = %w[airbnb official].map { |source| loaded.metadata.fetch("source_files").fetch(source).fetch("sha256") }
-      AlojamentoLocal::Analysis::PublicPublisher.verify_public_sources!(path, hashes)
-    end
-  end
-
 end

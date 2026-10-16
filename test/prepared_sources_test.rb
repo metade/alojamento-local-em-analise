@@ -1,7 +1,6 @@
 require "minitest/autorun"
 require "tmpdir"
 require_relative "../lib/alojamento_local"
-require_relative "support/legacy_snapshot"
 
 class PreparedSourcesTest < Minitest::Test
   def with_method(object, name, replacement)
@@ -211,7 +210,7 @@ class PreparedSourcesTest < Minitest::Test
         outside_region_history: File.join(dir, "history", "outside_regions.csv"))
       with_method(File, :read, read) do
         runs = builder.public_runs
-        assert_equal result[:path], builder.measured_run(runs)
+        assert_equal result[:path], runs.first
         data = builder.site_data(runs)
         assert_equal 24, data["districts"].size
         assert_equal 10, data["metrics"]["announcements"]
@@ -221,19 +220,10 @@ class PreparedSourcesTest < Minitest::Test
         %w[metadata.json summary.json registration_metrics.json].each do |file|
           assert_equal 0, reads[File.join(result[:path], file)]
         end
-        metrics = builder.load_json(File.join(result[:path], "snapshot.json")).fetch("registration_metrics")
+        metrics = builder.snapshot(result[:path]).fetch("registration_metrics")
         refute metrics.fetch("rows").first.key?("geometry")
         AlojamentoLocal::Analysis::RegistrationMetrics.validate!(JSON.parse(JSON.generate(metrics), symbolize_names: true))
       end
-      # Existing published 2.0.0 snapshots remain readable with metric schema 1.0.0.
-      snapshot = AlojamentoLocal::PublicSnapshot::Loader.new.load(result[:path])
-      LegacySnapshot.write(result[:path], snapshot, methodology_version: "2.0.0")
-      FileUtils.rm(File.join(result[:path], "snapshot.json"))
-      legacy = AlojamentoLocal::SiteData.new(snapshots: File.join(dir, "snapshots"),
-        distance_history: File.join(dir, "history", "distance_ranges.csv"),
-        outside_region_history: File.join(dir, "history", "outside_regions.csv"))
-      assert_equal result[:path], legacy.measured_run(legacy.public_runs)
-      assert_equal 10, legacy.site_data(legacy.public_runs)["metrics"]["announcements"]
     end
   end
 

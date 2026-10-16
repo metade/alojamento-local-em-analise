@@ -80,7 +80,7 @@ namespace :report do
     require_relative "lib/alojamento_local"
     raise "Usage: rake 'report:build[run_dir]'" unless args[:run_dir]
     input = File.expand_path(args[:run_dir])
-    mode = AlojamentoLocal::PublicSnapshot::Loader.new.metadata(input).fetch("mode")
+    mode = AlojamentoLocal::PublicSnapshot.load(input, allow_local: true).fetch("metadata").fetch("mode")
     destination = File.expand_path(ENV["DESTINATION"] || File.join("tmp", "reports", mode, File.basename(input)))
     sh({"REPORT_RUN" => input}, "bundle", "exec", "jekyll", "build", "--destination", destination)
     html = (mode == "local") ? "report_local.html" : "report.html"

@@ -9,18 +9,18 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
 {%- assign unrecognised = 0 -%}
 {%- assign repeated = 0 -%}
 {%- assign outside = 0 %}
-{% for row in d.listings %}
+{% for row in d.announcements_by_parish_and_classification %}
   {% if row.classification == 'sem licença' -%}
-    {%- assign missing = missing | plus: row.listings -%}
+    {%- assign missing = missing | plus: row.announcements -%}
   {%- endif %}
   {% if row.classification == 'sem licença identificável' -%}
-    {%- assign unrecognised = unrecognised | plus: row.listings -%}
+    {%- assign unrecognised = unrecognised | plus: row.announcements -%}
   {%- endif %}
   {% if row.classification == 'licença repetida em várias localizações' -%}
-    {%- assign repeated = repeated | plus: row.listings -%}
+    {%- assign repeated = repeated | plus: row.announcements -%}
   {%- endif %}
   {% if row.classification == 'licença oficial fora de Lisboa' -%}
-    {%- assign outside = outside | plus: row.listings -%}
+    {%- assign outside = outside | plus: row.announcements -%}
   {%- endif %}
 {% endfor %}
 {% assign unresolved = missing | plus: unrecognised %}

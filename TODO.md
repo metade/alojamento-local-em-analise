@@ -83,11 +83,12 @@ arquivo permanente e da integração descrita abaixo.
 
 - [x] Depois do loader partilhado, consolidar os dados do snapshot num ficheiro
   estruturado e versionado que esse loader consuma. Manter a interface do
-  loader para que o relatório e o site não dependam do formato de armazenamento.
-  Definir a compatibilidade com snapshots anteriores; CSV apenas no leitor
-  legado, sem exportações nos novos runs, evitando duas fontes de verdade. Atualizar a escrita, o schema
+  documento para o relatório e o site. Apenas schema 6.0.0: snapshots anteriores
+  exigem reanálise das fontes verificadas; sem leitores legados ou fallback.
+  Validar a estrutura com JSON Schema e a proveniência/contabilidade em Ruby.
+  Atualizar a escrita, o schema
   público, a auditoria de publicação e a
-  documentação; testar os formatos antigo e novo e a equivalência dos resultados.
+  documentação; rejeitar formatos antigos e verificar a equivalência dos resultados.
 
 - [ ] Considerar integrar `scripts/reanalyse_public_run.rb` numa tarefa Rake
   de análise de fontes de um run público anterior. Preservar a

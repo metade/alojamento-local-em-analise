@@ -1,9 +1,11 @@
 #!/usr/bin/env ruby
 # Recompute verified dated sources, replacing the public date-pair snapshot.
+require "digest"
+require "json"
 require_relative "../lib/alojamento_local"
 run_id = ARGV.fetch(0)
-raise ArgumentError, "Expected a public run ID" unless run_id.match?(/\A\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}(?:__m[\d.]+(?:__a[\d.]+)?)?\z/)
-metadata = AlojamentoLocal::PublicSnapshot::Loader.new.metadata(File.join("data/snapshots", run_id))
+raise ArgumentError, "Expected a public run ID" unless run_id.match?(/\A\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}\z/)
+metadata = AlojamentoLocal::PublicSnapshot.load(File.join("data/snapshots", run_id)).fetch("metadata")
 dates = metadata.fetch("source_dates")
 airbnb = "data_sources/listings-#{dates.fetch('airbnb_snapshot_date')}.csv"
 official = "data_sources/Estabelecimentos_de_Alojamento_Local-#{dates.fetch('official_register_download_date')}.csv"

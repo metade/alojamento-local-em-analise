@@ -65,15 +65,15 @@ class VersionedAnalysisTest < Minitest::Test
       run_dir = result[:path]
       assert_equal "2026-06-23__2026-09-17", result[:run_id]
       assert_equal %w[snapshot.json].sort, Dir.children(run_dir).sort
-      snapshot = AlojamentoLocal::PublicSnapshot::Loader.new.load(run_dir)
-      public_listings = snapshot.published_announcement_rows
+      snapshot = AlojamentoLocal::PublicSnapshot.load(run_dir)
+      public_listings = snapshot.fetch("announcements_by_parish_and_classification")
       assert_equal 3, public_listings.length
-      assert_equal 1, public_listings.find { |row| row["classification"] == "sem licença" }["listings"].to_i
-      assert_equal 1, public_listings.find { |row| row["classification"] == "sem licença identificável" }["listings"].to_i
-      assert_equal 1, snapshot.summary.fetch("official_registers_lisbon")
-      assert_equal "2.1.0", snapshot.summary.fetch("methodology_version")
-      assert_equal "6.0.0", snapshot.metadata.fetch("output_schema_version")
-      refute JSON.generate(snapshot.to_h).match?(/host_id|listing_url|licensa_raw|latitude|longitude|official_address/i)
+      assert_equal 1, public_listings.find { |row| row["classification"] == "sem licença" }["announcements"]
+      assert_equal 1, public_listings.find { |row| row["classification"] == "sem licença identificável" }["announcements"]
+      assert_equal 1, snapshot.fetch("summary").fetch("official_registers_lisbon")
+      assert_equal "2.1.0", snapshot.fetch("summary").fetch("methodology_version")
+      assert_equal "6.0.0", snapshot.fetch("metadata").fetch("output_schema_version")
+      refute JSON.generate(snapshot).match?(/host_id|listing_url|licensa_raw|latitude|longitude|official_address/i)
       assert_raises(RuntimeError) { AlojamentoLocal::Analysis::History.append_history(File.join(dir, "history", "summary.csv"), result[:summary]) }
       File.write(File.join(run_dir, "obsolete.pdf"), "obsolete")
       repeated = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official, mode: "public", output_root: File.join(dir, "snapshots"), history_path: File.join(dir, "history", "summary.csv"))
@@ -152,7 +152,7 @@ class VersionedAnalysisTest < Minitest::Test
       assert_equal 4, rows.size
       assert_equal 1, rows.sum { |row| row["licence_groups"].to_i }
       assert_equal "1", rows.find { |row| row["range"] == "2_5_km" }["licence_groups"]
-      assert_equal 2, AlojamentoLocal::PublicSnapshot::Loader.new.load(result[:path]).published_announcement_rows.sum { |row| row["listings"].to_i }
+      assert_equal 2, AlojamentoLocal::PublicSnapshot.load(result[:path]).fetch("announcements_by_parish_and_classification").sum { |row| row["announcements"] }
       assert_equal %w[snapshot.json].sort, Dir.children(result[:path]).sort
       assert_raises(RuntimeError) { AlojamentoLocal::Analysis::History.append_distance_history(File.join(dir, "history", "distance_ranges.csv"), result[:run_id], []) }
     end
@@ -181,7 +181,7 @@ class VersionedAnalysisTest < Minitest::Test
       assert_equal({["resolved", "Norte"] => 2}, counts)
       assert_equal 2, counts.values.sum
       assert rows.all? { |row| row["region_method"] == "official_register_nutsii_v1" }
-      assert_equal 2, AlojamentoLocal::PublicSnapshot::Loader.new.load(result[:path]).published_announcement_rows.select { |row| row["classification"] == "licença oficial fora de Lisboa" }.sum { |row| row["listings"].to_i }
+      assert_equal 2, AlojamentoLocal::PublicSnapshot.load(result[:path]).fetch("announcements_by_parish_and_classification").select { |row| row["classification"] == "licença oficial fora de Lisboa" }.sum { |row| row["announcements"] }
       assert_raises(RuntimeError) { AlojamentoLocal::Analysis::History.append_outside_region_history(File.join(dir, "history", "outside_regions.csv"), result[:run_id], []) }
     end
   end
@@ -254,11 +254,11 @@ class VersionedAnalysisTest < Minitest::Test
         end
         FileUtils.stub(:mv, fail_install) do
           assert_raises(failure_class) do
-            publisher.publish(summary: published.fetch(:summary).merge(generated_at: "replacement"), listings: listings) do |run_dir|
+            publisher.publish(summary: published.fetch(:summary).merge(generated_at: "2024-08-01T12:00:00Z"), listings: listings) do |run_dir|
               FileUtils.cp_r(destination, run_dir)
               snapshot_file = File.join(run_dir, "snapshot.json")
               document = JSON.parse(File.read(snapshot_file))
-              document["summary"]["generated_at"] = "replacement"
+              document["summary"]["generated_at"] = "2024-08-01T12:00:00Z"
               File.write(snapshot_file, JSON.generate(document))
             end
           end
