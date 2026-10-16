@@ -52,6 +52,14 @@ dated sources; no legacy readers or fallback snapshots. `PublicSnapshot.load`
 returns a string-keyed Hash. JSON Schema validates structure; Ruby validates
 provenance and accounting. Analysis 3.7.0 changes output organisation, not the
 2.1.0 methodology or analytical values.
+Analysis 3.8.0 / methodology 2.2.0 trims Unicode whitespace and invisible format
+characters at licence-value boundaries. Internal characters and multi-number
+values remain unrecognised. Existing schema-7 snapshots retain their recorded
+methodology; the metric accounting supports both 2.1.0 and 2.2.0.
+Analysis 3.9.0 / methodology 2.3.0 also extracts one explicit number/AL token
+from surrounding prose, requiring a single numeric sequence in the value.
+Multiple numbers and partial tokens remain unrecognised. Schema-7 snapshots
+from 2.1.0, 2.2.0 and 2.3.0 share metric accounting and keep their own versions.
 
 `site:build` and `report:build[run_dir]` build public HTML/PDF using the complete
 Jekyll page `site/report.html` and bundled wkhtmltopdf, without fallback.

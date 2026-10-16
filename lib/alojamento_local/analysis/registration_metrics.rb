@@ -1,4 +1,4 @@
-require "set"
+require "set" # standard:disable Lint/RedundantRequireStatement
 
 module AlojamentoLocal
   module Analysis
@@ -8,6 +8,9 @@ module AlojamentoLocal
     # and its parishes. Public and local aggregates live in snapshot.json.
     module RegistrationMetrics
       VERSION = "1.0.0"
+      # These versions share metric schema/accounting but differ in licence
+      # parsing. Older outputs retain their own methodology.
+      SUPPORTED_METHODOLOGIES = %w[2.1.0 2.2.0 2.3.0].freeze
       COUNTS = %w[rnal airbnb intersection rnal_only airbnb_only another_lisbon_parish another_municipality no_national_match unresolved_official_geography announcements empty_licence unrecognised_licence identifiable_number confirmed_rnal_match official_entries].freeze
       DEFINITIONS = {
         sets: "Distinct normalized AL numbers. RNAL: official Concelho=Lisboa and official Freguesia. Airbnb: observed municipality=Lisboa and observed parish. City sets are computed independently, never summed from parishes.",
@@ -34,7 +37,7 @@ module AlojamentoLocal
           a = observed.filter_map { |r| r[:licensa] }.to_set
           r = local_records.filter_map { |row| row.number }.to_set
           # Unknown geography is an accounting bucket, not an asserted local match.
-          intersection = name == Geography::UNKNOWN ? Set.new : a & r
+          intersection = (name == Geography::UNKNOWN) ? Set.new : a & r
           breakdown = Hash.new(0)
           (a - intersection).each do |number|
             matches = national[number]
@@ -63,9 +66,9 @@ module AlojamentoLocal
         end
         result = {metric_version: VERSION, definitions: DEFINITIONS, rows: aggregates,
                   diagnostics: {national_entries: records.size, unparseable_official_numbers: national.fetch(nil, []).size,
-                    duplicate_number_extra_entries: national.reject { |number, _| number.nil? }.values.sum { |group| group.size - 1 },
-                    official_entries_unresolved_municipality: records.count { |record| !record.municipality },
-                    lisbon_entries_unresolved_parish: lisbon.count { |record| record.parish == Geography::UNKNOWN }}}
+                                duplicate_number_extra_entries: national.reject { |number, _| number.nil? }.values.sum { |group| group.size - 1 },
+                                official_entries_unresolved_municipality: records.count { |record| !record.municipality },
+                                lisbon_entries_unresolved_parish: lisbon.count { |record| record.parish == Geography::UNKNOWN }}}
         validate!(result)
         result
       end
@@ -78,8 +81,9 @@ module AlojamentoLocal
         raise "Invalid diagnostics" unless data[:diagnostics].keys == diagnostic_keys && data[:diagnostics].values.all? { |count| count.is_a?(Integer) && count >= 0 }
         if data[:run_id]
           raise "Invalid metric run" unless data[:run_id].match?(/\A\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}\z/)
-          raise "Incompatible metric method" unless data[:methodology_version] == METHODOLOGY_VERSION
-          raise "Invalid metric dates" unless data[:source_dates].keys == %i[airbnb_snapshot_date official_register_date official_register_download_date] && data[:source_dates].values.all? { |date| date.nil? || date.match?(/\A\d{4}-\d{2}-\d{2}\z/) }
+          raise "Incompatible metric method" unless SUPPORTED_METHODOLOGIES.include?(data[:methodology_version])
+          valid_dates = data[:source_dates].keys == %i[airbnb_snapshot_date official_register_date official_register_download_date] && data[:source_dates].values.all? { |date| date.nil? || date.match?(/\A\d{4}-\d{2}-\d{2}\z/) }
+          raise "Invalid metric dates" unless valid_dates
         end
         if data[:source_files]
           raise "Invalid source hashes" unless data[:source_files].keys == %i[airbnb official] && data[:source_files].values.all? { |source| source.keys == [:sha256] && source[:sha256].match?(/\A[0-9a-f]{64}\z/) }

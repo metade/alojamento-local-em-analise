@@ -21,8 +21,8 @@
     },
     "git_commit": "<git_commit>",
     "git_worktree_dirty": "<git_worktree_dirty>",
-    "analysis_version": "3.7.0",
-    "methodology_version": "2.1.0",
+    "analysis_version": "3.9.0",
+    "methodology_version": "2.3.0",
     "output_schema_version": "7.0.0"
   },
   "summary": {
@@ -32,7 +32,7 @@
       "official_register_date": "2020-01-01",
       "official_register_download_date": "2024-07-01"
     },
-    "methodology_version": "2.1.0",
+    "methodology_version": "2.3.0",
     "listings": 34,
     "licence_groups": 18,
     "official_registers_lisbon": 19,
@@ -913,7 +913,7 @@
         "sha256": "2bb9c11d6f9c3c19f717387e1d43100c231dfcd831ab6d8413de9b4c8dcca13b"
       }
     },
-    "methodology_version": "2.1.0",
+    "methodology_version": "2.3.0",
     "source_dates": {
       "airbnb_snapshot_date": "2024-06-01",
       "official_register_date": "2020-01-01",

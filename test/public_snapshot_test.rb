@@ -56,6 +56,19 @@ class PublicSnapshotTest < Minitest::Test
     end
   end
 
+  def test_current_schema_preserves_previous_methodology_without_relabelling
+    with_snapshot do |_, path|
+      mutate(path) do |data|
+        %w[metadata summary registration_metrics].each { |key| data[key]["methodology_version"] = "2.1.0" }
+      end
+      document = AlojamentoLocal::PublicSnapshot.load(path)
+      assert_equal "2.1.0", document.fetch("metadata").fetch("methodology_version")
+      assert_equal 28, document.fetch("summary").fetch("establishment_estimate")
+      mutate(path) { |data| data["registration_metrics"]["methodology_version"] = "2.2.0" }
+      assert_raises(RuntimeError) { AlojamentoLocal::PublicSnapshot.load(path) }
+    end
+  end
+
   def test_load_run_rejects_invalid_and_unknown_identifiers
     with_snapshot do |root, _|
       ["invalid", "../#{RUN_ID}"].each do |run_id|

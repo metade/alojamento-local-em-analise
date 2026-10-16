@@ -13,6 +13,16 @@ mode fields, the duplicate local snapshot and private history. Analytical
 accounting, methodology, CSV rows and aggregate histories remain unchanged.
 Only schema 7.0.0 is supported; previous formats require verified reanalysis.
 
+The 3.8.0 / methodology 2.2.0 parser trims invisible Unicode characters at
+licence-value boundaries. These synthetic sources contain no such values, so
+their analytical outputs remain unchanged. Expected version fields and the
+synthetic comparable-history row move to 2.2.0; no counts are adjusted.
+
+The current 3.9.0 / methodology 2.3.0 baseline adds extraction of one explicit
+number/AL token from surrounding prose. No synthetic source row changes its
+parsed number; expected versions and the comparable-history row move to 2.3.0
+with identical counts and detailed outputs.
+
 The test does not download sources, use repository snapshots or private caches,
 invoke Jekyll, or create a PDF. Site builds and publication audits remain separate
 CI checks. A dedicated regression test also audits the synthetic public artifact.

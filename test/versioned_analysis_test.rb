@@ -71,7 +71,7 @@ class VersionedAnalysisTest < Minitest::Test
       assert_equal 1, public_listings.find { |row| row["classification"] == "sem licença" }["announcements"]
       assert_equal 1, public_listings.find { |row| row["classification"] == "sem licença identificável" }["announcements"]
       assert_equal 1, snapshot.fetch("summary").fetch("official_registers_lisbon")
-      assert_equal "2.1.0", snapshot.fetch("summary").fetch("methodology_version")
+      assert_equal "2.3.0", snapshot.fetch("summary").fetch("methodology_version")
       assert_equal "7.0.0", snapshot.fetch("metadata").fetch("output_schema_version")
       refute JSON.generate(snapshot).match?(/host_id|listing_url|licensa_raw|latitude|longitude|official_address/i)
       assert_raises(RuntimeError) { AlojamentoLocal::Analysis::History.append_history(File.join(dir, "history", "summary.csv"), result[:summary]) }

@@ -78,7 +78,7 @@ conjuntos de números normalizados; as estimativas municipais e os números
 distintos não são somas de freguesias.
 
 A análise 3.7.0 remove os modos e escreve sempre os diagnósticos separadamente.
-A metodologia mantém-se em 2.1.0: a fixture sintética e os dois pares arquivados
+A metodologia então manteve-se em 2.1.0: a fixture sintética e os dois pares arquivados
 foram recalculados com os mesmos bytes verificados, sem alterações aos valores
 analíticos. O arquivo conserva os pares `2025-09-21__2025-11-25` (Q4 2025) e
 `2026-06-23__2026-09-26` (Q3 2026); os rótulos trimestrais não são datas de recolha.
@@ -383,6 +383,36 @@ bundle exec rake 'analysis[2026-06-23__2026-09-26]'
 ```
 
 ### Versão da metodologia
+
+**2.3.0 (análise 3.9.0):** aceita texto envolvente quando existe um único token
+explícito `número/AL`, com limites que impedem extrair fragmentos de palavras ou
+de outros formatos. Por exemplo, `Local Accomodation N.º 23405/AL` produz `23405`.
+A extração exige uma única sequência numérica no valor: números adicionais,
+listas, números com separadores de milhares e outros esquemas continuam por
+resolver, sem escolher arbitrariamente um número. Os formatos completos já
+suportados mantêm-se e os valores originais não são modificados.
+Comparada com 2.2.0 nos mesmos bytes verificados, recupera mais 22 anúncios em
+`2025-09-21__2025-11-25` (21 com correspondência RNAL) e mais 20 em
+`2026-06-23__2026-09-26` (18 com correspondência RNAL). As estimativas passam de
+14 850 para 14 848 e de 14 587 para 14 585, respetivamente. Os números Airbnb
+distintos passam de 8 950 para 8 970 e de 8 888 para 8 906; as interseções RNAL
+passam de 7 882 para 7 901 e de 7 287 para 7 303. A fixture sintética mantém
+os valores analíticos. Os snapshots publicados não são substituídos.
+
+**2.2.0 (análise 3.8.0):** o parser remove espaços Unicode e caracteres de
+formatação invisíveis apenas nas extremidades do valor. Assim, um número AL
+precedido de U+200B ou seguido de U+2028 passa a ser reconhecido. Não junta
+algarismos separados por caracteres invisíveis nem aceita listas de números;
+os valores originais ficam intactos nos diagnósticos privados.
+Com os mesmos bytes verificados, cada um dos dois pares arquivados recupera
+13 anúncios com correspondência no RNAL. Em `2025-09-21__2025-11-25`, os anúncios
+com número identificável passam de 12 922 para 12 935 e a estimativa de 14 863
+para 14 850. Em `2026-06-23__2026-09-26`, passam de 12 727 para 12 740 e de
+14 600 para 14 587, respetivamente. Os conjuntos municipais de números distintos
+e a sua interseção mantêm-se iguais. A fixture sintética conserva os valores
+analíticos; apenas as versões e a referência histórica comparável são atualizadas.
+Os snapshots publicados não foram substituídos por esta alteração e conservam
+a metodologia original; continuam legíveis no schema 7.0.0 sem serem relabelados.
 
 Cada run regista `methodology_version`, versões de análise/schema, datas e hashes
 das fontes e proveniência Git. O relatório identifica a metodologia. O sistema

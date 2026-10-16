@@ -1,6 +1,6 @@
 require_relative "alojamento_local/public_schema"
 require "haversine"
-require "set"
+require "set" # standard:disable Lint/RedundantRequireStatement
 require "zeitwerk"
 
 module AlojamentoLocal
@@ -10,9 +10,9 @@ module AlojamentoLocal
   LOADER.ignore(File.join(__dir__, "alojamento_local/public_schema.rb"))
   LOADER.setup
 
-  ANALYSIS_VERSION = "3.7.0"
+  ANALYSIS_VERSION = "3.9.0"
   OUTPUT_SCHEMA_VERSION = "7.0.0"
-  METHODOLOGY_VERSION = "2.1.0"
+  METHODOLOGY_VERSION = "2.3.0"
   COLLAPSIBLE_ASSESSMENTS = [
     "provável estabelecimento com anúncios múltiplos",
     "licença repetida na mesma localização"
@@ -20,7 +20,9 @@ module AlojamentoLocal
   DISTANCE_RANGE_KEYS = %w[500_m_1_km 1_2_km 2_5_km over_5_km].freeze
 
   def self.parse_al_license(string)
-    value = string.to_s.strip
+    # Trim Unicode whitespace and invisible format characters only at the
+    # boundaries. Do not join digits or otherwise repair ambiguous content.
+    value = string.to_s.strip.gsub(/\A[\p{Space}\p{Cf}]+|[\p{Space}\p{Cf}]+\z/, "")
     if value =~ /\ARegistration Number:\s*0*(\d+)\s*\/AL\z/i
       return $1.to_i.to_s
     end
@@ -36,6 +38,12 @@ module AlojamentoLocal
     return value.to_i.to_s if /\A0*\d+\z/.match?(value)
 
     if value =~ /\A0*(\d+)\s*\/\s*20[12]\d\z/
+      return $1.to_i.to_s
+    end
+
+    # Extract one explicit number/AL token from prose. Additional numbers are
+    # ambiguous (including bare numbers in a list); never silently pick one.
+    if value.scan(/\p{N}+/).size == 1 && value =~ /(?<![\p{L}\p{N}\p{M}\p{Cf}_\/])([0-9]+)\s*\/\s*AL(?![\p{L}\p{N}\p{M}_\/])/i
       return $1.to_i.to_s
     end
 
