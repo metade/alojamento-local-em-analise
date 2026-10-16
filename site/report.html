@@ -450,38 +450,45 @@ layout: null
           <h2>{{ table.title | escape }}</h2>
           <p>
             <a href="{{ table.filename | escape }}">Descarregar CSV detalhado</a>
-            · {{ table.rows.size }} linhas
+            · {{ table.total_rows }} linhas no CSV
           </p>
-          <div class="table-container">
-            <table class="diagnostics-table">
-              <thead>
-                <tr>
-                  {%- for header in table.headers -%}
-                    <th>{{ header | escape }}</th>
-                  {%- endfor -%}
-                </tr>
-              </thead>
-              <tbody>
-                {%- for row in table.rows -%}
+          {% if table.filtered %}
+            <p>{{ table.rows.size }} grupos para verificação. O CSV inclui todos os grupos.</p>
+          {% endif %}
+          {% if table.filtered and table.rows.size == 0 %}
+            <p>Sem grupos para verificação nesta análise.</p>
+          {% else %}
+            <div class="table-container">
+              <table class="diagnostics-table">
+                <thead>
                   <tr>
                     {%- for header in table.headers -%}
-                      {%- assign value = row[header] | default: '' -%}
-                      <td>
-                        {%- if value.size > 200 -%}
-                          <details>
-                            <summary>{{ value | truncate: 100 | escape }}</summary>
-                            <div class="long-value">{{- value | escape -}}</div>
-                          </details>
-                        {%- else -%}
-                          {{- value | escape -}}
-                        {%- endif -%}
-                      </td>
+                      <th>{{ header | escape }}</th>
                     {%- endfor -%}
                   </tr>
-                {%- endfor -%}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {%- for row in table.rows -%}
+                    <tr>
+                      {%- for header in table.headers -%}
+                        {%- assign value = row[header] | default: '' -%}
+                        <td>
+                          {%- if value.size > 200 -%}
+                            <details>
+                              <summary>{{ value | truncate: 100 | escape }}</summary>
+                              <div class="long-value">{{- value | escape -}}</div>
+                            </details>
+                          {%- else -%}
+                            {{- value | escape -}}
+                          {%- endif -%}
+                        </td>
+                      {%- endfor -%}
+                    </tr>
+                  {%- endfor -%}
+                </tbody>
+              </table>
+            </div>
+          {% endif %}
         </section>
       {%- endfor -%}
     {%- endif -%}

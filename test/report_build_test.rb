@@ -142,6 +142,51 @@ class ReportBuildTest < Minitest::Test
     end
   end
 
+  def test_private_group_table_shows_cases_for_verification_and_downloads_all_rows
+    with_runs do |root, _, diagnostics|
+      source = File.join(diagnostics, "licence_groups_detailed.csv")
+      before = files(diagnostics)
+      output = File.join(root, "rendered")
+      build_site(root, output, serving: true)
+      private_dir = File.join(output, "private-reports", PipelineFixture::RUN_ID)
+      html = File.read(File.join(private_dir, "report.html"))
+      section = html.match(%r{<h2>Grupos de licenças</h2>(.*?)</section>}m)[1]
+      csv = CSV.read(source, headers: true)
+      excluded = ["licença única em Lisboa", "provável estabelecimento com anúncios múltiplos", "licença repetida na mesma localização"]
+      expected = csv.reject { |row| excluded.include?(row["classification"]) }
+      assert_equal expected.size, section.scan("<tr>").length - 1
+      excluded.each { |classification| refute_includes section, classification }
+      expected.map { |row| row["classification"] }.uniq.each do |classification|
+        assert_includes section, classification
+      end
+      assert_includes section, "#{expected.size} grupos para verificação"
+      assert_includes section, "#{csv.size} linhas no CSV"
+      assert_equal File.binread(source), File.binread(File.join(private_dir, "licence_groups_detailed.csv"))
+      assert_equal before, files(diagnostics)
+      announcements = html.match(%r{<h2>Anúncios</h2>(.*?)</section>}m)[1]
+      assert_equal CSV.read(File.join(diagnostics, "listings_detailed.csv"), headers: true).size,
+        announcements.scan("<tr>").length - 1
+    end
+  end
+
+  def test_private_group_table_handles_no_cases_for_verification
+    with_runs do |root, _, diagnostics|
+      source = File.join(diagnostics, "licence_groups_detailed.csv")
+      csv = CSV.read(source, headers: true)
+      csv.delete_if { |row| row["classification"] != "licença única em Lisboa" }
+      File.write(source, csv.to_csv)
+      output = File.join(root, "rendered")
+      build_site(root, output, serving: true)
+      private_dir = File.join(output, "private-reports", PipelineFixture::RUN_ID)
+      html = File.read(File.join(private_dir, "report.html"))
+      section = html.match(%r{<h2>Grupos de licenças</h2>(.*?)</section>}m)[1]
+      assert_includes section, "Sem grupos para verificação nesta análise."
+      refute_includes section, '<table'
+      assert_includes section, "#{csv.size} linhas no CSV"
+      assert_equal File.binread(source), File.binread(File.join(private_dir, "licence_groups_detailed.csv"))
+    end
+  end
+
   def test_public_build_ignores_invalid_diagnostics_and_serving_skips_incomplete_pairs
     with_runs do |root, _, diagnostics|
       csv_path = File.join(diagnostics, "listings_detailed.csv")

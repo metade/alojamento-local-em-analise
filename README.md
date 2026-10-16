@@ -209,6 +209,11 @@ os dois CSVs do par de datas. O layout mostra o link «Relatório detalhado · u
 local». O HTML/PDF, snapshot agregado e CSVs ficam em
 `_site/private-reports/<run_id>/`.
 
+Na secção «Grupos de licenças», o relatório apresenta apenas casos para
+verificação: omite licenças únicas em Lisboa, prováveis estabelecimentos com
+anúncios múltiplos e repetições na mesma localização. Os CSVs descarregáveis
+mantêm todas as linhas; a tabela de anúncios mantém os detalhes completos.
+
 O build local contém dados privados e permanece ignorado pelo Git. Um
 `jekyll build` normal, incluindo `site:build` e os workflows GitHub Actions,
 exclui os relatórios privados e remove os ficheiros deixados por um build local

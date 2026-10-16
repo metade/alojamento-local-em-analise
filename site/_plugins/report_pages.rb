@@ -9,6 +9,12 @@ class SnapshotReportGenerator < Jekyll::Generator
 
   DIAGNOSTICS = {"licence_groups_detailed.csv" => "Grupos de licenças", "listings_detailed.csv" => "Anúncios"}.freeze
 
+  UNFLAGGED_GROUP_CLASSIFICATIONS = [
+    "licença única em Lisboa",
+    "provável estabelecimento com anúncios múltiplos",
+    "licença repetida na mesma localização"
+  ].freeze
+
   def generate(site)
     template = site.pages.find { |page| page.relative_path == "report.html" }
     raise "Missing shared report page" unless template
@@ -34,7 +40,11 @@ class SnapshotReportGenerator < Jekyll::Generator
       next unless DIAGNOSTICS.keys.all? { |file| File.file?(File.join(private_dir, file)) }
       tables = DIAGNOSTICS.map do |file, title|
         csv = CSV.read(File.join(private_dir, file), headers: true)
-        {"title" => title, "filename" => file, "headers" => csv.headers, "rows" => csv.map(&:to_h)}
+        filtered = file == "licence_groups_detailed.csv"
+        rows = csv.map(&:to_h)
+        rows.reject! { |row| UNFLAGGED_GROUP_CLASSIFICATIONS.include?(row["classification"]) } if filtered
+        {"title" => title, "filename" => file, "headers" => csv.headers,
+         "rows" => rows, "total_rows" => csv.length, "filtered" => filtered}
       end
       page = add_report(site, template, snapshot, path, "private-reports/#{run_id}")
       page.data["private_tables"] = tables
