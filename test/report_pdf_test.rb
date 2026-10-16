@@ -61,6 +61,28 @@ class ReportPdfTest < Minitest::Test
     end
   end
 
+  def test_converter_does_not_reload_bundler_and_keeps_diagnostics_visible
+    Dir.mktmpdir do |root|
+      launcher = File.join(root, "converter.rb")
+      File.write(launcher, <<~RUBY)
+        abort "Unexpected Bundler bootstrap" if defined?(Bundler)
+        warn "Converter diagnostic"
+        File.write(ARGV.last, "%PDF-1.4 converted")
+      RUBY
+      html = File.join(root, "report.html")
+      pdf = File.join(root, "report.pdf")
+      original_options = ENV["RUBYOPT"]
+      _, stderr = capture_subprocess_io do
+        Gem.stub(:bin_path, launcher) do
+          AlojamentoLocal::ReportPdf.convert(html, pdf)
+        end
+      end
+      assert_equal "Converter diagnostic\n", stderr
+      assert_equal original_options, ENV["RUBYOPT"]
+      assert_equal "%PDF-1.4 converted", File.read(pdf)
+    end
+  end
+
   def test_interrupted_conversion_cleans_partial_output
     Dir.mktmpdir do |root|
       pdf = File.join(root, "report.pdf")

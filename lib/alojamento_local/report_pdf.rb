@@ -3,6 +3,7 @@
 require "tempfile"
 require "fileutils"
 require "rbconfig"
+require "bundler"
 
 module AlojamentoLocal
   class ReportPdf
@@ -15,7 +16,11 @@ module AlojamentoLocal
       begin
         temporary.close
         executable = Gem.bin_path("wkhtmltopdf-binary", "wkhtmltopdf")
-        success = system(RbConfig.ruby, executable, "--quiet", "--keep-relative-links", "--print-media-type", "--orientation", "Landscape", File.expand_path(html), temporary.path)
+        # The gem's launcher uses only Ruby's standard library. Avoid reloading
+        # Bundler in the child through its inherited RUBYOPT.
+        success = Bundler.with_unbundled_env do
+          system(RbConfig.ruby, executable, "--quiet", "--keep-relative-links", "--print-media-type", "--orientation", "Landscape", File.expand_path(html), temporary.path)
+        end
         unless success && valid?(temporary.path)
           status = $?
           detail = success ? "invalid PDF output" : (status ? status.to_s : "could not start converter")
