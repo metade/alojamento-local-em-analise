@@ -136,6 +136,119 @@ class AnalysisFlowsTest < Minitest::Test
     end
   end
 
+  def with_analysis_task
+    Rake.with_application do
+      load File.expand_path("../Rakefile", __dir__)
+      URI.stub(:open, ->(*) { flunk "Analysis task must not download sources" }) do
+        yield Rake::Task["analysis"]
+      end
+    end
+  end
+
+  def test_analysis_task_selects_verified_snapshot_sources_and_preserves_other_runs
+    with_analysis_task do |task|
+      with_sources do
+        selected = AlojamentoLocal::Analysis.run
+        snapshot_path = File.join(selected[:path], "snapshot.json")
+        snapshot = JSON.parse(File.read(snapshot_path))
+        snapshot.fetch("metadata")["analysis_version"] = "0.0.1"
+        File.write(snapshot_path, JSON.generate(snapshot))
+        archived = {"report.html" => "archived public report", "report.pdf" => "%PDF-archived"}
+        archived.each { |file, bytes| File.binwrite(File.join(selected[:path], file), bytes) }
+        File.write(File.join(selected[:private_path], "obsolete.txt"), "obsolete")
+
+        FileUtils.cp("data_sources/listings-2024-06-01.csv", "data_sources/listings-2024-08-01.csv")
+        FileUtils.cp("data_sources/Estabelecimentos_de_Alojamento_Local-2024-07-01.csv",
+          "data_sources/Estabelecimentos_de_Alojamento_Local-2024-09-01.csv")
+        unrelated = AlojamentoLocal::Analysis.run
+        before = analysis_files
+        histories = Dir.glob("data/history/*.csv").to_h do |path|
+          [path, CSV.read(path, headers: true).reject { |row| row["run_id"] == selected[:run_id] }.map(&:to_h)]
+        end
+
+        AlojamentoLocal::Analysis::Data.stub(:local_paths!, -> { flunk "Explicit run must use its recorded dates" }) do
+          capture_io { task.invoke(selected[:run_id]) }
+        end
+
+        updated = AlojamentoLocal::PublicSnapshot.load(selected[:path])
+        assert_equal selected[:run_id], updated.dig("metadata", "run_id")
+        assert_equal AlojamentoLocal::ANALYSIS_VERSION, updated.dig("metadata", "analysis_version")
+        assert_equal AlojamentoLocal::METHODOLOGY_VERSION, updated.dig("metadata", "methodology_version")
+        %w[source_dates source_files].each do |key|
+          assert_equal snapshot.dig("metadata", key), updated.dig("metadata", key)
+        end
+        archived.each { |file, bytes| assert_equal bytes, File.binread(File.join(selected[:path], file)) }
+        refute File.exist?(File.join(selected[:private_path], "obsolete.txt"))
+        unrelated_files = ->(files) { files.select { |path, _| path.include?(unrelated[:run_id]) } }
+        assert_equal unrelated_files.call(before), unrelated_files.call(analysis_files)
+        histories.each do |path, rows|
+          assert_equal rows, CSV.read(path, headers: true).reject { |row| row["run_id"] == selected[:run_id] }.map(&:to_h)
+          assert_equal 2, CSV.read(path, headers: true).map { |row| row["run_id"] }.uniq.size
+        end
+      end
+    end
+  end
+
+  def test_analysis_task_rejects_invalid_and_unknown_run_ids_before_analysis
+    with_analysis_task do |task|
+      with_sources do
+        AlojamentoLocal::Analysis.run
+        before = analysis_files
+        AlojamentoLocal::Analysis.stub(:run, ->(**) { flunk "Invalid run must fail before analysis" }) do
+          ["invalid", "../2024-06-01__2024-07-01", "2024-01-01__2024-02-01"].each do |run_id|
+            task.reenable
+            error = assert_raises(ArgumentError, RuntimeError) { task.invoke(run_id) }
+            assert_match(/(?:Invalid|Unknown) public run ID/, error.message)
+            assert_equal before, analysis_files
+          end
+        end
+      end
+    end
+  end
+
+  def test_analysis_task_validates_snapshot_before_analysis
+    with_analysis_task do |task|
+      with_sources do
+        selected = AlojamentoLocal::Analysis.run
+        File.write(File.join(selected[:path], "snapshot.json"), "{}")
+        before = analysis_files
+        AlojamentoLocal::Analysis.stub(:run, ->(**) { flunk "Invalid snapshot must fail before analysis" }) do
+          error = assert_raises(RuntimeError) { task.invoke(selected[:run_id]) }
+          assert_includes error.message, "Invalid snapshot schema"
+        end
+        assert_equal before, analysis_files
+      end
+    end
+  end
+
+  def test_analysis_task_checks_both_source_hashes_and_missing_files_before_analysis
+    with_analysis_task do |task|
+      with_sources do
+        selected = AlojamentoLocal::Analysis.run
+        before = analysis_files
+        AlojamentoLocal::Analysis.stub(:run, ->(**) { flunk "Unverified sources must fail before analysis" }) do
+          Dir.glob("data_sources/*.csv").each do |path|
+            bytes = File.binread(path)
+            File.binwrite(path, bytes + "\n")
+            task.reenable
+            error = assert_raises(RuntimeError) { task.invoke(selected[:run_id]) }
+            assert_includes error.message, "Source bytes differ from selected run"
+            assert_includes error.message, path
+            assert_equal before, analysis_files
+
+            File.delete(path)
+            task.reenable
+            error = assert_raises(RuntimeError) { task.invoke(selected[:run_id]) }
+            assert_includes error.message, "Missing source"
+            assert_includes error.message, path
+            assert_equal before, analysis_files
+            File.binwrite(path, bytes)
+          end
+        end
+      end
+    end
+  end
+
   def test_cascading_tasks_and_independent_stages
     rakefile = File.expand_path("../Rakefile", __dir__)
     Rake.with_application do

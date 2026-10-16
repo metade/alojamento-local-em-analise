@@ -5,6 +5,7 @@ require "date"
 require "json"
 require "fileutils"
 require "tempfile"
+require "digest"
 
 module AlojamentoLocal
   module Analysis
@@ -28,6 +29,24 @@ module AlojamentoLocal
         raise "Missing dated local sources; run bundle exec rake sources:update first" unless airbnb && official
 
         [airbnb, official]
+      end
+
+      # Resolve and verify local source bytes recorded by a validated snapshot.
+      def self.local_paths_for_snapshot!(snapshot, root: "data_sources")
+        metadata = snapshot.fetch("metadata")
+        run_id = metadata.fetch("run_id")
+        dates = metadata.fetch("source_dates")
+        paths = {
+          "airbnb" => File.join(root, "listings-#{dates.fetch('airbnb_snapshot_date')}.csv"),
+          "official" => File.join(root, "Estabelecimentos_de_Alojamento_Local-#{dates.fetch('official_register_download_date')}.csv")
+        }
+        paths.each do |source, path|
+          raise "Missing source for #{run_id}: #{path}" unless File.file?(path)
+          unless Digest::SHA256.file(path).hexdigest == metadata.fetch("source_files").fetch(source).fetch("sha256")
+            raise "Source bytes differ from selected run #{run_id}: #{source} (#{path})"
+          end
+        end
+        paths.values_at("airbnb", "official")
       end
 
       def self.source_date(path)

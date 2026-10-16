@@ -121,6 +121,36 @@ class AnalysisDataTest < Minitest::Test
     end
   end
 
+  def test_snapshot_source_selection_uses_recorded_dates_and_verifies_bytes
+    Dir.mktmpdir do |root|
+      airbnb = write_source(root, "listings", "2024-06-01", "airbnb bytes")
+      official = write_source(root, "Estabelecimentos_de_Alojamento_Local", "2024-07-01", "official bytes")
+      write_source(root, "listings", "2024-08-01")
+      write_source(root, "Estabelecimentos_de_Alojamento_Local", "2024-09-01")
+      snapshot = {"metadata" => {
+        "run_id" => "2024-06-01__2024-07-01",
+        "source_dates" => {"airbnb_snapshot_date" => "2024-06-01", "official_register_download_date" => "2024-07-01"},
+        "source_files" => {"airbnb" => {"sha256" => Digest::SHA256.file(airbnb).hexdigest},
+                           "official" => {"sha256" => Digest::SHA256.file(official).hexdigest}}
+      }}
+      URI.stub(:open, ->(*) { flunk "Snapshot source selection must not download" }) do
+        assert_equal [airbnb, official], Data.local_paths_for_snapshot!(snapshot, root: root)
+        [airbnb, official].each do |path|
+          bytes = File.binread(path)
+          File.write(path, "changed bytes")
+          error = assert_raises(RuntimeError) { Data.local_paths_for_snapshot!(snapshot, root: root) }
+          assert_includes error.message, "Source bytes differ from selected run"
+          assert_includes error.message, path
+          File.delete(path)
+          error = assert_raises(RuntimeError) { Data.local_paths_for_snapshot!(snapshot, root: root) }
+          assert_includes error.message, "Missing source"
+          assert_includes error.message, path
+          File.binwrite(path, bytes)
+        end
+      end
+    end
+  end
+
   def test_archive_contains_only_selected_pair_and_preserves_bytes
     Dir.mktmpdir do |root|
       write_source(root, "listings", "2024-05-01")

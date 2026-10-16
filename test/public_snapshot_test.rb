@@ -47,6 +47,28 @@ class PublicSnapshotTest < Minitest::Test
     end
   end
 
+  def test_load_run_resolves_and_validates_the_selected_snapshot
+    with_snapshot do |root, path|
+      assert_equal AlojamentoLocal::PublicSnapshot.load(path),
+        AlojamentoLocal::PublicSnapshot.load_run(RUN_ID, snapshots: root)
+      mutate(path) { |data| data["summary"]["listings"] += 1 }
+      assert_raises(RuntimeError) { AlojamentoLocal::PublicSnapshot.load_run(RUN_ID, snapshots: root) }
+    end
+  end
+
+  def test_load_run_rejects_invalid_and_unknown_identifiers
+    with_snapshot do |root, _|
+      ["invalid", "../#{RUN_ID}"].each do |run_id|
+        error = assert_raises(ArgumentError) { AlojamentoLocal::PublicSnapshot.load_run(run_id, snapshots: root) }
+        assert_includes error.message, "Invalid public run ID"
+      end
+      error = assert_raises(RuntimeError) do
+        AlojamentoLocal::PublicSnapshot.load_run("2024-01-01__2024-02-01", snapshots: root)
+      end
+      assert_includes error.message, "Unknown public run ID"
+    end
+  end
+
   def test_consumers_reject_schema_provenance_and_accounting_corruption
     mutations = {
       "version" => ->(d) { d["schema_version"] = "99.0.0" },

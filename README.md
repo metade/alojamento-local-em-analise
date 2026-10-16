@@ -41,10 +41,12 @@ em falta. Reutiliza o RNAL datado mais recente se a sua data de download for igu
 ou posterior à data do snapshot Airbnb; caso contrário, descarrega uma cópia com
 a data real de hoje. Nunca altera a data de uma cópia existente.
 
-A análise seleciona o par datado mais recente em `data_sources/`, sem rede.
-Recebe ambos os caminhos de fontes ou nenhum. Para reproduzir um par anterior,
-use `bundle exec ruby scripts/reanalyse_public_run.rb <run_id>`; o script verifica
-os hashes das fontes antes de recalcular.
+A análise sem argumentos seleciona o par datado mais recente em `data_sources/`,
+sem rede. Para reproduzir um par anterior, use `bundle exec rake 'analysis[<run_id>]'`.
+A tarefa carrega e valida o snapshot existente, seleciona as fontes locais datadas
+pelo metadata e verifica ambos os hashes SHA-256 antes de recalcular com as versões
+atuais. IDs inválidos ou desconhecidos, fontes em falta e hashes diferentes são
+rejeitados antes da análise, sem substituir os resultados existentes.
 
 Cada par tem um identificador baseado apenas nas duas datas. Reanalisar substitui
 o snapshot, os diagnósticos e as linhas desse par no histórico após validação,
@@ -361,7 +363,7 @@ freguesias também não devem ser somadas para obter Lisboa.
 Para recalcular um par de fontes já guardado, verificando os hashes originais:
 
 ```bash
-bundle exec ruby scripts/reanalyse_public_run.rb <run_id>
+bundle exec rake 'analysis[2026-06-23__2026-09-26]'
 ```
 
 ### Versão da metodologia

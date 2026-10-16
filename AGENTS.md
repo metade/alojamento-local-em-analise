@@ -23,7 +23,14 @@ bundle exec rake analysis
 
 Source updates, analysis and site builds are independent. `sources:update`
 checks the latest Lisbon snapshot and refreshes RNAL only when needed. Analysis
-always recalculates the latest dated local source pair without network requests.
+without arguments always recalculates the latest dated local source pair without
+network requests.
+`bundle exec rake 'analysis[2026-06-23__2026-09-26]'` loads that existing snapshot
+through `PublicSnapshot.load_run` (which delegates to `load`).
+`Analysis::Data.local_paths_for_snapshot!` selects local dated sources from its
+metadata and verifies both SHA-256 hashes before the task calls `Analysis.run`
+with current versions.
+Invalid/unknown IDs, missing sources and mismatched hashes fail before analysis.
 `refresh` updates sources, analyses and builds the public site; `rebuild` analyses
 and builds without downloads. `FORCE=1` applies only to source updates.
 
@@ -156,7 +163,7 @@ Measured overlap metrics live in the `registration_metrics` section of versioned
 - RNAL and Airbnb sets count distinct normalized AL numbers; announcement counts and official entry counts have separate fields. Never sum parish distinct counts to obtain Lisbon.
 - Use official Concelho/Freguesia for RNAL and observed geography for Airbnb. Retain unknown geography explicitly and qualify local set differences.
 - Public run IDs contain only the two source dates. Versions live in metadata. Analysis always recalculates; replacing an existing public pair verifies its source hashes and validates the new schema, provenance and aggregates before installation.
-- To reproduce a prior run with a new methodology from verified local dated sources: `bundle exec ruby scripts/reanalyse_public_run.rb <prior-public-run-id>`. Never relabel an old source as a fresh download.
+- To reproduce a prior run with a new methodology from verified local dated sources: `bundle exec rake 'analysis[<prior-public-run-id>]'`. Never relabel an old source as a fresh download.
 - Circle areas and overlap use measured sets, including empty, disjoint, identical and contained sets. Announcement bubbles use a separate fractional scale.
 - Regression metric/geometry tests in `test/registration_metrics_test.rb` also run through `test/versioned_analysis_test.rb`.
 

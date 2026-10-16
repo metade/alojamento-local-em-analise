@@ -17,7 +17,7 @@ module AlojamentoLocal
 
       def validate_run!(snapshot, expected_run_id:)
         meta = snapshot.fetch("metadata")
-        raise "Invalid snapshot run" unless meta.fetch("run_id") == expected_run_id && expected_run_id.match?(/\A\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}\z/)
+        raise "Invalid snapshot run" unless meta.fetch("run_id") == expected_run_id && expected_run_id.match?(RUN_ID_PATTERN)
         expected_run_id
       end
 

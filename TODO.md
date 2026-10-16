@@ -101,9 +101,8 @@ arquivo permanente e da integração descrita abaixo.
   público, a auditoria de publicação e a
   documentação; rejeitar formatos antigos e verificar a equivalência dos resultados.
 
-- [ ] Considerar integrar `scripts/reanalyse_public_run.rb` numa tarefa Rake
-  de análise de fontes de um run público anterior. Preservar a
-  seleção das fontes datadas através do metadata, a verificação dos hashes
-  SHA-256, a validação antes da substituição e a preservação dos outros pares de datas; usar o pipeline existente com as
-  versões atuais, sem descarregar fontes novas. Atualizar documentação e testes
-  se o wrapper separado for substituído.
+- [x] Integrar a reanálise de um run público anterior em `analysis[run_id]` e
+  remover o wrapper separado. Selecionar fontes datadas pelo metadata, verificar
+  ambos os hashes SHA-256 e usar o pipeline existente com as versões atuais, sem
+  downloads. Preservar validação, substituição transacional, relatórios arquivados
+  e outros pares de datas; atualizar documentação e testes.

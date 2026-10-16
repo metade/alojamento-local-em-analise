@@ -28,10 +28,17 @@ namespace :sources do
   end
 end
 
-desc "Analyse local sources into aggregate snapshots and private diagnostics (no downloads)"
-task :analysis do
+desc "Analyse latest local sources or verified sources of an existing run (no downloads)"
+task :analysis, [:run_id] do |_task, args|
   require_relative "lib/alojamento_local"
-  print_analysis_result(AlojamentoLocal::Analysis.run)
+
+  paths = {}
+  if (run_id = args[:run_id])
+    snapshot = AlojamentoLocal::PublicSnapshot.load_run(run_id)
+    airbnb, official = AlojamentoLocal::Analysis::Data.local_paths_for_snapshot!(snapshot)
+    paths = {airbnb_path: airbnb, official_path: official}
+  end
+  print_analysis_result(AlojamentoLocal::Analysis.run(**paths))
 end
 
 desc "Analyse local sources into public outputs, then build the site"
