@@ -144,8 +144,18 @@ title: Metodologia e proveniência
       <p>
         Um candidato tem um ID próprio, zero ou um número AL e um ou vários IDs de anúncio. Anúncios
         próximos com o mesmo número podem formar um candidato. Um anúncio que declara vários números
-        pode contribuir para vários candidatos; um número repetido em localizações suspeitamente
-        distintas pode aparecer em candidatos separados.
+        contribui uma vez por número; o mesmo número pode aparecer em candidatos separados. Anúncios
+        sem número, incluindo isenções declaradas, permanecem candidatos individuais.
+      </p>
+      <p>
+        Para cada par com o mesmo número, a distância até 50 m vale 3 pontos e de 50 a 100 m vale 2;
+        o mesmo anfitrião vale 1, títulos semelhantes valem 2 e descrições fortemente semelhantes
+        valem 3. Comparamos conjuntos de palavras e números: os títulos exigem pelo menos três
+        termos comuns e similaridade Jaccard de 0,5; as descrições exigem 30 termos distintos em
+        cada texto e 0,8. O agrupamento exige pelo menos 7 pontos, coordenadas até 100 m e
+        categorias de quarto compatíveis. Dois apartamentos inteiros com números de quartos
+        conhecidos diferentes ficam separados. Todos os pares de um grupo têm de cumprir a regra.
+        Casos de revisão ficam separados; a pontuação resume evidência e não é uma probabilidade.
       </p>
       <p>
         Cada candidato conta uma vez na freguesia atribuída ou em localização desconhecida. Esses
@@ -158,13 +168,18 @@ title: Metodologia e proveniência
       <p>
         A freguesia observada pelo Airbnb, a derivada de coordenadas e a oficial são mantidas
         separadamente. O snapshot regista a freguesia atribuída e os motivos de divergência. A
-        precisão das coordenadas e a proximidade dos limites de freguesia podem afetar essa
-        atribuição.
+        geografia Airbnb não está verificada. Atribuímos uma freguesia apenas quando todos os
+        membros declaram a mesma freguesia reconhecida. Usamos o membro que minimiza a soma de
+        distâncias aos restantes para consultar os polígonos CML completos e calcular a distância ao
+        RNAL. A freguesia por coordenadas não substitui a atribuída. A fiabilidade das coordenadas e
+        a proximidade dos limites exigem investigação adicional.
       </p>
       <p>
         Encontrar um número no RNAL não verifica a identidade do alojamento. A avaliação de
         correspondência fica para uma etapa posterior. Registamos apenas a declaração de isenção,
-        sem avaliar a sua validade legal nesta etapa.
+        sem avaliar a sua validade legal nesta etapa. Nos registos RNAL duplicados, valores não
+        vazios concordantes são conservados; campos contraditórios ficam por resolver. Uma
+        divergência de município deixa também freguesia e localização por resolver.
       </p>
     </section>
 
@@ -177,7 +192,10 @@ title: Metodologia e proveniência
       <p>
         O campo da licença é preenchido no anúncio. Normalizamos de forma conservadora: retiramos
         espaços exteriores e zeros iniciais, reconhecemos números simples e variantes com AL antes
-        ou depois do número. Também aceitamos formatos antigos com ano entre 2010 e 2029.
+        ou depois do número. Também aceitamos formatos antigos com ano entre 2010 e 2029. Extraímos
+        todos os tokens AL explícitos e conservamos a declaração original no ficheiro de dados.
+        Extrações parciais recebem um sinal; o texto restante não cria um candidato adicional. Uma
+        isenção só é reconhecida como declaração completa, nunca pela presença da palavra em prosa.
       </p>
       <table class="my-6 w-full table-fixed border-collapse text-sm [&_th]:normal-case! [&_th]:tracking-normal! [&_th]:text-[length:inherit]! [&_th]:text-[var(--color-ink)]! [&_th]:px-0! [&_td]:px-0! [&_td]:text-left! [&_td:first-child]:pr-4! [&_td]:break-words">
         <caption class="mb-4 text-left text-sm text-[var(--color-ink)]/75">
@@ -304,11 +322,11 @@ title: Metodologia e proveniência
           id="localizacoes-diferentes"
           aria-labelledby="locations-title"
         >
-          <h3 id="locations-title">Mesmo número, localizações diferentes</h3>
+          <h3 id="locations-title">Mesmo número, candidatos separados</h3>
           <p>
-            O mesmo número aparece em candidatos de localizações diferentes. Contamos os IDs de
-            anúncio associados uma vez neste sinal, mantendo os candidatos separados. A distância de
-            cada candidato ao seu registo RNAL fica registada no snapshot.
+            O mesmo número aparece em candidatos separados. Contamos os IDs de anúncio associados
+            uma vez neste sinal, mantendo os candidatos separados. A distância de cada candidato ao
+            seu registo RNAL fica registada no snapshot.
           </p>
           <p>
             O gráfico conta cada número AL repetido uma vez, segundo a maior distância de um dos
@@ -392,7 +410,7 @@ title: Metodologia e proveniência
           <dt class="font-semibold">Airbnb</dt>
           <dd class="mt-1">
             Snapshot de {{ d.source_dates.airbnb_snapshot_date }} · descarregado em
-            {{ d.source_dates.airbnb_fetched_on }} ·
+            {{ d.source_dates.airbnb_fetched_on | default: '???' }} ·
             <a
               class="text-[var(--color-blue)] underline underline-offset-4"
               href="{{ d.metadata.source_urls.airbnb | escape }}"
@@ -421,11 +439,12 @@ title: Metodologia e proveniência
       </p>
       <p>
         Os ficheiros públicos contêm IDs de anúncio, números normalizados, geografia por freguesia e
-        sinais. Não incluem anfitriões, nomes, endereços, coordenadas exatas ou licenças originais.
+        sinais, declarações originais de licença e avaliações de pares. Os restantes campos excluem
+        anfitriões, nomes, endereços e coordenadas exatas dos anúncios.
       </p>
       {% assign public_data_file = 'snapshot.json' %}
       <div class="mt-6 flex flex-wrap gap-x-6 gap-y-4 text-sm text-[var(--color-blue)] [&_a]:underline [&_a]:underline-offset-4">
-        <a href="{{ '/snapshots/candidate/snapshot.json' | relative_url }}">Dados do snapshot →</a>
+        <a href="{{ site.data.site.snapshot_download | relative_url }}">Dados do snapshot →</a>
         <a href="{{ '/report.html' | relative_url }}">Relatório técnico ↗</a>
         {% unless site.skip_report_pdfs %}
           ·

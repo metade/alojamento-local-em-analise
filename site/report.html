@@ -186,12 +186,12 @@ layout: null
       correspondência com o alojamento.
     </p>
     <p>
-      <a href="snapshots/candidate/snapshot.json">Snapshot JSON ↓</a>
+      <a href="{{ d.snapshot_download | remove_first: '/' }}">Snapshot JSON ↓</a>
     </p>
     <p>
-      RNAL descarregado em {{ d.source_dates.rnal_fetched_on }} · Anúncios de
+      RNAL descarregado em {{ d.source_dates.rnal_fetched_on | default: '???' }} · Anúncios de
       {{ d.source_dates.airbnb_snapshot_date }} (descarregados em
-      {{ d.source_dates.airbnb_fetched_on }}).
+      {{ d.source_dates.airbnb_fetched_on | default: '???' }}).
     </p>
     <div class="cards">
       <div class="card">
@@ -254,8 +254,11 @@ layout: null
     </p>
     <h2>Candidatos</h2>
     <p>
-      A tabela apresenta os motivos registados no ficheiro de dados. As declarações de isenção não
-      são certificações legais.
+      A tabela mostra {{ d.report_candidates.size | pt_count: 'candidato', 'candidatos' }} com
+      sinais ou informação por resolver. Omite os casos sem sinais, com número encontrado no RNAL,
+      freguesias concordantes e distância até 500 m. Os totais e o download incluem todos os
+      candidatos. Esta seleção não certifica a legalidade dos casos omitidos nem das isenções
+      declaradas.
     </p>
     <div class="table-container">
       <table class="diagnostics-table">
@@ -270,7 +273,7 @@ layout: null
           </tr>
         </thead>
         <tbody>
-          {% for candidate in d.candidates %}
+          {% for candidate in d.report_candidates %}
             <tr>
               <td>
                 {{ candidate.id | escape }}
@@ -333,6 +336,12 @@ layout: null
               </td>
               <td>
                 {{ candidate.grouping_reason | candidate_label | escape }}
+                {% if candidate.minimum_merge_score %}
+                  <small>Pontuação mínima dos pares: {{ candidate.minimum_merge_score }}</small>
+                {% endif %}
+                {% if candidate.grouping_review_count > 0 %}
+                  <small>{{ candidate.grouping_review_count }} pares por rever</small>
+                {% endif %}
               </td>
             </tr>
           {% endfor %}
@@ -350,7 +359,7 @@ layout: null
       {% for range in d.distance_ranges %}
         <li>{{ range.label }}: {{ range.count | pt_number }}</li>
       {% else %}
-        <li>Nenhum número AL repetido em localizações diferentes.</li>
+        <li>Nenhum número AL partilhado por candidatos separados.</li>
       {% endfor %}
     </ul>
   </body>

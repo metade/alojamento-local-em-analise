@@ -9,3 +9,4 @@ node_modules/
 .jekyll-cache/
 **/.jekyll-cache/
 _site/
+data_sources/*.manifest.json

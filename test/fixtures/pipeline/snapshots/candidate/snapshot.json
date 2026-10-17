@@ -234,7 +234,7 @@
         ]
       },
       "registration_status": "found",
-      "grouping_reason": "single_listing_per_number_location",
+      "grouping_reason": "single_listing",
       "signals": [],
       "official_match": {
         "municipality": "Lisboa",
@@ -242,6 +242,9 @@
         "type": "Apartamento",
         "district": "Grande Lisboa",
         "distance_km": null
+      },
+      "raw_licences": {
+        "demo-101": "100001/AL"
       }
     },
     {
@@ -261,7 +264,7 @@
         ]
       },
       "registration_status": "found",
-      "grouping_reason": "same_number_same_location",
+      "grouping_reason": "scored_merge",
       "signals": [],
       "official_match": {
         "municipality": "Lisboa",
@@ -269,6 +272,11 @@
         "type": "Apartamento",
         "district": "Grande Lisboa",
         "distance_km": null
+      },
+      "raw_licences": {
+        "demo-102": "100002/AL",
+        "demo-103": "100002/AL",
+        "demo-104": "100002/AL"
       }
     },
     {
@@ -286,7 +294,7 @@
         ]
       },
       "registration_status": "found",
-      "grouping_reason": "single_listing_per_number_location",
+      "grouping_reason": "single_listing",
       "signals": [],
       "official_match": {
         "municipality": "Lisboa",
@@ -294,6 +302,9 @@
         "type": "Apartamento",
         "district": "Grande Lisboa",
         "distance_km": null
+      },
+      "raw_licences": {
+        "demo-105": "100003/AL; 100004/AL"
       }
     },
     {
@@ -311,7 +322,7 @@
         ]
       },
       "registration_status": "found",
-      "grouping_reason": "single_listing_per_number_location",
+      "grouping_reason": "single_listing",
       "signals": [],
       "official_match": {
         "municipality": "Lisboa",
@@ -319,6 +330,9 @@
         "type": "Apartamento",
         "district": "Grande Lisboa",
         "distance_km": null
+      },
+      "raw_licences": {
+        "demo-105": "100003/AL; 100004/AL"
       }
     },
     {
@@ -336,9 +350,9 @@
         ]
       },
       "registration_status": "found",
-      "grouping_reason": "single_listing_per_number_location",
+      "grouping_reason": "single_listing",
       "signals": [
-        "number_reused_across_locations"
+        "shared_number"
       ],
       "official_match": {
         "municipality": "Lisboa",
@@ -346,6 +360,9 @@
         "type": "Apartamento",
         "district": "Grande Lisboa",
         "distance_km": 0.2
+      },
+      "raw_licences": {
+        "demo-106": "100005/AL"
       }
     },
     {
@@ -363,7 +380,7 @@
         ]
       },
       "registration_status": "found",
-      "grouping_reason": "single_listing_per_number_location",
+      "grouping_reason": "single_listing",
       "signals": [
         "official_parish_mismatch",
         "observed_parish_disagreement"
@@ -374,6 +391,9 @@
         "type": "Apartamento",
         "district": "Grande Lisboa",
         "distance_km": 6.2
+      },
+      "raw_licences": {
+        "demo-107": "100005/AL"
       }
     },
     {
@@ -391,9 +411,12 @@
         ]
       },
       "registration_status": "not_found",
-      "grouping_reason": "single_listing_per_number_location",
+      "grouping_reason": "single_listing",
       "signals": [],
-      "official_match": null
+      "official_match": null,
+      "raw_licences": {
+        "demo-108": "100006/AL"
+      }
     },
     {
       "id": "candidate-008",
@@ -410,9 +433,12 @@
         ]
       },
       "registration_status": "exempt",
-      "grouping_reason": "unnumbered_listing",
+      "grouping_reason": "single_listing",
       "signals": [],
-      "official_match": null
+      "official_match": null,
+      "raw_licences": {
+        "demo-109": "Exempt"
+      }
     },
     {
       "id": "candidate-009",
@@ -429,9 +455,12 @@
         ]
       },
       "registration_status": "exempt",
-      "grouping_reason": "unnumbered_listing",
+      "grouping_reason": "single_listing",
       "signals": [],
-      "official_match": null
+      "official_match": null,
+      "raw_licences": {
+        "demo-110": "Exempt"
+      }
     },
     {
       "id": "candidate-010",
@@ -448,9 +477,12 @@
         ]
       },
       "registration_status": "unrecognised",
-      "grouping_reason": "unnumbered_listing",
+      "grouping_reason": "single_listing",
       "signals": [],
-      "official_match": null
+      "official_match": null,
+      "raw_licences": {
+        "demo-111": "unsupported"
+      }
     },
     {
       "id": "candidate-011",
@@ -465,9 +497,12 @@
         "airbnb_freguesias": []
       },
       "registration_status": "absent",
-      "grouping_reason": "unnumbered_listing",
+      "grouping_reason": "single_listing",
       "signals": [],
-      "official_match": null
+      "official_match": null,
+      "raw_licences": {
+        "demo-112": null
+      }
     },
     {
       "id": "candidate-012",
@@ -484,7 +519,7 @@
         ]
       },
       "registration_status": "found",
-      "grouping_reason": "single_listing_per_number_location",
+      "grouping_reason": "single_listing",
       "signals": [
         "official_municipality_mismatch",
         "official_location_far_from_listings"
@@ -495,7 +530,60 @@
         "type": "Apartamento",
         "district": "Algarve",
         "distance_km": 217.0
+      },
+      "raw_licences": {
+        "demo-113": "100007/AL"
       }
+    }
+  ],
+  "grouping_assessments": [
+    {
+      "al_number": "100002",
+      "listing_ids": [
+        "demo-102",
+        "demo-103"
+      ],
+      "score": 8,
+      "outcome": "merge",
+      "reasons": [
+        "merge_threshold"
+      ]
+    },
+    {
+      "al_number": "100002",
+      "listing_ids": [
+        "demo-102",
+        "demo-104"
+      ],
+      "score": 8,
+      "outcome": "merge",
+      "reasons": [
+        "merge_threshold"
+      ]
+    },
+    {
+      "al_number": "100002",
+      "listing_ids": [
+        "demo-103",
+        "demo-104"
+      ],
+      "score": 8,
+      "outcome": "merge",
+      "reasons": [
+        "merge_threshold"
+      ]
+    },
+    {
+      "al_number": "100005",
+      "listing_ids": [
+        "demo-106",
+        "demo-107"
+      ],
+      "score": 0,
+      "outcome": "separate",
+      "reasons": [
+        "insufficient_score"
+      ]
     }
   ]
 }

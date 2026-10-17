@@ -1,4 +1,5 @@
 require "rake/testtask"
+require "json"
 
 Rake::TestTask.new(:test) do |task|
   task.libs << "test"
@@ -10,7 +11,6 @@ task default: :test
 
 def print_analysis_result(result)
   puts "Run #{result[:run_id]} criado em #{result[:path]}"
-  puts "Diagnósticos privados em #{result[:private_path]}"
   puts JSON.pretty_generate(result[:summary])
 end
 
@@ -21,6 +21,12 @@ namespace :sources do
     puts AlojamentoLocal::Analysis::Data.update!(force: ENV["FORCE"] == "1")
   end
 
+  desc "Register cached source provenance offline (unknown fetch dates stay null)"
+  task :register do
+    require_relative "lib/alojamento_local"
+    puts JSON.pretty_generate(AlojamentoLocal::Analysis::Data.register!)
+  end
+
   desc "Stage the latest local source pair for an Actions artifact"
   task :archive do
     require_relative "lib/alojamento_local"
@@ -28,17 +34,11 @@ namespace :sources do
   end
 end
 
-desc "Analyse latest local sources or verified sources of an existing run (no downloads)"
-task :analysis, [:run_id] do |_task, args|
+desc "Analyse the latest dated local source pair without downloads"
+task :analysis do
   require_relative "lib/alojamento_local"
-
-  paths = {}
-  if (run_id = args[:run_id])
-    snapshot = AlojamentoLocal::PublicSnapshot.load_run(run_id)
-    airbnb, official = AlojamentoLocal::Analysis::Data.local_paths_for_snapshot!(snapshot)
-    paths = {airbnb_path: airbnb, official_path: official}
-  end
-  print_analysis_result(AlojamentoLocal::Analysis.run(**paths))
+  raise ArgumentError, "analysis no longer accepts a run ID; pass paired source paths to Analysis.run in Ruby" unless Rake.application.top_level_tasks.none? { |name| name.start_with?("analysis[") }
+  print_analysis_result(AlojamentoLocal::Analysis.run)
 end
 
 desc "Analyse local sources into public outputs, then build the site"
@@ -46,6 +46,11 @@ task rebuild: [:analysis, "site:build"]
 
 desc "Update sources, analyse into public outputs, then build the site"
 task refresh: ["sources:update", :rebuild]
+
+def selected_download
+  path = ENV["SNAPSHOT"] || AlojamentoLocal::CandidateDataset.default_path
+  AlojamentoLocal::CandidateDataset.new(path).download_path.delete_prefix("/")
+end
 
 namespace :site do
   desc "Build and validate the site from cleaned RNAL and candidate data"
@@ -55,7 +60,7 @@ namespace :site do
     command = ["bundle", "exec", "jekyll", "build", "--destination", destination]
     command.concat(["--baseurl", ENV["JEKYLL_BASEURL"]]) if ENV["JEKYLL_BASEURL"]
     sh(*command)
-    result = AlojamentoLocal::SiteChecker.check(File.expand_path(ENV["DESTINATION"] || "_site", __dir__), required: AlojamentoLocal::SiteChecker::REQUIRED_FILES + %w[report.html report.pdf snapshots/candidate/snapshot.json])
+    result = AlojamentoLocal::SiteChecker.check(File.expand_path(ENV["DESTINATION"] || "_site", __dir__), required: AlojamentoLocal::SiteChecker::REQUIRED_FILES + ["report.html", "report.pdf", selected_download])
     sh "bundle", "exec", "ruby", "scripts/audit_publication.rb", "--artifact", destination
     puts "Site Jekyll criado em #{destination} (#{result[:districts]} freguesias)."
   end
@@ -63,7 +68,7 @@ namespace :site do
   desc "Check the generated site's structure"
   task :check do
     require_relative "lib/alojamento_local"
-    result = AlojamentoLocal::SiteChecker.check(File.expand_path(ENV["DESTINATION"] || "_site", __dir__), required: AlojamentoLocal::SiteChecker::REQUIRED_FILES + %w[report.html report.pdf snapshots/candidate/snapshot.json])
+    result = AlojamentoLocal::SiteChecker.check(File.expand_path(ENV["DESTINATION"] || "_site", __dir__), required: AlojamentoLocal::SiteChecker::REQUIRED_FILES + ["report.html", "report.pdf", selected_download])
     puts "Site verificado: #{result[:html_pages]} páginas HTML, #{result[:districts]} freguesias."
   end
 

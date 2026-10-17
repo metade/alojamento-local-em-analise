@@ -21,8 +21,10 @@ module AlojamentoLocal
       regions = outside_regions
       repeated = @dataset.candidates.select { |candidate| candidate["al_number"] }.group_by { |candidate| candidate["al_number"] }.values.select { |group| group.size > 1 }
       distances = distance_distribution(repeated)
+      candidates = report_candidates
       {
         "snapshot_name" => File.basename(@dataset.path),
+        "snapshot_download" => @dataset.download_path,
         "source_dates" => @dataset.document.fetch("source_dates"),
         "summary" => city,
         "rnal" => @dataset.rnal,
@@ -30,7 +32,8 @@ module AlojamentoLocal
         "metrics" => city.fetch("metrics"),
         "districts" => districts,
         "unknown" => summary(nil),
-        "candidates" => @dataset.candidates,
+        "candidates" => candidates,
+        "report_candidates" => candidates.reject { |candidate| unflagged_match?(candidate) },
         "quotes" => JSON.parse(File.read(File.join(ROOT, "site_content", "quotes.json"))),
         "metadata" => {
           "source_urls" => {"airbnb" => Analysis::Data::AIRBNB_DATA_PAGE, "official" => Analysis::Data::OFFICIAL_URL}
@@ -46,6 +49,37 @@ module AlojamentoLocal
     end
 
     private
+
+    def report_candidates
+      candidates = @dataset.candidates.map do |candidate|
+        candidate.merge("grouping_review_count" => 0, "minimum_merge_score" => nil)
+      end
+      by_contribution = candidates.each_with_object({}) do |candidate, index|
+        candidate["listing_ids"].each { |id| index[[candidate["al_number"], id]] = candidate }
+      end
+      @dataset.document.fetch("grouping_assessments").each do |pair|
+        related = pair["listing_ids"].map { |id| by_contribution.fetch([pair["al_number"], id]) }.uniq
+        related.each do |candidate|
+          if pair["outcome"] == "review"
+            candidate["grouping_review_count"] += 1
+          elsif pair["outcome"] == "merge"
+            candidate["minimum_merge_score"] = [candidate["minimum_merge_score"], pair["score"]].compact.min
+          end
+        end
+      end
+      candidates
+    end
+
+    def unflagged_match?(candidate)
+      return false unless candidate["registration_status"] == "found" && candidate["signals"].empty? && candidate["grouping_review_count"].zero?
+
+      record = candidate.fetch("official_match")
+      parish = candidate["freguesia"]
+      distance = record["distance_km"]
+      parish && candidate.dig("geography", "coordinate_freguesia") == parish &&
+        record["municipality"] == "Lisboa" && record["freguesia"] == parish &&
+        !distance.nil? && distance <= 0.5
+    end
 
     def listing_ids(candidates)
       candidates.flat_map { |c| c.fetch("listing_ids") }.uniq
@@ -97,7 +131,7 @@ module AlojamentoLocal
       end
       counts = regions_by_listing.values.each_with_object(Hash.new(0)) do |regions, totals|
         distinct = regions.uniq
-        totals[distinct.size == 1 ? distinct.first : nil] += 1
+        totals[(distinct.size == 1) ? distinct.first : nil] += 1
       end
       maximum = counts.values.max
       rows = counts.sort_by { |name, count| [name.nil? ? 1 : 0, -count, name.to_s] }.map do |name, count|

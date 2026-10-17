@@ -137,7 +137,7 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
           ·
           <a
             class="underline underline-offset-4"
-            href="{{ '/snapshots/candidate/snapshot.json' | relative_url }}"
+            href="{{ site.data.site.snapshot_download | relative_url }}"
           >
             snapshot ↗
           </a>
@@ -204,8 +204,8 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
       O que encontrámos?
     </h2>
     <p class="mt-6 max-w-[75ch] text-lg text-[var(--color-paper)]/85">
-      Ao cruzar as fontes, encontrámos anúncios sem número identificável, números repetidos em
-      locais diferentes e licenças registadas fora de Lisboa.
+      Ao cruzar as fontes, encontrámos anúncios sem número identificável, números partilhados por
+      candidatos separados e licenças registadas fora de Lisboa.
     </p>
     <div class="mt-12 grid gap-5 xl:grid-cols-3">
       <article
@@ -280,14 +280,13 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
         >
           <span class="block text-5xl text-[var(--color-yellow)]">{{ repeated | pt_number }}</span>
           {% if repeated == 1 %}
-            anúncio com o mesmo número em localizações diferentes
+            anúncio com o mesmo número em candidatos separados
           {% else -%}
-            anúncios com o mesmo número em localizações diferentes
+            anúncios com o mesmo número em candidatos separados
           {% endif %}
         </h3>
         <p class="mt-4 text-sm text-[var(--color-paper)]/85">
-          Um número normalizado surge em candidatos de localizações diferentes. O sinal exige
-          verificação individual.
+          Um número normalizado surge em candidatos separados. O sinal exige verificação individual.
         </p>
         <figure class="mt-8 mb-6">
           <figcaption class="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--color-paper)]/85">
@@ -317,7 +316,7 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
               {% endfor %}
             </ul>
           {% else %}
-            <p class="text-sm">Nenhum número AL repetido em localizações diferentes.</p>
+            <p class="text-sm">Nenhum número AL partilhado por candidatos separados.</p>
           {% endif %}
         </figure>
         <p class="mt-auto text-sm text-[var(--color-paper)]/85">

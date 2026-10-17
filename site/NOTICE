@@ -1,9 +1,15 @@
 Alojamento Ilegal — aviso de atribuição
 
 O projeto utiliza dados públicos do Inside Airbnb e do registo oficial de
-alojamento local disponibilizado pelo Turismo de Portugal. Consulte os links
-e as datas de cada fonte no campo metadata de snapshot.json do respetivo run.
+alojamento local disponibilizado pelo Turismo de Portugal. As datas conhecidas
+constam de source_dates no snapshot selecionado; downloads não documentados
+permanecem desconhecidos. A página de metodologia contém os links das fontes.
 
-Os outputs publicados são agregados e destinam-se a investigação e verificação.
-Não constituem conclusões legais nem representam necessariamente a posição das
-fontes de dados.
+Os limites de freguesias são da Câmara Municipal de Lisboa:
+https://gisapps.cm-lisboa.pt/arcgis/rest/services/SGPI_Open/LXSGPI_Temas/MapServer/4
+A derivação analítica conserva os polígonos completos e o SHA-256 do original.
+
+Os outputs publicados destinam-se a investigação e verificação. Incluem IDs,
+números AL e declarações originais de licença; os restantes campos excluem
+anfitriões, nomes, endereços e coordenadas exatas de anúncios. Não constituem
+conclusões legais nem representam necessariamente a posição das fontes de dados.

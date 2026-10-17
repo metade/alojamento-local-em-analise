@@ -7,11 +7,17 @@
       "type": "object",
       "properties": {
         "rnal_fetched_on": {
-          "type": "string",
+          "type": [
+            "string",
+            "null"
+          ],
           "format": "date"
         },
         "airbnb_fetched_on": {
-          "type": "string",
+          "type": [
+            "string",
+            "null"
+          ],
           "format": "date"
         },
         "airbnb_snapshot_date": {
@@ -37,13 +43,79 @@
       "items": {
         "$ref": "#/$defs/candidate"
       }
+    },
+    "grouping_assessments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "al_number": {
+            "type": "string",
+            "pattern": "^[1-9][0-9]*$"
+          },
+          "listing_ids": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^(?:demo-)?[0-9]+$"
+            }
+          },
+          "score": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9
+          },
+          "outcome": {
+            "enum": [
+              "merge",
+              "review",
+              "separate"
+            ]
+          },
+          "reasons": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "distance_le_50m",
+                "distance_le_100m",
+                "distance_over_100m",
+                "missing_coordinates",
+                "same_host",
+                "similar_title",
+                "strong_description",
+                "room_category_ambiguity",
+                "incompatible_room_categories",
+                "different_apartment_bedrooms",
+                "insufficient_score",
+                "merge_threshold",
+                "review_score",
+                "complete_link_conflict"
+              ]
+            }
+          }
+        },
+        "required": [
+          "al_number",
+          "listing_ids",
+          "score",
+          "outcome",
+          "reasons"
+        ],
+        "additionalProperties": false
+      }
     }
   },
   "required": [
     "source_dates",
     "rnal",
     "listings",
-    "candidates"
+    "candidates",
+    "grouping_assessments"
   ],
   "additionalProperties": false,
   "$defs": {
@@ -215,13 +287,23 @@
           ]
         },
         "grouping_reason": {
-          "type": "string"
+          "enum": [
+            "single_listing",
+            "scored_merge"
+          ]
         },
         "signals": {
           "type": "array",
           "items": {
-            "type": "string",
-            "minLength": 1
+            "enum": [
+              "partial_licence_extraction",
+              "grouping_review",
+              "shared_number",
+              "official_municipality_mismatch",
+              "official_parish_mismatch",
+              "official_location_far_from_listings",
+              "observed_parish_disagreement"
+            ]
           },
           "uniqueItems": true
         },
@@ -268,6 +350,19 @@
             "distance_km"
           ],
           "additionalProperties": false
+        },
+        "raw_licences": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "pattern": "^(?:demo-)?[0-9]+$"
+          },
+          "additionalProperties": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
         }
       },
       "required": [
@@ -280,7 +375,8 @@
         "registration_status",
         "grouping_reason",
         "signals",
-        "official_match"
+        "official_match",
+        "raw_licences"
       ],
       "additionalProperties": false,
       "allOf": [

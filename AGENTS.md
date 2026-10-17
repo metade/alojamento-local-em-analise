@@ -1,255 +1,186 @@
 # Agent and contributor guide
 
-## Project purpose
+## Purpose and scope
 
-This project compares Airbnb listing snapshots for Lisbon with the official Portuguese local-accommodation register. It identifies licence matches, formatting mismatches, possible repeated use of licence numbers, and listings whose apparent location differs from the official record.
+Compare Lisbon Airbnb listings with the national Portuguese local-accommodation
+register. Results are investigative indicators for verification, never legal
+findings that a listing or establishment is illegal.
 
-The analysis is investigative. A result is an indicator for verification, not a legal finding that a listing or establishment is illegal.
+Use **listing** and **candidate** in code/data; public Portuguese copy uses
+**anúncio** and **candidato**. Preserve the existing homepage, parish pages,
+quotes, signal cards, overlap component, map and report styling. Change data
+bindings and necessary terminology, not the UX. Do not restore the removed yellow
+bubble. The user handles screenshots for now: use tests/builds without captures.
+Do not download sources, deploy or change `research/` during local implementation
+unless explicitly requested.
 
-## V2 presentation milestone
+## Current candidate pipeline
 
-The site consumes one `snapshot.json` with `rnal`, `listings` and `candidates` through
-`CandidateDataset` and `SiteData`. `_config.yml` temporarily selects
-`test/fixtures/pipeline/snapshots/candidate`, the same fixture used by tests.
-Future real output belongs in `data/snapshots/candidate`; `SNAPSHOT` overrides
-selection. Source dates live in `source_dates`: `rnal_fetched_on`,
-`airbnb_fetched_on` and `airbnb_snapshot_date`, all ISO dates. Fetch dates describe
-downloads; the Airbnb snapshot date describes the source archive and drives
-“Anúncios de”. Never substitute download time or listing-level last_scraped for it.
-There are no synthetic flags or separate test/production formats.
-Preserve the existing homepage, parish layouts, quotes, signal cards, overlap
-component, map and report styling. Change data bindings and necessary terminology,
-not the UX. The separate yellow bubble has been removed at the user's request.
-The diagram's Airbnb total counts all candidates, including unnumbered candidates;
-RNAL counts distinct registrations. The intersection counts candidates with a
-non-null `al_number`; the Airbnb-only area counts candidates with `al_number: null`.
-Count repeated numbers once per candidate, independently of RNAL lookup and
-correspondence assessments. If numbered candidates exceed RNAL, show the counts
-without impossible proportional geometry.
-Unknown measures display `???` and must not create measured chart areas.
-The user handles screenshots for now; use tests and build checks without capturing them.
+`Analysis.run` is the orchestration entry point. Supply both `airbnb_path` and
+`official_path` or neither; omission selects the latest dated local CSV pair
+without network requests. It returns `{run_id:, path:, summary:}`.
+There is no `analysis[run_id]`, parallel pipeline, legacy snapshot reader, output
+version infrastructure or historical comparison subsystem.
 
-Use **listing** and **candidate** in code/data. Portuguese public copy uses **anúncio**
-and **candidato**. A candidate has zero or one AL number and
-references one or more listings. Each candidate has one parish or unknown, so
-candidate totals are additive. Original listing totals are stored separately,
-overall and by the Airbnb source parish, and are also additive with unknown
-geography. Candidate geography stores only `coordinate_freguesia` and `airbnb_freguesias`;
-assignment reasons and boundary checks are deferred. Do not derive original listing
-totals from candidates or candidate geography. Numbers
-remain deduplicated per scope and are not necessarily additive.
-Capacity is deferred. RNAL summaries expose one `count` of distinct AL numbers,
-not separate entry and number totals. JSON Schema in
-`schema/candidate_snapshot.schema.json` validates structure; Ruby validates
-accounting relationships. Correspondence and exemption assessments are deferred; do not
-add placeholder fields. Declared exemptions use `registration_status: "exempt"`.
-Each candidate has one nullable `official_match`, required as an object only for
-`registration_status: "found"`. Its `distance_km` is the distance from the candidate
-to that RNAL location. Reuse counts are derived by grouping non-null AL numbers;
-there is no `reuse` object. The repeated-number chart counts each AL number once,
-using the largest `official_match.distance_km` among its candidates, with missing
-matches/distances explicitly unresolved. Resolve duplicate
-source rows before constructing this single official record; do not select the
-first row to conceal conflicting source data.
-Public fields allow listing IDs and normalized numbers; continue excluding names,
-host details, addresses, exact coordinates and raw licence text. Test IDs do not
-receive live listing links; numeric IDs do, without snapshot modes.
+The sole analysis output is `data/snapshots/<airbnb-archive-date>__<rnal-source-file-date>/snapshot.json`.
+Do not generate diagnostics or private outputs. Source manifests stay beside CSVs.
+Folder dates identify
+selected files; they do not prove download dates. Reanalysis safely replaces that
+pair. Other pairs are unchanged. Old outputs are retained only in Git history.
 
-`site:build` builds from the configured snapshot. `DESTINATION=tmp/v2-site` isolates
-output. `report:build[test/fixtures/pipeline/snapshots/candidate]` uses the same
-canonical report. Published data is `snapshots/candidate/snapshot.json`.
-The existing analysis and outputs are unchanged and do not feed this site. The
-old site snapshot/run-route/private-report instructions below are superseded for
-this branch; old analysis instructions still apply. Do not download sources,
-regenerate old outputs or deploy during this milestone. Next work is in TODO.md.
+Collaborators:
 
-## Running the project
+- `Analysis::Data`: downloads, dated local discovery, manifests, artifact staging.
+- `PreparedSources::Pair`: one preparation per run, initial hashes, manifests and
+  source-change checks. `Airbnb` retains Lisbon rows; `Official` keeps all source
+  entries and independently resolves national records.
+- `Declaration`: conservative normalization, multiple explicit AL tokens, raw text
+  and residual retention, whole-value exemptions.
+- `Grouping`: scored pairs, deterministic complete-link groups and medoids.
+- `Boundaries`: full-resolution CML polygon lookup.
+- `Result`: candidates, independent original-listing/RNAL summaries, source assertions.
+- `OutputWriter`/`PublicPublisher`: stage, validate, reread, recheck sources,
+  atomically rename snapshot as final commit; lock the destination directory.
 
-Install dependencies:
+Preserve Zeitwerk conventions. Require gems/standard libraries explicitly; do not
+require individual project files. Use responsible collaborators directly in
+focused scripts/tests, without facade forwarding methods. `lib/alojamento_local.rb`
+sets up the loader and shared licence/coordinate helpers.
+
+## Contract and accounting
+
+`CandidateDataset` and `schema/candidate_snapshot.schema.json` define the sole
+public contract. JSON Schema validates structure; Ruby validates relationships.
+The document has `source_dates`, `rnal`, `listings`, `candidates` and
+`grouping_assessments`. No synthetic flags or test/production formats.
+
+`airbnb_snapshot_date` is required and drives “Anúncios de”. Fetch dates
+`airbnb_fetched_on` and `rnal_fetched_on` may be null. Never infer them from mtime,
+listing `last_scraped`, backups or today. Local `*.csv.manifest.json` files record
+URLs, filenames, SHA-256, archive/source dates and documented fetch dates. Future
+successful downloads record the actual fetch date. Cache reuse and source
+artifacts preserve manifests. `sources:register` registers dated cached files
+offline with unknown fetch dates null.
+
+Each candidate has zero or one normalized AL number and references one or more
+listing IDs. Each listing–number contribution appears exactly once and all
+distinct referenced IDs equal the original listing population. Each candidate
+has one parish or unknown, so totals are additive. Original listing totals are
+computed independently before expansion/grouping, overall and by Airbnb source
+parish, including unknown. Never derive them from candidates or candidate geography.
+RNAL counts distinct numbers on source rows declaring Lisboa, overall and per
+official parish including unknown; distinct parish counts need not be additive.
+
+`raw_licences` maps each contributing ID to the unchanged original licence text
+or null. Publication of raw licence values is an explicitly authorized exception.
+Other public fields continue to exclude host IDs, descriptions, names, addresses
+and exact listing coordinates. Escape all strings when rendered. Numeric listing
+IDs get live listing links; `demo-` IDs do not.
+
+Full original declarations stay in `raw_licences`. Partial extraction receives a
+signal but does not create an additional unnumbered contribution. Exemptions
+require whole-value declarations. `Exempt` is never an AL number, never enters
+number reuse and never groups listings. All unnumbered contributions remain
+singleton candidates, including exemptions. Track future investigation in TODO.md.
+
+Pair assessments cover only the same non-null AL number, uniquely, and agree
+with final groups. Scores summarize evidence, not probabilities. Use the rules
+and thresholds documented in README; every pair in a merged group must qualify.
+Choose eligible unions by highest minimum cross-pair score, then sorted listing
+IDs. Qualifying pairs left apart by conflicts become review. RNAL never affects
+grouping. Different hosts do not automatically block merging; bedroom differences
+only contradict two entire-apartment listings, not room listings.
+
+Use member medoids for coordinate parish and RNAL distances, breaking ties by
+listing ID. Assign candidate parish only when all members report the same
+recognized Airbnb parish; keep unknown otherwise. Airbnb geography is unverified.
+Keep coordinate, Airbnb and official parishes separately. Never override assignment
+with coordinates yet. `data/freguesia_boundaries.json` is the minimal full-resolution
+analytical derivative, with attribution/original hash. The supplied original is committed at
+`data_sources/lisboa-freguesias.geojson`, the sole boundary-source exception to
+the source-file publication audit. Do not use simplified display paths for analysis.
+
+National RNAL records resolve nonmissing normalized values by consensus. Conflicts
+become null. Resolve coordinates as pairs. Municipality
+conflicts also leave dependent parish/location unresolved. Never choose the first
+row or the nearest record. `found` means national existence, even with unresolved
+fields. `official_match` is an object only for `found`; its `distance_km` is from
+the medoid to resolved RNAL coordinates. `NUTSII` maps to `district`. There is no
+reuse object or placeholder correspondence/exemption/capacity assessment.
+
+## Site and report semantics
+
+Default selection is the latest dated snapshot directory; validate it and fail
+without falling back. `SNAPSHOT` overrides selection explicitly. The invented
+presentation fixture remains `test/fixtures/pipeline/snapshots/candidate`.
+Publish the selected dataset at `/snapshots/<folder>/snapshot.json`; derive every
+download path from it. Public `report.html` and `report.pdf` stay at the site root.
+There is one report, shared by public builds and local serving; do not add a
+private report generator, template or route. Both site and standalone report
+builds use canonical `site/report.html`, with
+`layout: null`. PDF is a derivative generated through bundled wkhtmltopdf, without
+fallback. Builds never alter source snapshots and may leave partial destination
+output on failure. Successful builds remove stale legacy/private outputs.
+
+A tabela detalhada dos relatórios omite candidatos sem sinais nem revisão de
+agrupamento, com número encontrado no RNAL em Lisboa, freguesias atribuída, por
+coordenadas e oficial concordantes e distância conhecida até 500 m. Casos por
+resolver permanecem visíveis. Totais, gráficos e downloads incluem todos os
+candidatos; a omissão não é uma certificação legal.
+
+The overlap diagram counts all candidates as Airbnb; numbered candidates form
+the intersection and unnumbered candidates the Airbnb-only area. Count repeated
+numbers once per candidate regardless of RNAL lookup. If numbered candidates
+exceed RNAL, retain counts without impossible proportional geometry. Unknown
+measures show `???` and create no measured areas.
+
+The unidentified-licence signal counts distinct listing IDs with absent or
+unrecognised values, excluding declared exemptions. Reuse groups non-null numbers
+across candidates. Its headline counts distinct listings; its chart counts each
+number once using the largest `official_match.distance_km`, with any missing
+match/distance explicitly unresolved. Regional charts count distinct IDs for
+resolved non-Lisbon municipalities; missing/contradictory NUTS II remain unresolved.
+
+Preserve methodology anchors. The district locator uses simplified CML boundaries
+in `site/_data/freguesia_map.json`, showing only administrative outlines.
+
+## Commands and verification
 
 ```bash
-bundle install
-```
-
-Update sources, then run the single analysis pipeline:
-
-```bash
-bundle exec rake sources:update
+bundle exec rake sources:register
 bundle exec rake analysis
-```
-
-Source updates, analysis and site builds are independent. `sources:update`
-checks the latest Lisbon snapshot and refreshes RNAL only when needed. Analysis
-without arguments always recalculates the latest dated local source pair without
-network requests.
-`bundle exec rake 'analysis[2026-06-23__2026-09-26]'` loads that existing snapshot
-through `PublicSnapshot.load_run` (which delegates to `load`).
-`Analysis::Data.local_paths_for_snapshot!` selects local dated sources from its
-metadata and verifies both SHA-256 hashes before the task calls `Analysis.run`
-with current versions.
-Invalid/unknown IDs, missing sources and mismatched hashes fail before analysis.
-`refresh` updates sources, analyses and builds the public site; `rebuild` analyses
-and builds without downloads. `FORCE=1` applies only to source updates.
-
-There are no local/public analysis modes, mode metadata or rerun IDs. Every run
-writes aggregate-only `snapshot.json` under `data/snapshots/<source-date-pair>/`
-and detailed CSVs under ignored
-`data/private/<source-date-pair>/`. Reanalysis replaces both outputs and that
-pair's history rows together, with staging, validation and rollback. Other pairs
-remain unchanged. Existing public source hashes must match before replacement.
-No private history is generated. Never add private details to snapshots.
-
-Preserve existing archived public `report.html` and `report.pdf` when replacing
-a dated snapshot. Analysis does not generate or update these historical copies.
-Site/report builds generate fresh reports and ignore archived copies. Preserve
-only those report filenames, not arbitrary files from the old snapshot folder.
-
-Only snapshot schema 7.0.0 is supported. Regenerate older documents from verified
-dated sources; no legacy readers or fallback snapshots. `PublicSnapshot.load`
-returns a string-keyed Hash. JSON Schema validates structure; Ruby validates
-provenance and accounting. Analysis 3.7.0 changes output organisation, not the
-2.1.0 methodology or analytical values.
-Analysis 3.8.0 / methodology 2.2.0 trims Unicode whitespace and invisible format
-characters at licence-value boundaries. Internal characters and multi-number
-values remain unrecognised. Existing schema-7 snapshots retain their recorded
-methodology; the metric accounting supports both 2.1.0 and 2.2.0.
-Analysis 3.9.0 / methodology 2.3.0 also extracts one explicit number/AL token
-from surrounding prose, requiring a single numeric sequence in the value.
-Multiple numbers and partial tokens remain unrecognised. Schema-7 snapshots
-from 2.1.0, 2.2.0 and 2.3.0 share metric accounting and keep their own versions.
-
-`site:build` and `report:build[run_dir]` build public HTML/PDF using the complete
-Jekyll page `site/report.html` and bundled wkhtmltopdf, without fallback.
-Standalone outputs default to `tmp/reports/<run-id>/`, overridden by
-`DESTINATION`, separate from the input. Builds leave inputs unchanged.
-Analysis writes data only. Both public and private reports use the canonical
-`site/report.html` Jekyll template and generate HTML/PDF. During
-`bundle exec jekyll serve`, Jekyll sets `site.config["serving"]`; the report
-generator reads the two diagnostic CSVs for each available source pair and adds
-private report pages. Liquid shows links for those pairs. Private reports and
-CSV downloads go into `_site/private-reports/<run-id>/` during local serving.
-There is no custom HTTP handler, private ERB renderer or GitHub-specific flag.
-
-Normal `jekyll build`, `site:build` and standalone `report:build` are public-only.
-A normal build must remove private outputs left by local serving in the same
-destination. Publication audits reject private files, report markers and links.
-Private CSV inputs and snapshots remain unchanged by every build. Reanalysis
-replaces diagnostics; restart Jekyll after updating inputs outside `site/`.
-
-Run the full test suite (`bundle exec rake` also runs it by default):
-
-```bash
+DESTINATION=tmp/candidate-site bundle exec rake site:build site:check
+DESTINATION=tmp/candidate-report bundle exec rake 'report:build[data/snapshots/2026-06-23__2026-09-26]'
 bundle exec rake test
+npm run site:format
+npm run site:lint
+ruby scripts/audit_publication.rb
 ```
 
-Ruby syntax checks:
+`site:build` consumes existing output without analysis. `report:build[input-dir]`
+uses the same report template. `rebuild` analyses local sources then builds;
+`refresh` updates sources first. `sources:update` uses the network only when
+explicitly requested; `FORCE=1` applies only there. `sources:archive` stages just
+the selected CSV pair and manifests. Use `bundle exec rake -T` for tasks.
 
-```bash
-ruby -c Rakefile
-ruby -c lib/alojamento_local/analysis.rb
-ruby -c site/_plugins/site_data.rb
-ruby -c site/_plugins/report_pages.rb
-ruby -c lib/alojamento_local/site_checker.rb
-ruby -c lib/alojamento_local.rb
-ruby -c lib/alojamento_local/analysis/data.rb
-```
+Add meaningful regression tests for parsing, spatial/grouping rules, source
+conflicts and publication failure paths. Synthetic sources and reviewed expected
+outputs live under `test/fixtures/pipeline/`; read its README before changes.
+The separate presentation fixture preserves its established counts. Do not use
+real datasets in tests. Test full ID coverage of the real run independently.
 
-## Data and reproducibility
+Format only source HTML/Liquid with Prettier (two spaces, preferred width 100),
+not generated pages or historical output. Use tests/builds without screenshots.
+Before committing snapshots or workflows, run `ruby scripts/audit_publication.rb`.
+The optional `--history` safety audit does not add compatibility readers. Rewriting
+history requires recoverable backup and coordinated approval.
 
-Raw data under `data_sources/**/*.csv`, detailed local results under `data/private/`, and cached files under `tmp/` are intentionally ignored by Git. Transformed, versioned outputs under `data/snapshots/` and `data/history/` are publishable project outputs and may be committed. Snapshot documents are aggregate-only and must not contain listing/host identifiers, listing URLs, names, addresses, exact coordinates, or raw licence strings. Do not commit large raw upstream datasets.
+## CI and privacy
 
-The GitHub Actions workflow in `.github/workflows/monthly-analysis.yml` runs monthly or through `workflow_dispatch`, tests before source updates and analysis, restores the latest retained `analysis-sources` artifact from a successful default-branch run, runs `sources:update`, archives only the latest dated pair with 90-day retention renewed each run, runs `analysis`, stages and audits only the sanitised `data/snapshots/` and `data/history/` outputs before committing them, builds the site from public snapshots, and publishes the site as a GitHub Pages artifact. Sources may be reused, but analysis always recalculates, even when the dated pair is unchanged. It must never commit local/detailed outputs or the generated site.
-
-The `.github/workflows/site-publish.yml` workflow rebuilds and publishes the site on human pushes to `main` and through `workflow_dispatch`. It skips the automated `github-actions[bot]` / `Atualiza análise mensal` push because the monthly workflow already builds and publishes the site in that same run. Site publication is therefore separate from the data-analysis decision, while both use `bundle exec rake site:build` and the publication audit.
-
-Rake is the interface for analysis, site builds and site checks; its tasks require `lib/alojamento_local.rb` inside the task and call `Analysis.run`, `SiteChecker` or the standard `jekyll build` CLI. The entry point configures Zeitwerk to load project constants from matching file paths. Keep standard-library and gem requires explicit; do not require individual project files. `public_schema.rb` defines shared constants and is explicitly required outside the loader. `test/alojamento_local_test.rb` checks eager loading for filename/constant consistency. npm provides frontend tooling through `npm run site:css`. Use `bundle exec rake -T` to list tasks. `bundle exec rake site:build` builds from existing public snapshots without running the analysis. `bundle exec rake site:check` checks the generated site. Test files load the application in the separate process launched by `Rake::TestTask`.
-
-Before committing changes to `data/snapshots/`, `data/history/`, or publication workflows, run `ruby scripts/audit_publication.rb`. Run `ruby scripts/audit_publication.rb --history` when auditing repository history. A history rewrite requires a recoverable Git backup and coordinated approval before force-pushing.
-
-The Airbnb snapshot is discovered from the public Inside Airbnb data page at runtime. `latest_airbnb_snapshot` must select the latest Lisbon `listings.csv.gz` entry and fail clearly if the page format changes. The run ID uses the date in the source filename, rather than assuming that the maximum listing-level `last_scraped` date is the archive date.
-
-A fresh official register is downloaded with the actual current date in its filename only when needed for the Airbnb snapshot. Cached RNAL files retain their original download date. Analysis uses the latest dated local copy, never an undated file. The `metadata` section of `snapshot.json` records source URLs, source dates, SHA-256 hashes, Git commit, analysis version, methodology version, and output schema version.
-
-Airbnb `last_scraped` values are listing-level collection dates and may span several days. They are not necessarily the same as the archive snapshot date.
-
-Historical comparisons are generated only for metrics with the same methodology version. Comparisons across different methodology versions are marked incompatible. Reanalysis replaces the current public output for its dated source pair; previously committed results remain available through Git.
-
-## Analysis architecture
-
-`Analysis.run` is the orchestration entry point. It prepares sources, selects the destination, calculates results, and generates data inside the publication step. It returns `{run_id:, path:, private_path:, summary:}`. Supply both source paths or neither; omitting them selects the latest dated local pair. There is no separate `Runner` or facade for internal helpers.
-
-- `Analysis::PreparedSources::Pair` owns source selection, preparation, dates, URLs, initial hashes, byte-change verification and the base source-date `identifier`.
-- `Analysis::Classifier` produces detailed classified listing rows from that prepared pair. `Aggregates`, `AnnouncementCounts` and `RegistrationMetrics` calculate their respective aggregates without selecting or downloading sources.
-- `Analysis::Result` takes `sources` and `run_id`; it owns classified listings, aggregates, summary and run metadata. Its `snapshot` builds and validates the current snapshot document as a Hash. The matched `official_register_date` is derived from classified listings here; the official download date belongs to source provenance.
-- `Analysis::OutputWriter` is an instance holding a result and output path. Its generation methods own the snapshot document and separate private diagnostics; serialization helpers are private.
-- `Analysis::History` owns comparisons and history CSV operations. `Analysis::PublicPublisher` stages and validates the snapshot, stages private diagnostics and histories, installs them together, rolls back failures or interruptions, and cleans staging files.
-
-Use the responsible collaborator directly in scripts and focused tests rather than adding forwarding methods to `Analysis`. Keep the high-level sequence readable in `Analysis.run`, with setup details in private helpers. Structural refactors preserve the synthetic fixture's analytical results and output contents.
-
-Public and private reports share the complete Jekyll page `site/report.html`, with
-`layout: null`. `post_read` prepares `site.data.site`; the report generator loads
-validated snapshots and creates pages before rendering. `post_write` copies
-only aggregate downloads and generates PDFs. Rake invokes `jekyll build`, then
-checks and audits output. Direct Jekyll builds also generate public PDFs.
-`report:build` uses the same path with only report pages enabled. Presentation
-defaults and bar widths belong in the page. `SiteChecker` verifies output files
-and report/download links. Jekyll handles Liquid syntax; the publication audit
-handles data/privacy validation. Report tests cover calculations, escaping,
-historical defaults and equivalent rendering between standalone and site builds.
-Builds write directly to the destination and may leave partial output on failure.
-Snapshots and histories remain unchanged. Data publication uses
-`Analysis::PublicPublisher` with validation and rollback, including diagnostics.
-Older snapshots require verified reanalysis before building.
-
-## Matching and classification
-
-Licence values are normalized conservatively. Leading zeroes and clear `/AL` or legacy year formats may be normalized; other schemes such as `/UT/YYYY` must not be treated as AL registration numbers.
-
-Repeated licence numbers are not automatically collapsed. The classifier uses spatial clusters within 500 metres, listing names, room/property types, official establishment type, and official municipality. `host_id` may exist in in-memory/local analysis rows as diagnostic metadata, but is not used as a merge criterion and must never be written to public outputs.
-
-The output distinguishes, among other categories:
-
-- likely establishments with multiple room/unit listings;
-- repeated licences in the same location;
-- the same licence appearing in multiple locations;
-- licences officially registered outside Lisbon;
-- listings with no identifiable licence.
-
-The establishment-level figure printed by the script is an analytical estimate. It collapses only the lower-risk repeated-location categories and leaves suspicious reuse cases separate.
-
-## Editing guidance
-
-Track deferred work in [TODO.md](TODO.md).
-
-### Registration statistics
-
-Measured overlap metrics live in the `registration_metrics` section of versioned `snapshot.json` (metric version 1.0.0). See [README.md — Métricas de registo](README.md#métricas-de-registo) and each output's `definitions` for units and limitations. Preserve the homepage and district layout and keep each district RNAL headline consistent with its overlap total.
-
-- RNAL and Airbnb sets count distinct normalized AL numbers; announcement counts and official entry counts have separate fields. Never sum parish distinct counts to obtain Lisbon.
-- Use official Concelho/Freguesia for RNAL and observed geography for Airbnb. Retain unknown geography explicitly and qualify local set differences.
-- Public run IDs contain only the two source dates. Versions live in metadata. Analysis always recalculates; replacing an existing public pair verifies its source hashes and validates the new schema, provenance and aggregates before installation.
-- To reproduce a prior run with a new methodology from verified local dated sources: `bundle exec rake 'analysis[<prior-public-run-id>]'`. Never relabel an old source as a fresh download.
-- Circle areas and overlap use measured sets, including empty, disjoint, identical and contained sets. Announcement bubbles use a separate fractional scale.
-- Regression metric tests in `test/registration_metrics_test.rb` and presentation geometry tests in `test/site_data_overlap_test.rb` also run through `test/versioned_analysis_test.rb`.
-
-### Source preparation and methodology changes
-
-- Prepare sources once per run with `Analysis::PreparedSources::Pair`; no cache by filename. Preserve every official entry and its raw fields. Derive the classification lookup separately so resolving official conflicts never changes the entries used by metrics.
-- Retain Airbnb rows whose municipality normalizes to Lisboa. Derive reuse counts from those same retained entries; classification, spatial grouping and metrics must use the same population. Preserve original source values internally.
-- Use the synthetic pipeline fixture for full aggregate/private output regression. Update its expected files only for an intentional change, review the diffs and independently check the accounting described in [test/fixtures/pipeline/README.md](test/fixtures/pipeline/README.md).
-- Record the methodology version on every run and explain changes and measured impact on identical source bytes in README's methodology notes. Keep implementation details that do not change results under the analysis version. Deferred simplification and archive work belongs in TODO.md.
-
-### General guidance
-
-- Format source HTML/Liquid templates with `npm run site:format` and check them with `npm run site:lint`. Prettier's Liquid plugin uses two-space indentation and a preferred width of 100 characters. CI checks source templates only; do not format archived snapshots or generated `_site/` files.
-
-- Follow the homepage and freguesia pages for site UX: Tailwind utilities, existing design tokens, concise Portuguese copy, and qualified estimates. Keep the grouping explanation with the Airbnb figures; RNAL registrations are a separate source, not the input to that estimate.
-- The district locator uses CML administrative boundaries from `site/_data/freguesia_map.json`. It highlights the selected freguesia within Lisbon; it does not show announcement locations or density.
-- Preserve methodology anchors linked from other pages when simplifying `site/metodologia.html`.
-- Preserve `licensa_raw` in internal analysis rows when changing licence parsing so the source value remains auditable; never write it to public outputs.
-- Add regression tests for new licence formats and spatial rules.
-- Do not describe unmatched or geographically inconsistent listings as illegal without official validation.
-- Do not commit raw downloaded datasets unless explicitly requested.
-- Treat `report.html` as the canonical self-contained report and `report.pdf` as a derivative.
-- Do not recreate or maintain the removed legacy `relatorio_anomalias_al.*` files; new reports belong inside their versioned run directory.
-- For homepage layout changes, run `bundle exec rake site:screenshots`. For other page layouts, build with `bundle exec rake site:build`, then run `node scripts/capture_homepage.mjs <page-path>` (for example, `freguesias/arroios/index.html` or `metodologia.html`). Inspect the 1440, 768, and 390 px images in `tmp/screenshots/`; the script checks for horizontal overflow.
+Monthly CI tests first, restores retained sources, updates explicitly, stages the
+selected pair plus manifests with renewed 90-day retention, analyses, stages only
+the generated dated snapshot, audits, builds and inspects `_site/report.pdf`.
+Site-only CI builds on human main pushes/manual runs; it skips the monthly bot
+push. Both publish a separate audited Pages artifact. Never commit raw sources,
+generated sites. Airbnb/RNAL CSV sources, manifests, legacy `data/private/`
+and `tmp/` are ignored. Work left for later belongs in [TODO.md](TODO.md).

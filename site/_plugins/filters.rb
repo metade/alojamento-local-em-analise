@@ -6,7 +6,7 @@ module SiteFilters
   end
 
   def pt_count(value, singular, plural)
-    "#{pt_number(value)} #{value == 1 ? singular : plural}"
+    "#{pt_number(value)} #{(value == 1) ? singular : plural}"
   end
 
   def listing_url(value)
@@ -18,14 +18,15 @@ module SiteFilters
       "absent" => "Sem número declarado", "unrecognised" => "Número não reconhecido",
       "found" => "Número encontrado no RNAL", "not_found" => "Número não encontrado no RNAL",
       "exempt" => "Isenção declarada",
-      "same_number_same_location" => "Mesmo número e localização compatível",
-      "single_listing_per_number_location" => "Um anúncio nesta localização e número",
-      "unnumbered_listing" => "Anúncio sem número identificável",
+      "scored_merge" => "Anúncios agrupados por evidência concordante",
+      "single_listing" => "Um anúncio neste candidato",
+      "partial_licence_extraction" => "Declaração parcialmente reconhecida",
+      "grouping_review" => "Agrupamento por rever",
+      "shared_number" => "Número partilhado por vários candidatos",
       "official_municipality_mismatch" => "Município oficial diferente do observado",
       "official_parish_mismatch" => "Freguesia oficial diferente da observada",
       "official_location_far_from_listings" => "Localização oficial distante dos anúncios",
-      "observed_parish_disagreement" => "Coordenadas e freguesia Airbnb discordantes",
-      "number_reused_across_locations" => "Número repetido em localizações diferentes"
+      "observed_parish_disagreement" => "Coordenadas e freguesia Airbnb discordantes"
     }.fetch(value, value || "???")
   end
 end

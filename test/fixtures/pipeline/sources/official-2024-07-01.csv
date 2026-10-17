@@ -1,26 +1,7 @@
-NrRNAL,Concelho,Freguesia,LatLong,DataRegisto,Denominacao,Endereco,Modalidade,NrUtentes,NUTSII
-001,Lisboa,Arroios,,2020-01-01,Synthetic establishment 001,Synthetic address 001,Hostel,4,Área Metropolitana de Lisboa
-001,Lisboa,Arroios,,2020-01-01,Synthetic establishment 001,Synthetic address 001,Hostel,4,Área Metropolitana de Lisboa
-2,Lisboa,Arroios,,2020-01-01,Synthetic establishment 2,Synthetic address 2,Moradia,4,Área Metropolitana de Lisboa
-3,Lisboa,Arroios,,2020-01-01,Synthetic establishment 3,Synthetic address 3,Moradia,4,Área Metropolitana de Lisboa
-4,Porto,Bonfim,,2020-01-01,Synthetic establishment 4,Synthetic address 4,Moradia,4,Norte
-5,Porto,Bonfim,,2020-01-01,Synthetic establishment 5,Synthetic address 5,Moradia,4,
-7,,,,2020-01-01,Synthetic establishment 7,Synthetic address 7,Moradia,4,
-8,Lisboa,Arroios,,2020-01-01,Synthetic establishment 8,Synthetic address 8,Moradia,4,Área Metropolitana de Lisboa
-8,Porto,Bonfim,,2020-01-01,Synthetic establishment 8,Synthetic address 8,Moradia,4,Norte
-9,Lisboa,Arroios,,2020-01-01,Synthetic establishment 9,Synthetic address 9,Moradia,4,Área Metropolitana de Lisboa
-9,Lisboa,Belém,,2020-01-01,Synthetic establishment 9,Synthetic address 9,Moradia,4,Área Metropolitana de Lisboa
-10,Lisboa,Arroios,38.71;-9.14,2020-01-01,Synthetic establishment 10,Synthetic address 10,Moradia,4,Área Metropolitana de Lisboa
-10,Lisboa,Arroios,38.72;-9.14,2020-01-01,Synthetic establishment 10,Synthetic address 10,Moradia,4,Área Metropolitana de Lisboa
-11,Lisboa,Arroios,38.71;-9.14,2020-01-01,Synthetic establishment 11,Synthetic address 11,Moradia,4,Área Metropolitana de Lisboa
-12,Lisboa,Arroios,,2020-01-01,Synthetic establishment 12,Synthetic address 12,Moradia,4,Área Metropolitana de Lisboa
-13,Lisboa,Ajuda,,2020-01-01,Synthetic establishment 13,Synthetic address 13,Moradia,4,Área Metropolitana de Lisboa
-406/UT/2017,Lisboa,,,2020-01-01,Synthetic establishment 406/UT/2017,Synthetic address 406/UT/2017,Moradia,4,Área Metropolitana de Lisboa
-15,n/a,,,2020-01-01,Synthetic establishment 15,Synthetic address 15,Moradia,4,
-16,Lisboa,Unknown,,2020-01-01,Synthetic establishment 16,Synthetic address 16,Moradia,4,Área Metropolitana de Lisboa
-17,Lisboa,Belém,,2020-01-01,Synthetic establishment 17,Synthetic address 17,Moradia,4,Área Metropolitana de Lisboa
-18,Lisboa,Arroios,,2020-01-01,Synthetic establishment 18,Synthetic address 18,Moradia,4,Área Metropolitana de Lisboa
-20,Lisboa,Arroios,,2020-01-01,Synthetic establishment 20,Synthetic address 20,Moradia,4,Área Metropolitana de Lisboa
-20,,,,2020-01-01,Synthetic establishment 20,Synthetic address 20,Moradia,4,
-21,Lisboa,Arroios,,2020-01-01,Synthetic establishment 21,Synthetic address 21,Moradia,4,Área Metropolitana de Lisboa
-22,Lisboa,Arroios,,2020-01-01,Synthetic establishment 22,Synthetic address 22,Moradia,4,Área Metropolitana de Lisboa
+NrRNAL,Concelho,Freguesia,LatLong,Modalidade,NUTSII
+100,Lisboa,Arroios,38.73;-9.14,Apartamento,Área Metropolitana de Lisboa
+00100/AL, Lisboa ,Belém,"38,73 ; -9,14",Apartamento,Área Metropolitana de Lisboa
+200,Lisboa,Belém,38.74;-9.14,Apartamento,Área Metropolitana de Lisboa
+200,Porto,Bonfim,41.1;-8.6,Apartamento,Norte
+300,Lisboa,Arroios,,Quartos,Área Metropolitana de Lisboa
+400,Faro,Sé,37;-7.9,Apartamento,

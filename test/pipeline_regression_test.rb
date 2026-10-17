@@ -1,110 +1,133 @@
 require "minitest/autorun"
-require "open3"
+require "minitest/mock"
 require_relative "support/pipeline_fixture"
 
 class PipelineRegressionTest < Minitest::Test
-  def with_outputs
-    Dir.mktmpdir("pipeline-regression-") do |root|
-      yield PipelineFixture.outputs(root), root
+  def test_source_to_snapshot_regression_and_independent_accounting
+    PipelineFixture.with_sources do |root, airbnb, official|
+      result = PipelineFixture.run(root, airbnb, official)
+      document = AlojamentoLocal::CandidateDataset.new(result[:path]).document
+      expected = JSON.parse(File.read(File.join(PipelineFixture::EXPECTED, "public", "snapshot.json")))
+      assert_equal expected, document
+      assert_equal({listings: 11, candidates: 11, distinct_al_numbers: 4, rnal: 3}, result[:summary])
+      assert_equal (1..11).map(&:to_s).sort, document["candidates"].flat_map { |c| c["listing_ids"] }.uniq.sort
+      assert_equal 12, document["candidates"].sum { |c| c["listing_count"] }
+      assert_equal 2, document["candidates"].count { |c| c["listing_ids"].include?("4") }
+      assert_equal 2, document["candidates"].count { |c| c["registration_status"] == "exempt" }
+      assert_equal 4, document["rnal"]["parishes"].sum { |r| r["count"] }, "Distinct parish sets are nonadditive"
+      assert_equal 11, document["listings"]["parishes"].sum { |r| r["count"] }
+      assert_equal 1, document["listings"]["parishes"].find { |r| r["freguesia"].nil? }["count"]
+      assert_equal %i[path run_id summary], result.keys.sort
+      assert_equal ["snapshot.json"], Dir.children(result[:path])
+      refute Dir.exist?(File.join(root, "private"))
+      before = File.binread(File.join(result[:path], "snapshot.json"))
+      assert_equal result[:summary], PipelineFixture.run(root, airbnb, official)[:summary]
+      assert_equal before, File.binread(File.join(result[:path], "snapshot.json"))
     end
   end
 
-  def test_complete_pipeline_matches_reviewed_expected_files
-    with_outputs do |actual, _root|
-      expected = {}
-      Dir.glob(File.join(PipelineFixture::EXPECTED, "**", "*"), File::FNM_DOTMATCH).select { |path| File.file?(path) }.each do |path|
-        relative = path.delete_prefix(PipelineFixture::EXPECTED + "/")
-        expected[relative] = File.read(path)
-      end
-      assert_equal 6, expected.size, "The analysis baseline contains public, private and history outputs"
-      assert_equal expected.keys.sort, actual.keys.sort, "Output files added or removed"
-      expected.each do |path, content|
-        assert_equal content, actual.fetch(path), "Pipeline output changed: #{path}"
-      end
-    end
-  end
-
-  def test_fixture_totals_match_independent_accounting
-    with_outputs do |files, _root|
-      document = JSON.parse(files.fetch("public/snapshot.json"))
-      metrics = document.fetch("registration_metrics")
-      # Hand-counted from the synthetic sources, not from the calculator.
-      fields = %w[rnal airbnb intersection rnal_only airbnb_only another_lisbon_parish another_municipality no_national_match unresolved_official_geography announcements empty_licence unrecognised_licence identifiable_number confirmed_rnal_match official_entries]
-      expected = {
-        "Lisboa" => [15, 18, 13, 2, 5, 0, 2, 1, 2, 34, 2, 2, 30, 28, 19],
-        "Arroios" => [12, 15, 8, 4, 7, 1, 2, 1, 3, 30, 2, 2, 26, 24, 14],
-        "Belém" => [2, 2, 0, 2, 2, 1, 0, 0, 1, 2, 0, 0, 2, 2, 2],
-        "Ajuda" => [1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1],
-        "Geografia não identificada" => [1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 2]
+  def test_national_record_consensus_and_independent_lisbon_summary
+    PipelineFixture.with_sources do |_, airbnb, official|
+      pair = PipelineFixture.pair(airbnb, official)
+      records = pair.official.records
+      assert_equal 6, pair.official.entries.size
+      assert_equal "Lisboa", records["100"]["municipality"]
+      assert_nil records["100"]["freguesia"]
+      assert_equal [38.73, -9.14], records["100"]["coordinates"]
+      %w[municipality freguesia coordinates district].each { |key| assert_nil records["200"][key] }
+      assert_nil records["300"]["coordinates"]
+      assert_equal "Faro", records["400"]["municipality"]
+      document = AlojamentoLocal::Analysis::Result.new(sources: pair).snapshot
+      conflict = document["candidates"].find { |c| c["al_number"] == "200" }
+      assert_equal "found", conflict["registration_status"]
+      assert_nil conflict["official_match"]["distance_km"]
+      # Reverse source rows: no first-row selection or nearest-location selection.
+      table = CSV.read(official, headers: true)
+      CSV.open(official, "w") { |csv|
+        csv << table.headers
+        table.reverse_each { |row| csv << row.fields }
       }
-      assert_equal 26, metrics.fetch("rows").size
-      metrics.fetch("rows").each do |row|
-        assert_equal ["geography", *fields], row.keys
-        assert_equal expected.fetch(row.fetch("geography"), Array.new(fields.size, 0)), row.values_at(*fields), row.fetch("geography")
-      end
-      assert_equal({"national_entries" => 25, "unparseable_official_numbers" => 1,
-                    "duplicate_number_extra_entries" => 5, "official_entries_unresolved_municipality" => 3,
-                    "lisbon_entries_unresolved_parish" => 2}, metrics.fetch("diagnostics"))
-      summary = document.fetch("summary")
-      assert_equal [34, 18, 19, 28], summary.values_at("listings", "licence_groups", "official_registers_lisbon", "establishment_estimate")
-      comparisons = summary.fetch("historical_comparisons").to_h { |row| [row.fetch("run_id"), row] }
-      assert_equal "incompatível — metodologia diferente", comparisons.fetch("2024-05-01__2024-06-01").fetch("status")
-      assert_empty comparisons.fetch("2024-05-01__2024-06-01").fetch("metrics")
-      assert_equal "comparável", comparisons.fetch("2024-05-02__2024-06-02").fetch("status")
-      assert_equal({"provável estabelecimento com anúncios múltiplos" => 1,
-                    "licença repetida na mesma localização" => 2,
-                    "licença repetida em várias localizações" => 1,
-                    "licença oficial fora de Lisboa" => 2,
-                    "número sem correspondência no RNAL" => 1,
-                    "geografia oficial não identificada" => 6,
-                    "localização observada não identificada" => 1,
-                    "licença única em Lisboa" => 4}, summary.fetch("classifications"))
-      assert_equal({"airbnb_snapshot_date" => "2024-06-01", "official_register_date" => "2020-01-01",
-                    "official_register_download_date" => "2024-07-01"}, summary.fetch("source_dates"))
+      assert_equal records, AlojamentoLocal::Analysis::PreparedSources::Official.new(official).records
     end
   end
 
-  def test_synthetic_public_outputs_pass_publication_audit
-    with_outputs do |_files, root|
-      artifact = File.join(root, "artifact")
-      FileUtils.cp_r(File.join(root, "public", PipelineFixture::RUN_ID), artifact)
-      FileUtils.cp(File.expand_path("../NOTICE", __dir__), File.join(artifact, "NOTICE"))
-      output, status = Open3.capture2e(RbConfig.ruby, File.expand_path("../scripts/audit_publication.rb", __dir__), "--artifact", artifact)
-      assert status.success?, output
+  def test_missing_columns_and_duplicate_or_nonnumeric_ids_fail_locally
+    PipelineFixture.with_sources do |_, airbnb, _|
+      original = File.read(airbnb)
+      File.write(airbnb, original + original.lines[1])
+      error = assert_raises(ArgumentError) { AlojamentoLocal::Analysis::PreparedSources::Airbnb.new(airbnb) }
+      assert_includes error.message, "duplicate listing IDs"
+      assert_includes error.message, 'duplicates=["1"]'
+      refute File.exist?("#{airbnb}.invalid-ids.json")
+      File.write(airbnb, original.sub(/^1,/, "bad,"))
+      assert_raises(ArgumentError) { AlojamentoLocal::Analysis::PreparedSources::Airbnb.new(airbnb) }
+      File.write(airbnb, "id,license\n1,100/AL\n")
+      assert_raises(ArgumentError) { AlojamentoLocal::Analysis::PreparedSources::Airbnb.new(airbnb) }
+    end
+  end
 
-      private_file = File.join(artifact, "listings_detailed.csv")
-      File.write(private_file, "private diagnostics")
-      output, status = Open3.capture2e(RbConfig.ruby, File.expand_path("../scripts/audit_publication.rb", __dir__), "--artifact", artifact)
-      refute status.success?
-      assert_includes output, "dados privados no artefacto: listings_detailed.csv"
-      File.delete(private_file)
+  def test_source_change_interruption_or_invalid_output_preserves_previous_snapshot
+    PipelineFixture.with_sources do |root, airbnb, official|
+      previous = PipelineFixture.run(root, airbnb, official)
+      json = File.join(previous[:path], "snapshot.json")
+      before = File.binread(json)
+      sources = PipelineFixture.pair(airbnb, official)
+      result = AlojamentoLocal::Analysis::Result.new(sources: sources)
+      publisher = AlojamentoLocal::Analysis::PublicPublisher.new(destination: previous[:path])
+      sources.stub(:verify_unchanged!, -> { raise Interrupt, "changed/interrupted" }) do
+        assert_raises(Interrupt) { publisher.publish(result: result, sources: sources) }
+      end
+      assert_equal before, File.binread(json)
+      assert_equal ["snapshot.json"], Dir.children(previous[:path])
+      result.snapshot["candidates"].first["listing_count"] = 99
+      assert_raises(ArgumentError) { publisher.publish(result: result, sources: sources) }
+      assert_equal before, File.binread(json)
+      File.open(airbnb, "a") { |file| file.write("\n") }
+      assert_raises(RuntimeError) { sources.verify_unchanged! }
+      assert_raises(RuntimeError) { PipelineFixture.run(root, airbnb, official) }
+      assert_equal before, File.binread(json)
+    end
+  end
 
-      private_html = File.join(artifact, "innocent.html")
-      File.write(private_html, '<meta name="al-private-report" content="true">')
-      output, status = Open3.capture2e(RbConfig.ruby, File.expand_path("../scripts/audit_publication.rb", __dir__), "--artifact", artifact)
-      refute status.success?
-      assert_includes output, "relatório privado em innocent.html"
-      File.write(private_html, '<a href="/private-reports/run/report.html">Local</a>')
-      output, status = Open3.capture2e(RbConfig.ruby, File.expand_path("../scripts/audit_publication.rb", __dir__), "--artifact", artifact)
-      refute status.success?
-      assert_includes output, "relatório privado em innocent.html"
-      File.delete(private_html)
+  def test_final_rename_failure_preserves_snapshot_and_other_pairs
+    PipelineFixture.with_sources do |root, airbnb, official|
+      previous = PipelineFixture.run(root, airbnb, official)
+      other = File.join(root, "public", "2024-01-01__2024-02-01")
+      FileUtils.mkdir_p(other)
+      File.write(File.join(other, "snapshot.json"), "other pair")
+      json = File.join(previous[:path], "snapshot.json")
+      before = File.binread(json)
+      sources = PipelineFixture.pair(airbnb, official)
+      result = AlojamentoLocal::Analysis::Result.new(sources: sources)
+      publisher = AlojamentoLocal::Analysis::PublicPublisher.new(destination: previous[:path])
+      real_rename = File.method(:rename)
+      rename = ->(from, to) do
+        raise IOError, "final rename failed" if to == json
+        real_rename.call(from, to)
+      end
+      File.stub(:rename, rename) do
+        assert_raises(IOError) { publisher.publish(result: result, sources: sources) }
+      end
+      assert_equal before, File.binread(json)
+      assert_equal "other pair", File.read(File.join(other, "snapshot.json"))
+    end
+  end
 
-      private_dir = File.join(artifact, "private-reports", "example")
-      FileUtils.mkdir_p(private_dir)
-      File.write(File.join(private_dir, "report.pdf"), "%PDF-private")
-      output, status = Open3.capture2e(RbConfig.ruby, File.expand_path("../scripts/audit_publication.rb", __dir__), "--artifact", artifact)
-      refute status.success?
-      assert_includes output, "dados privados no artefacto: private-reports/example/report.pdf"
-      FileUtils.rm_rf(File.join(artifact, "private-reports"))
-
-      document = File.join(artifact, "snapshot.json")
-      data = JSON.parse(File.read(document))
-      data.fetch("parish_totals").first["licensa_raw"] = "123/AL"
-      File.write(document, JSON.pretty_generate(data))
-      output, status = Open3.capture2e(RbConfig.ruby, File.expand_path("../scripts/audit_publication.rb", __dir__), "--artifact", artifact)
-      refute status.success?
-      assert_includes output, "campo proibido em snapshot.json: licensa_raw"
+  def test_listing_order_does_not_change_groups_ids_or_medoid
+    PipelineFixture.with_sources do |_, airbnb, official|
+      first = AlojamentoLocal::Analysis::Result.new(sources: PipelineFixture.pair(airbnb, official)).snapshot
+      table = CSV.read(airbnb, headers: true)
+      CSV.open(airbnb, "w") { |csv|
+        csv << table.headers
+        table.reverse_each { |row| csv << row.fields }
+      }
+      File.delete("#{airbnb}.manifest.json")
+      second = AlojamentoLocal::Analysis::Result.new(sources: PipelineFixture.pair(airbnb, official)).snapshot
+      assert_equal first, second
+      merged = first["candidates"].find { |c| c["listing_ids"] == %w[1 2] }
+      assert_equal 0, merged["official_match"]["distance_km"], "Two-member medoid ties select ID 1"
+      assert_equal "Arroios", merged["freguesia"]
+      assert_equal "Arroios", merged["geography"]["coordinate_freguesia"]
     end
   end
 end

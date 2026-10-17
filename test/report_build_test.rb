@@ -11,7 +11,7 @@ require_relative "support/candidate_fixture"
 class ReportBuildTest < Minitest::Test
   def with_data
     Dir.mktmpdir do |root|
-      path = File.join(root, "input")
+      path = File.join(root, "candidate")
       FileUtils.mkdir_p(path)
       FileUtils.cp(Dir[File.join(CandidateFixture::PATH, "*.json")], path)
       yield root, path
@@ -60,9 +60,7 @@ class ReportBuildTest < Minitest::Test
       standalone = File.join(root, "standalone")
       full = File.join(root, "site")
       build(standalone, path: path)
-      AlojamentoLocal::PublicSnapshot.stub(:load, ->(*) { flunk "Site must not read old snapshots" }) do
-        build(full, baseurl: "/preview")
-      end
+      build(full, baseurl: "/preview")
       assert_equal File.binread(File.join(standalone, "report.html")), File.binread(File.join(full, "report.html"))
       report = File.read(File.join(full, "report.html"))
       assert_includes report, "Isenção declarada"
@@ -138,6 +136,7 @@ class ReportBuildTest < Minitest::Test
       data = JSON.parse(File.read(file))
       data["candidates"][0]["official_match"]["type"] = '<script>alert("example")</script>'
       data["candidates"][0]["official_match"]["distance_km"] = 0
+      data["candidates"][0]["signals"] = ["partial_licence_extraction"]
       File.write(file, JSON.generate(data))
       output = File.join(root, "report")
       build(output, path: path)
@@ -145,6 +144,24 @@ class ReportBuildTest < Minitest::Test
       assert_includes html, "&lt;script&gt;alert(&quot;example&quot;)&lt;/script&gt;"
       refute_includes html, "<script>"
       assert_includes html.gsub(/\s+/, " "), "Distância RNAL (km): 0"
+    end
+  end
+
+  def test_report_skips_unflagged_matches_but_preserves_totals_and_download
+    with_data do |root, path|
+      file = File.join(path, "snapshot.json")
+      document = JSON.parse(File.read(file))
+      document["candidates"].first["official_match"]["distance_km"] = 0
+      File.write(file, JSON.generate(document))
+      output = File.join(root, "report")
+      build(output, path: path)
+      html = File.read(File.join(output, "report.html"))
+      refute_includes html, "candidate-001"
+      assert_includes html, "candidate-002", "Unresolved distances remain visible"
+      assert_includes html, "candidate-007", "National nonmatches remain visible"
+      assert_includes html, "candidate-008", "Declared exemptions remain unresolved"
+      assert_includes html, "<b>12</b>"
+      assert_equal document, JSON.parse(File.read(File.join(output, "snapshots", "candidate", "snapshot.json")))
     end
   end
 
@@ -167,13 +184,14 @@ class ReportBuildTest < Minitest::Test
   def test_public_build_removes_stale_private_and_historical_outputs
     with_data do |root, _|
       output = File.join(root, "site")
-      %w[private-reports/example runs/old].each do |folder|
+      %w[private-reports/example runs/old snapshots/old].each do |folder|
         FileUtils.mkdir_p(File.join(output, folder))
         File.write(File.join(output, folder, "report.html"), "private")
       end
       build(output)
       refute Dir.exist?(File.join(output, "private-reports"))
       refute Dir.exist?(File.join(output, "runs"))
+      assert_equal ["candidate"], Dir.children(File.join(output, "snapshots"))
       text, status = Open3.capture2e(RbConfig.ruby, File.expand_path("../scripts/audit_publication.rb", __dir__), "--artifact", output)
       assert status.success?, text
       # New public fields are allowed, extra detailed fields are rejected.
@@ -184,6 +202,25 @@ class ReportBuildTest < Minitest::Test
       text, status = Open3.capture2e(RbConfig.ruby, File.expand_path("../scripts/audit_publication.rb", __dir__), "--artifact", output)
       refute status.success?, text
       assert_includes text, "snapshot inválido"
+    end
+  end
+
+  def test_dated_snapshot_links_and_unknown_fetch_dates
+    with_data do |root, path|
+      dated = File.join(root, "2024-06-01__2024-07-01")
+      File.rename(path, dated)
+      file = File.join(dated, "snapshot.json")
+      data = JSON.parse(File.read(file))
+      data["source_dates"]["rnal_fetched_on"] = nil
+      data["source_dates"]["airbnb_fetched_on"] = nil
+      File.write(file, JSON.generate(data))
+      output = File.join(root, "report")
+      build(output, path: dated)
+      html = File.read(File.join(output, "report.html"))
+      assert_includes html, 'href="snapshots/2024-06-01__2024-07-01/snapshot.json"'
+      assert_includes html.gsub(/\s+/, " "), "RNAL descarregado em ???"
+      assert_includes html.gsub(/\s+/, " "), "Anúncios de 2024-06-01 (descarregados em ???)"
+      assert File.file?(File.join(output, "snapshots", "2024-06-01__2024-07-01", "snapshot.json"))
     end
   end
 
