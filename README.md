@@ -192,8 +192,8 @@ Preservamos as unidades da apresentação:
 
 ## Arquitetura e substituição segura
 
-`Analysis.run` prepara fontes uma vez (`PreparedSources::Pair`), constrói o
-`Result` e publica com `OutputWriter`/`PublicPublisher`. `Declaration`, `Grouping`
+`Analysis.run` prepara fontes uma vez (`DataSource`), constrói o
+`Result` e publica com `ResultPublisher`. `Declaration`, `Grouping`
 e `Boundaries` são colaboradores focados; Zeitwerk mantém nomes/caminhos coerentes.
 
 O builder compara contribuições e resumos diretamente com as fontes preparadas.

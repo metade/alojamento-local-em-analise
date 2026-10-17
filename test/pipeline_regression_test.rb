@@ -47,7 +47,7 @@ class PipelineRegressionTest < Minitest::Test
         csv << table.headers
         table.reverse_each { |row| csv << row.fields }
       }
-      assert_equal records, AlojamentoLocal::Analysis::PreparedSources::Official.new(official).records
+      assert_equal records, AlojamentoLocal::Analysis::DataSource::Official.new(official).records
     end
   end
 
@@ -55,14 +55,14 @@ class PipelineRegressionTest < Minitest::Test
     PipelineFixture.with_sources do |_, airbnb, _|
       original = File.read(airbnb)
       File.write(airbnb, original + original.lines[1])
-      error = assert_raises(ArgumentError) { AlojamentoLocal::Analysis::PreparedSources::Airbnb.new(airbnb) }
+      error = assert_raises(ArgumentError) { AlojamentoLocal::Analysis::DataSource::Airbnb.new(airbnb) }
       assert_includes error.message, "duplicate listing IDs"
       assert_includes error.message, 'duplicates=["1"]'
       refute File.exist?("#{airbnb}.invalid-ids.json")
       File.write(airbnb, original.sub(/^1,/, "bad,"))
-      assert_raises(ArgumentError) { AlojamentoLocal::Analysis::PreparedSources::Airbnb.new(airbnb) }
+      assert_raises(ArgumentError) { AlojamentoLocal::Analysis::DataSource::Airbnb.new(airbnb) }
       File.write(airbnb, "id,license\n1,100/AL\n")
-      assert_raises(ArgumentError) { AlojamentoLocal::Analysis::PreparedSources::Airbnb.new(airbnb) }
+      assert_raises(ArgumentError) { AlojamentoLocal::Analysis::DataSource::Airbnb.new(airbnb) }
     end
   end
 
@@ -73,7 +73,7 @@ class PipelineRegressionTest < Minitest::Test
       before = File.binread(json)
       sources = PipelineFixture.pair(airbnb, official)
       result = AlojamentoLocal::Analysis::Result.new(sources: sources)
-      publisher = AlojamentoLocal::Analysis::PublicPublisher.new(destination: previous[:path])
+      publisher = AlojamentoLocal::Analysis::ResultPublisher.new(destination: previous[:path])
       sources.stub(:verify_unchanged!, -> { raise Interrupt, "changed/interrupted" }) do
         assert_raises(Interrupt) { publisher.publish(result: result, sources: sources) }
       end
@@ -99,7 +99,7 @@ class PipelineRegressionTest < Minitest::Test
       before = File.binread(json)
       sources = PipelineFixture.pair(airbnb, official)
       result = AlojamentoLocal::Analysis::Result.new(sources: sources)
-      publisher = AlojamentoLocal::Analysis::PublicPublisher.new(destination: previous[:path])
+      publisher = AlojamentoLocal::Analysis::ResultPublisher.new(destination: previous[:path])
       real_rename = File.method(:rename)
       rename = ->(from, to) do
         raise IOError, "final rename failed" if to == json

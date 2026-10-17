@@ -3,11 +3,11 @@ module AlojamentoLocal
     module_function
 
     def run(airbnb_path: nil, official_path: nil, output_root: "data/snapshots")
-      sources = PreparedSources::Pair.new(airbnb_path: airbnb_path, official_path: official_path)
+      sources = DataSource.new(airbnb_path: airbnb_path, official_path: official_path)
       raise "No observed Lisbon listings" if sources.airbnb.entries.empty?
       result = Result.new(sources: sources)
       destination = File.join(output_root, sources.identifier)
-      PublicPublisher.new(destination: destination).publish(result: result, sources: sources)
+      ResultPublisher.new(destination: destination).publish(result: result, sources: sources)
       {run_id: sources.identifier, path: destination, summary: result.summary}
     end
   end

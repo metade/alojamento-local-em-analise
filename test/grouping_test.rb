@@ -4,7 +4,7 @@ require_relative "../lib/alojamento_local"
 
 class GroupingTest < Minitest::Test
   Grouping = AlojamentoLocal::Analysis::Grouping
-  Entry = AlojamentoLocal::Analysis::PreparedSources::Entry
+  Entry = AlojamentoLocal::Analysis::DataSource::Entry
   DESCRIPTION = (1..40).map { |i| "token#{i}" }.join(" ")
 
   def entry(id, lat: 38.73, lng: -9.14, **changes)

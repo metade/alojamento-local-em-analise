@@ -31,7 +31,7 @@ pair. Other pairs are unchanged. Old outputs are retained only in Git history.
 Collaborators:
 
 - `Analysis::Data`: downloads, dated local discovery, manifests, artifact staging.
-- `PreparedSources::Pair`: one preparation per run, initial hashes, manifests and
+- `DataSource`: one preparation per run, initial hashes, manifests and
   source-change checks. `Airbnb` retains Lisbon rows; `Official` keeps all source
   entries and independently resolves national records.
 - `Declaration`: conservative normalization, multiple explicit AL tokens, raw text
@@ -39,7 +39,7 @@ Collaborators:
 - `Grouping`: scored pairs, deterministic complete-link groups and medoids.
 - `Boundaries`: full-resolution CML polygon lookup.
 - `Result`: candidates, independent original-listing/RNAL summaries, source assertions.
-- `OutputWriter`/`PublicPublisher`: stage, validate, reread, recheck sources,
+- `ResultPublisher`: stage, validate, reread, recheck sources,
   atomically rename snapshot as final commit; lock the destination directory.
 
 Preserve Zeitwerk conventions. Require gems/standard libraries explicitly; do not

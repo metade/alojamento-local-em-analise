@@ -1,10 +1,11 @@
 require "fileutils"
+require "json"
 require "tmpdir"
 
 module AlojamentoLocal
   module Analysis
     # Validate staged bytes before atomically replacing the sole output file.
-    class PublicPublisher
+    class ResultPublisher
       def initialize(destination:)
         @destination = destination
       end
@@ -16,11 +17,21 @@ module AlojamentoLocal
         File.open(@destination, "r") do |lock|
           lock.flock(File::LOCK_EX)
           Dir.mktmpdir(".candidate-", @destination) do |stage|
-            OutputWriter.new(result: result).generate_data(stage)
+            write_snapshot(File.join(stage, CandidateDataset::FILE), result.snapshot)
             CandidateDataset.new(stage)
             sources.verify_unchanged!
             File.rename(File.join(stage, CandidateDataset::FILE), File.join(@destination, CandidateDataset::FILE))
           end
+        end
+      end
+
+      private
+
+      def write_snapshot(path, snapshot)
+        File.open(path, "w") do |file|
+          file.write(JSON.pretty_generate(snapshot) + "\n")
+          file.flush
+          file.fsync
         end
       end
     end

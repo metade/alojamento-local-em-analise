@@ -19,7 +19,7 @@ module PipelineFixture
   end
 
   def self.pair(airbnb, official)
-    AlojamentoLocal::Analysis::PreparedSources::Pair.new(airbnb_path: airbnb, official_path: official)
+    AlojamentoLocal::Analysis::DataSource.new(airbnb_path: airbnb, official_path: official)
   end
 
   def self.run(root, airbnb, official)
