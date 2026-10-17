@@ -192,9 +192,11 @@ Preservamos as unidades da apresentação:
 
 ## Arquitetura e substituição segura
 
-`Analysis.run` prepara fontes uma vez (`DataSource`), constrói o
-`Result` e publica com `ResultPublisher`. `Declaration`, `Grouping`
-e `Boundaries` são colaboradores focados; Zeitwerk mantém nomes/caminhos coerentes.
+`Analysis.run` prepara fontes uma vez (`DataSource`), constrói um `CandidateDataset`
+validado com `DatasetBuilder` e publica-o com `ResultPublisher`. O dataset é o mesmo
+objeto de dados usado para snapshots gerados e carregados, incluindo o resumo.
+`Declaration`, `Grouping` e `Boundaries` são colaboradores focados; Zeitwerk mantém
+nomes/caminhos coerentes.
 
 O builder compara contribuições e resumos diretamente com as fontes preparadas.
 A publicação prepara o JSON em staging, valida e relê os bytes por

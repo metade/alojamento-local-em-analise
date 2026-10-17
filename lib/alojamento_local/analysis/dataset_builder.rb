@@ -3,12 +3,13 @@ require "digest"
 
 module AlojamentoLocal
   module Analysis
-    class Result
-      attr_reader :sources, :snapshot
-
+    class DatasetBuilder
       def initialize(sources:)
         @sources = sources
         @boundaries = Boundaries.new
+      end
+
+      def build
         assessments = []
         numbered = Hash.new { |hash, number| hash[number] = [] }
         unnumbered = []
@@ -27,22 +28,18 @@ module AlojamentoLocal
         candidates.group_by { |row| row["al_number"] }.each do |number, group|
           group.each { |row| row["signals"] << "shared_number" } if number && group.size > 1
         end
-        @snapshot = {"source_dates" => sources.source_dates,
-                     "rnal" => counts(sources.official.lisbon_entries, distinct: true),
-                     "listings" => counts(sources.airbnb.entries),
-                     "candidates" => candidates.sort_by { |row| row["id"] },
-                     "grouping_assessments" => assessments}
-        assert_sources!
-        CandidateDataset.validate!(@snapshot)
-      end
-
-      def summary
-        {listings: snapshot.dig("listings", "lisbon", "count"), candidates: snapshot["candidates"].size,
-         distinct_al_numbers: snapshot["candidates"].filter_map { |c| c["al_number"] }.uniq.size,
-         rnal: snapshot.dig("rnal", "lisbon", "count")}
+        document = {"source_dates" => sources.source_dates,
+                    "rnal" => counts(sources.official.lisbon_entries, distinct: true),
+                    "listings" => counts(sources.airbnb.entries),
+                    "candidates" => candidates.sort_by { |row| row["id"] },
+                    "grouping_assessments" => assessments}
+        assert_sources!(document)
+        CandidateDataset.new(document: document)
       end
 
       private
+
+      attr_reader :sources
 
       def counts(entries, distinct: false)
         count = ->(rows) { distinct ? rows.filter_map(&:number).reject { |number| number == "0" }.uniq.size : rows.size }
@@ -82,18 +79,18 @@ module AlojamentoLocal
          "official_match" => match}
       end
 
-      def assert_sources!
-        actual_ids = snapshot["candidates"].flat_map { |candidate| candidate["listing_ids"] }.uniq.sort
+      def assert_sources!(document)
+        actual_ids = document["candidates"].flat_map { |candidate| candidate["listing_ids"] }.uniq.sort
         expected_ids = sources.airbnb.entries.map { |entry| entry.raw["id"] }.sort
         raise "Builder lost source listings" unless actual_ids == expected_ids
         expected = sources.airbnb.entries.flat_map do |entry|
           numbers = entry.declaration.numbers.empty? ? [nil] : entry.declaration.numbers
           numbers.map { |number| [entry.raw["id"], number] }
         end.to_set
-        actual = snapshot["candidates"].flat_map { |c| c["listing_ids"].map { |id| [id, c["al_number"]] } }
+        actual = document["candidates"].flat_map { |c| c["listing_ids"].map { |id| [id, c["al_number"]] } }
         raise "Builder changed contributions" unless actual.to_set == expected && actual.size == expected.size
-        raise "Builder changed listing summary" unless snapshot["listings"] == counts(sources.airbnb.entries)
-        raise "Builder changed RNAL summary" unless snapshot["rnal"] == counts(sources.official.lisbon_entries, distinct: true)
+        raise "Builder changed listing summary" unless document["listings"] == counts(sources.airbnb.entries)
+        raise "Builder changed RNAL summary" unless document["rnal"] == counts(sources.official.lisbon_entries, distinct: true)
       end
     end
   end

@@ -38,7 +38,10 @@ Collaborators:
   and residual retention, whole-value exemptions.
 - `Grouping`: scored pairs, deterministic complete-link groups and medoids.
 - `Boundaries`: full-resolution CML polygon lookup.
-- `Result`: candidates, independent original-listing/RNAL summaries, source assertions.
+- `DatasetBuilder`: builds a validated `CandidateDataset` from prepared sources,
+  with candidates, independent original-listing/RNAL summaries and source assertions.
+- `CandidateDataset`: the shared result object for generated and loaded documents;
+  owns document validation, accessors and the analysis summary.
 - `ResultPublisher`: stage, validate, reread, recheck sources,
   atomically rename snapshot as final commit; lock the destination directory.
 

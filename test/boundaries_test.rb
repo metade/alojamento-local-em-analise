@@ -50,8 +50,8 @@ class BoundariesTest < Minitest::Test
 
       AlojamentoLocal::Analysis::Boundaries.stub(:new, fake) do
         pair = PipelineFixture.pair(airbnb, official)
-        result = AlojamentoLocal::Analysis::Result.new(sources: pair)
-        merged = result.snapshot["candidates"].find { |c| c["listing_ids"] == %w[1 2] }
+        dataset = AlojamentoLocal::Analysis::DatasetBuilder.new(sources: pair).build
+        merged = dataset.document["candidates"].find { |c| c["listing_ids"] == %w[1 2] }
         assert_equal "Arroios", merged["freguesia"]
         assert_equal "Belém", merged["geography"]["coordinate_freguesia"]
         assert_includes merged["signals"], "observed_parish_disagreement"
@@ -62,8 +62,8 @@ class BoundariesTest < Minitest::Test
           table.each { |row| csv << row.fields }
         }
         File.delete("#{airbnb}.manifest.json")
-        result = AlojamentoLocal::Analysis::Result.new(sources: PipelineFixture.pair(airbnb, official))
-        merged = result.snapshot["candidates"].find { |c| c["listing_ids"] == %w[1 2] }
+        dataset = AlojamentoLocal::Analysis::DatasetBuilder.new(sources: PipelineFixture.pair(airbnb, official)).build
+        merged = dataset.document["candidates"].find { |c| c["listing_ids"] == %w[1 2] }
         assert_nil merged["freguesia"]
         assert_equal %w[Arroios Belém], merged["geography"]["airbnb_freguesias"]
       end

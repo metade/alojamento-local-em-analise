@@ -10,14 +10,14 @@ module AlojamentoLocal
         @destination = destination
       end
 
-      def publish(result:, sources:)
+      def publish(dataset:, sources:)
         FileUtils.mkdir_p(@destination)
         # The stable destination directory also serializes writers without a
         # separate lock file or auxiliary output directory.
         File.open(@destination, "r") do |lock|
           lock.flock(File::LOCK_EX)
           Dir.mktmpdir(".candidate-", @destination) do |stage|
-            write_snapshot(File.join(stage, CandidateDataset::FILE), result.snapshot)
+            write_snapshot(File.join(stage, CandidateDataset::FILE), dataset.document)
             CandidateDataset.new(stage)
             sources.verify_unchanged!
             File.rename(File.join(stage, CandidateDataset::FILE), File.join(@destination, CandidateDataset::FILE))

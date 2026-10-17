@@ -45,6 +45,12 @@ module AlojamentoLocal
 
     def candidates = document.fetch("candidates")
 
+    def summary
+      {listings: listings.dig("lisbon", "count"), candidates: candidates.size,
+       distinct_al_numbers: candidates.filter_map { |candidate| candidate["al_number"] }.uniq.size,
+       rnal: rnal.dig("lisbon", "count")}
+    end
+
     private
 
     def check(condition, message)
