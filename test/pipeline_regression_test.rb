@@ -16,7 +16,7 @@ class PipelineRegressionTest < Minitest::Test
         relative = path.delete_prefix(PipelineFixture::EXPECTED + "/")
         expected[relative] = File.read(path)
       end
-      assert_equal 7, expected.size, "The baseline must contain public, private, history and site outputs"
+      assert_equal 6, expected.size, "The analysis baseline contains public, private and history outputs"
       assert_equal expected.keys.sort, actual.keys.sort, "Output files added or removed"
       expected.each do |path, content|
         assert_equal content, actual.fetch(path), "Pipeline output changed: #{path}"

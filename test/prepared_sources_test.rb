@@ -195,38 +195,6 @@ class PreparedSourcesTest < Minitest::Test
     end
   end
 
-  def test_site_loads_selected_json_once_and_keeps_measured_inputs_unmodified
-    with_sources do |dir, airbnb, official|
-      result = AlojamentoLocal::Analysis.run(airbnb_path: airbnb, official_path: official,
-        output_root: File.join(dir, "snapshots"), history_path: File.join(dir, "history", "summary.csv"))
-      reads = Hash.new(0)
-      original = File.method(:read)
-      read = ->(path, *args, **options) do
-        reads[path] += 1
-        original.call(path, *args, **options)
-      end
-      builder = AlojamentoLocal::SiteData.new(snapshots: File.join(dir, "snapshots"),
-        distance_history: File.join(dir, "history", "distance_ranges.csv"),
-        outside_region_history: File.join(dir, "history", "outside_regions.csv"))
-      with_method(File, :read, read) do
-        runs = builder.public_runs
-        assert_equal result[:path], runs.first
-        data = builder.site_data(runs)
-        assert_equal 24, data["districts"].size
-        assert_equal 10, data["metrics"]["announcements"]
-        assert_equal 8, data["official_count"]
-        assert_equal "belm", data["districts"].find { |row| row["name"] == "Belém" }["slug"]
-        assert_equal 1, reads[File.join(result[:path], "snapshot.json")]
-        %w[metadata.json summary.json registration_metrics.json].each do |file|
-          assert_equal 0, reads[File.join(result[:path], file)]
-        end
-        metrics = builder.snapshot(result[:path]).fetch("registration_metrics")
-        refute metrics.fetch("rows").first.key?("geometry")
-        AlojamentoLocal::Analysis::RegistrationMetrics.validate!(JSON.parse(JSON.generate(metrics), symbolize_names: true))
-      end
-    end
-  end
-
   def test_site_aliases_keep_display_names_and_existing_routes
     AlojamentoLocal::Geography::ALIASES.each do |source, canonical|
       assert_equal canonical, AlojamentoLocal::Geography.display_name(source)

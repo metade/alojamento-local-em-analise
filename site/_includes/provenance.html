@@ -3,18 +3,22 @@
     Dados Airbnb:
     <time
       class="whitespace-nowrap"
-      datetime="{{ site.data.site.metadata.source_dates.airbnb_snapshot_date }}"
+      {% if site.data.site.source_dates.airbnb_snapshot_date %}
+        datetime="{{ site.data.site.source_dates.airbnb_snapshot_date }}"
+      {% endif %}
     >
-      {{- site.data.site.metadata.source_dates.airbnb_snapshot_date -}}
+      {{- site.data.site.source_dates.airbnb_snapshot_date | default: '???' -}}
     </time>
   </span>
   <span>
     Registo descarregado:
     <time
       class="whitespace-nowrap"
-      datetime="{{ site.data.site.metadata.source_dates.official_register_download_date }}"
+      {% if site.data.site.source_dates.rnal_fetched_on %}
+        datetime="{{ site.data.site.source_dates.rnal_fetched_on }}"
+      {% endif %}
     >
-      {{- site.data.site.metadata.source_dates.official_register_download_date -}}
+      {{- site.data.site.source_dates.rnal_fetched_on | default: '???' -}}
     </time>
   </span>
 </div>

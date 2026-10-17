@@ -1,0 +1,339 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Alojamento Local candidate snapshot",
+  "type": "object",
+  "properties": {
+    "source_dates": {
+      "type": "object",
+      "properties": {
+        "rnal_fetched_on": {
+          "type": "string",
+          "format": "date"
+        },
+        "airbnb_fetched_on": {
+          "type": "string",
+          "format": "date"
+        },
+        "airbnb_snapshot_date": {
+          "type": "string",
+          "format": "date"
+        }
+      },
+      "required": [
+        "rnal_fetched_on",
+        "airbnb_fetched_on",
+        "airbnb_snapshot_date"
+      ],
+      "additionalProperties": false
+    },
+    "rnal": {
+      "$ref": "#/$defs/geographic_counts"
+    },
+    "listings": {
+      "$ref": "#/$defs/geographic_counts"
+    },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/candidate"
+      }
+    }
+  },
+  "required": [
+    "source_dates",
+    "rnal",
+    "listings",
+    "candidates"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "parish": {
+      "enum": [
+        "Ajuda",
+        "Alcântara",
+        "Alvalade",
+        "Areeiro",
+        "Arroios",
+        "Avenidas Novas",
+        "Beato",
+        "Belém",
+        "Benfica",
+        "Campo de Ourique",
+        "Campolide",
+        "Carnide",
+        "Estrela",
+        "Lumiar",
+        "Marvila",
+        "Misericórdia",
+        "Olivais",
+        "Parque das Nações",
+        "Penha de França",
+        "Santa Clara",
+        "Santa Maria Maior",
+        "Santo António",
+        "São Domingos de Benfica",
+        "São Vicente",
+        null
+      ]
+    },
+    "distance": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "geographic_counts": {
+      "type": "object",
+      "properties": {
+        "lisbon": {
+          "type": "object",
+          "properties": {
+            "count": {
+              "$ref": "#/$defs/count"
+            }
+          },
+          "required": [
+            "count"
+          ],
+          "additionalProperties": false
+        },
+        "parishes": {
+          "type": "array",
+          "minItems": 25,
+          "maxItems": 25,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "properties": {
+              "freguesia": {
+                "$ref": "#/$defs/parish"
+              },
+              "count": {
+                "$ref": "#/$defs/count"
+              }
+            },
+            "required": [
+              "freguesia",
+              "count"
+            ],
+            "additionalProperties": false
+          }
+        }
+      },
+      "required": [
+        "lisbon",
+        "parishes"
+      ],
+      "additionalProperties": false
+    },
+    "candidate": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "al_number": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[1-9][0-9]*$"
+        },
+        "listing_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^(?:demo-)?[0-9]+$"
+          }
+        },
+        "listing_count": {
+          "$ref": "#/$defs/count"
+        },
+        "freguesia": {
+          "$ref": "#/$defs/parish"
+        },
+        "geography": {
+          "type": "object",
+          "properties": {
+            "coordinate_freguesia": {
+              "$ref": "#/$defs/parish"
+            },
+            "airbnb_freguesias": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "enum": [
+                  "Ajuda",
+                  "Alcântara",
+                  "Alvalade",
+                  "Areeiro",
+                  "Arroios",
+                  "Avenidas Novas",
+                  "Beato",
+                  "Belém",
+                  "Benfica",
+                  "Campo de Ourique",
+                  "Campolide",
+                  "Carnide",
+                  "Estrela",
+                  "Lumiar",
+                  "Marvila",
+                  "Misericórdia",
+                  "Olivais",
+                  "Parque das Nações",
+                  "Penha de França",
+                  "Santa Clara",
+                  "Santa Maria Maior",
+                  "Santo António",
+                  "São Domingos de Benfica",
+                  "São Vicente"
+                ]
+              }
+            }
+          },
+          "required": [
+            "coordinate_freguesia",
+            "airbnb_freguesias"
+          ],
+          "additionalProperties": false
+        },
+        "registration_status": {
+          "enum": [
+            "absent",
+            "unrecognised",
+            "found",
+            "not_found",
+            "exempt"
+          ]
+        },
+        "grouping_reason": {
+          "type": "string"
+        },
+        "signals": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "official_match": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "municipality": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "freguesia": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "type": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "district": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1
+            },
+            "distance_km": {
+              "$ref": "#/$defs/distance"
+            }
+          },
+          "required": [
+            "municipality",
+            "freguesia",
+            "type",
+            "district",
+            "distance_km"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "id",
+        "al_number",
+        "listing_ids",
+        "listing_count",
+        "freguesia",
+        "geography",
+        "registration_status",
+        "grouping_reason",
+        "signals",
+        "official_match"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "registration_status": {
+                "enum": [
+                  "found",
+                  "not_found"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "al_number": {
+                "type": "string"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "al_number": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "registration_status": {
+                "const": "found"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "official_match": {
+                "type": "object"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "official_match": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,501 @@
+{
+  "source_dates": {
+    "rnal_fetched_on": "2024-07-01",
+    "airbnb_fetched_on": "2024-06-03",
+    "airbnb_snapshot_date": "2024-06-01"
+  },
+  "rnal": {
+    "lisbon": {
+      "count": 17
+    },
+    "parishes": [
+      {
+        "freguesia": "Ajuda",
+        "count": 0
+      },
+      {
+        "freguesia": "Alcântara",
+        "count": 0
+      },
+      {
+        "freguesia": "Alvalade",
+        "count": 0
+      },
+      {
+        "freguesia": "Areeiro",
+        "count": 0
+      },
+      {
+        "freguesia": "Arroios",
+        "count": 6
+      },
+      {
+        "freguesia": "Avenidas Novas",
+        "count": 0
+      },
+      {
+        "freguesia": "Beato",
+        "count": 0
+      },
+      {
+        "freguesia": "Belém",
+        "count": 1
+      },
+      {
+        "freguesia": "Benfica",
+        "count": 0
+      },
+      {
+        "freguesia": "Campo de Ourique",
+        "count": 0
+      },
+      {
+        "freguesia": "Campolide",
+        "count": 0
+      },
+      {
+        "freguesia": "Carnide",
+        "count": 0
+      },
+      {
+        "freguesia": "Estrela",
+        "count": 2
+      },
+      {
+        "freguesia": "Lumiar",
+        "count": 0
+      },
+      {
+        "freguesia": "Marvila",
+        "count": 0
+      },
+      {
+        "freguesia": "Misericórdia",
+        "count": 2
+      },
+      {
+        "freguesia": "Olivais",
+        "count": 0
+      },
+      {
+        "freguesia": "Parque das Nações",
+        "count": 0
+      },
+      {
+        "freguesia": "Penha de França",
+        "count": 0
+      },
+      {
+        "freguesia": "Santa Clara",
+        "count": 0
+      },
+      {
+        "freguesia": "Santa Maria Maior",
+        "count": 4
+      },
+      {
+        "freguesia": "Santo António",
+        "count": 1
+      },
+      {
+        "freguesia": "São Domingos de Benfica",
+        "count": 0
+      },
+      {
+        "freguesia": "São Vicente",
+        "count": 0
+      },
+      {
+        "freguesia": null,
+        "count": 1
+      }
+    ]
+  },
+  "listings": {
+    "lisbon": {
+      "count": 13
+    },
+    "parishes": [
+      {
+        "freguesia": "Ajuda",
+        "count": 0
+      },
+      {
+        "freguesia": "Alcântara",
+        "count": 0
+      },
+      {
+        "freguesia": "Alvalade",
+        "count": 0
+      },
+      {
+        "freguesia": "Areeiro",
+        "count": 0
+      },
+      {
+        "freguesia": "Arroios",
+        "count": 8
+      },
+      {
+        "freguesia": "Avenidas Novas",
+        "count": 0
+      },
+      {
+        "freguesia": "Beato",
+        "count": 0
+      },
+      {
+        "freguesia": "Belém",
+        "count": 1
+      },
+      {
+        "freguesia": "Benfica",
+        "count": 0
+      },
+      {
+        "freguesia": "Campo de Ourique",
+        "count": 0
+      },
+      {
+        "freguesia": "Campolide",
+        "count": 0
+      },
+      {
+        "freguesia": "Carnide",
+        "count": 0
+      },
+      {
+        "freguesia": "Estrela",
+        "count": 0
+      },
+      {
+        "freguesia": "Lumiar",
+        "count": 0
+      },
+      {
+        "freguesia": "Marvila",
+        "count": 0
+      },
+      {
+        "freguesia": "Misericórdia",
+        "count": 1
+      },
+      {
+        "freguesia": "Olivais",
+        "count": 0
+      },
+      {
+        "freguesia": "Parque das Nações",
+        "count": 0
+      },
+      {
+        "freguesia": "Penha de França",
+        "count": 0
+      },
+      {
+        "freguesia": "Santa Clara",
+        "count": 0
+      },
+      {
+        "freguesia": "Santa Maria Maior",
+        "count": 1
+      },
+      {
+        "freguesia": "Santo António",
+        "count": 1
+      },
+      {
+        "freguesia": "São Domingos de Benfica",
+        "count": 0
+      },
+      {
+        "freguesia": "São Vicente",
+        "count": 0
+      },
+      {
+        "freguesia": null,
+        "count": 1
+      }
+    ]
+  },
+  "candidates": [
+    {
+      "id": "candidate-001",
+      "al_number": "100001",
+      "listing_ids": [
+        "demo-101"
+      ],
+      "listing_count": 1,
+      "freguesia": "Arroios",
+      "geography": {
+        "coordinate_freguesia": "Arroios",
+        "airbnb_freguesias": [
+          "Arroios"
+        ]
+      },
+      "registration_status": "found",
+      "grouping_reason": "single_listing_per_number_location",
+      "signals": [],
+      "official_match": {
+        "municipality": "Lisboa",
+        "freguesia": "Arroios",
+        "type": "Apartamento",
+        "district": "Grande Lisboa",
+        "distance_km": null
+      }
+    },
+    {
+      "id": "candidate-002",
+      "al_number": "100002",
+      "listing_ids": [
+        "demo-102",
+        "demo-103",
+        "demo-104"
+      ],
+      "listing_count": 3,
+      "freguesia": "Arroios",
+      "geography": {
+        "coordinate_freguesia": "Arroios",
+        "airbnb_freguesias": [
+          "Arroios"
+        ]
+      },
+      "registration_status": "found",
+      "grouping_reason": "same_number_same_location",
+      "signals": [],
+      "official_match": {
+        "municipality": "Lisboa",
+        "freguesia": "Arroios",
+        "type": "Apartamento",
+        "district": "Grande Lisboa",
+        "distance_km": null
+      }
+    },
+    {
+      "id": "candidate-003",
+      "al_number": "100003",
+      "listing_ids": [
+        "demo-105"
+      ],
+      "listing_count": 1,
+      "freguesia": "Santa Maria Maior",
+      "geography": {
+        "coordinate_freguesia": "Santa Maria Maior",
+        "airbnb_freguesias": [
+          "Santa Maria Maior"
+        ]
+      },
+      "registration_status": "found",
+      "grouping_reason": "single_listing_per_number_location",
+      "signals": [],
+      "official_match": {
+        "municipality": "Lisboa",
+        "freguesia": "Santa Maria Maior",
+        "type": "Apartamento",
+        "district": "Grande Lisboa",
+        "distance_km": null
+      }
+    },
+    {
+      "id": "candidate-004",
+      "al_number": "100004",
+      "listing_ids": [
+        "demo-105"
+      ],
+      "listing_count": 1,
+      "freguesia": "Santa Maria Maior",
+      "geography": {
+        "coordinate_freguesia": "Santa Maria Maior",
+        "airbnb_freguesias": [
+          "Santa Maria Maior"
+        ]
+      },
+      "registration_status": "found",
+      "grouping_reason": "single_listing_per_number_location",
+      "signals": [],
+      "official_match": {
+        "municipality": "Lisboa",
+        "freguesia": "Santa Maria Maior",
+        "type": "Apartamento",
+        "district": "Grande Lisboa",
+        "distance_km": null
+      }
+    },
+    {
+      "id": "candidate-005",
+      "al_number": "100005",
+      "listing_ids": [
+        "demo-106"
+      ],
+      "listing_count": 1,
+      "freguesia": "Arroios",
+      "geography": {
+        "coordinate_freguesia": "Arroios",
+        "airbnb_freguesias": [
+          "Arroios"
+        ]
+      },
+      "registration_status": "found",
+      "grouping_reason": "single_listing_per_number_location",
+      "signals": [
+        "number_reused_across_locations"
+      ],
+      "official_match": {
+        "municipality": "Lisboa",
+        "freguesia": "Arroios",
+        "type": "Apartamento",
+        "district": "Grande Lisboa",
+        "distance_km": 0.2
+      }
+    },
+    {
+      "id": "candidate-006",
+      "al_number": "100005",
+      "listing_ids": [
+        "demo-107"
+      ],
+      "listing_count": 1,
+      "freguesia": "Estrela",
+      "geography": {
+        "coordinate_freguesia": "Estrela",
+        "airbnb_freguesias": [
+          "Arroios"
+        ]
+      },
+      "registration_status": "found",
+      "grouping_reason": "single_listing_per_number_location",
+      "signals": [
+        "official_parish_mismatch",
+        "observed_parish_disagreement"
+      ],
+      "official_match": {
+        "municipality": "Lisboa",
+        "freguesia": "Arroios",
+        "type": "Apartamento",
+        "district": "Grande Lisboa",
+        "distance_km": 6.2
+      }
+    },
+    {
+      "id": "candidate-007",
+      "al_number": "100006",
+      "listing_ids": [
+        "demo-108"
+      ],
+      "listing_count": 1,
+      "freguesia": "Misericórdia",
+      "geography": {
+        "coordinate_freguesia": "Misericórdia",
+        "airbnb_freguesias": [
+          "Misericórdia"
+        ]
+      },
+      "registration_status": "not_found",
+      "grouping_reason": "single_listing_per_number_location",
+      "signals": [],
+      "official_match": null
+    },
+    {
+      "id": "candidate-008",
+      "al_number": null,
+      "listing_ids": [
+        "demo-109"
+      ],
+      "listing_count": 1,
+      "freguesia": "Santo António",
+      "geography": {
+        "coordinate_freguesia": "Santo António",
+        "airbnb_freguesias": [
+          "Santo António"
+        ]
+      },
+      "registration_status": "exempt",
+      "grouping_reason": "unnumbered_listing",
+      "signals": [],
+      "official_match": null
+    },
+    {
+      "id": "candidate-009",
+      "al_number": null,
+      "listing_ids": [
+        "demo-110"
+      ],
+      "listing_count": 1,
+      "freguesia": "Arroios",
+      "geography": {
+        "coordinate_freguesia": "Arroios",
+        "airbnb_freguesias": [
+          "Arroios"
+        ]
+      },
+      "registration_status": "exempt",
+      "grouping_reason": "unnumbered_listing",
+      "signals": [],
+      "official_match": null
+    },
+    {
+      "id": "candidate-010",
+      "al_number": null,
+      "listing_ids": [
+        "demo-111"
+      ],
+      "listing_count": 1,
+      "freguesia": "Belém",
+      "geography": {
+        "coordinate_freguesia": "Belém",
+        "airbnb_freguesias": [
+          "Belém"
+        ]
+      },
+      "registration_status": "unrecognised",
+      "grouping_reason": "unnumbered_listing",
+      "signals": [],
+      "official_match": null
+    },
+    {
+      "id": "candidate-011",
+      "al_number": null,
+      "listing_ids": [
+        "demo-112"
+      ],
+      "listing_count": 1,
+      "freguesia": null,
+      "geography": {
+        "coordinate_freguesia": null,
+        "airbnb_freguesias": []
+      },
+      "registration_status": "absent",
+      "grouping_reason": "unnumbered_listing",
+      "signals": [],
+      "official_match": null
+    },
+    {
+      "id": "candidate-012",
+      "al_number": "100007",
+      "listing_ids": [
+        "demo-113"
+      ],
+      "listing_count": 1,
+      "freguesia": "Arroios",
+      "geography": {
+        "coordinate_freguesia": "Arroios",
+        "airbnb_freguesias": [
+          "Arroios"
+        ]
+      },
+      "registration_status": "found",
+      "grouping_reason": "single_listing_per_number_location",
+      "signals": [
+        "official_municipality_mismatch",
+        "official_location_far_from_listings"
+      ],
+      "official_match": {
+        "municipality": "Faro",
+        "freguesia": "Sé e São Pedro",
+        "type": "Apartamento",
+        "district": "Algarve",
+        "distance_km": 217.0
+      }
+    }
+  ]
+}

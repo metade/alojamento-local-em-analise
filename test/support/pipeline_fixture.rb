@@ -24,13 +24,6 @@ module PipelineFixture
     collect(files, result.fetch(:path), "public")
     collect(files, result.fetch(:private_path), "private")
     collect(files, File.dirname(history), "public-history")
-    builder = AlojamentoLocal::SiteData.new(
-      snapshots: File.join(root, "public"),
-      distance_history: File.join(root, "public-history", "distance_ranges.csv"),
-      outside_region_history: File.join(root, "public-history", "outside_regions.csv"),
-      quotes: File.join(SOURCES, "quotes.json")
-    )
-    files["site.json"] = canonical("site.json", JSON.generate(builder.site_data(builder.public_runs)))
     files
   end
 
@@ -46,9 +39,6 @@ module PipelineFixture
       data = JSON.parse(text)
       case File.basename(path)
       when "snapshot.json"
-        normalize_metadata(data.fetch("metadata"))
-        normalize_summary(data.fetch("summary"))
-      when "site.json"
         normalize_metadata(data.fetch("metadata"))
         normalize_summary(data.fetch("summary"))
       end

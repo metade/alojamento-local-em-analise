@@ -27,14 +27,6 @@ class PublicSnapshotTest < Minitest::Test
     File.write(file, JSON.generate(data))
   end
 
-  def builder(root)
-    history = File.join(PipelineFixture::EXPECTED, "public-history")
-    AlojamentoLocal::SiteData.new(snapshots: root,
-      distance_history: File.join(history, "distance_ranges.csv"),
-      outside_region_history: File.join(history, "outside_regions.csv"),
-      quotes: File.join(PipelineFixture::SOURCES, "quotes.json"))
-  end
-
   def test_load_returns_the_document_with_integer_counts
     with_snapshot do |_, path|
       document = AlojamentoLocal::PublicSnapshot.load(path)
@@ -114,10 +106,6 @@ class PublicSnapshotTest < Minitest::Test
         mutate(path, &change)
         before = File.binread(File.join(path, "snapshot.json"))
         error = assert_raises(RuntimeError, name) { AlojamentoLocal::PublicSnapshot.load(path) }
-        site_error = assert_raises(RuntimeError, name) { builder(root).site_data(builder(root).public_runs) }
-        assert_equal error.message, site_error.message, name
-        report_error = assert_raises(RuntimeError, name) { JekyllBuild.build(run_dir: path, destination: File.join(root, "report-output")) }
-        assert_equal error.message, report_error.message, name
         assert_equal before, File.binread(File.join(path, "snapshot.json")), name
       end
     end
@@ -130,14 +118,12 @@ class PublicSnapshotTest < Minitest::Test
         File.write(File.join(path, "snapshot.json"), original)
         mutate(path) { |data| data["schema_version"] = data["metadata"]["output_schema_version"] = version }
         assert_raises(RuntimeError) { AlojamentoLocal::PublicSnapshot.load(path) }
-        assert_raises(RuntimeError) { builder(root).public_runs }
       end
       File.write(File.join(path, "snapshot.json"), "{")
       assert_raises(JSON::ParserError) { AlojamentoLocal::PublicSnapshot.load(path) }
       FileUtils.rm(File.join(path, "snapshot.json"))
       File.write(File.join(path, "metadata.json"), "{}")
       assert_raises(Errno::ENOENT) { AlojamentoLocal::PublicSnapshot.load(path) }
-      assert_raises(Errno::ENOENT) { builder(root).public_runs }
     end
   end
 

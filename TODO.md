@@ -1,5 +1,31 @@
 # Trabalho a retomar
 
+## V2 — próximos passos após o protótipo de apresentação
+
+- [x] Contrato num único snapshot RNAL + listings originais + candidatos, fixture de teste e site/relatório HTML/PDF com UX existente.
+- [ ] Rever o formato e as páginas com a fixture antes de implementar o pipeline real.
+- [ ] Avaliar coordenadas vs. freguesia Airbnb, distância aos limites CML e casos de fronteira;
+  definir quando atribuir freguesia e quando manter localização desconhecida.
+- [ ] Gerar o snapshot único a partir das fontes, incluindo totais originais de listings: declarações de vários números,
+  candidatos sem número, agrupamento conservador e reutilização em localizações separadas.
+- [ ] Preparar um único registo RNAL por número AL, resolvendo duplicações na fonte sem
+  selecionar arbitrariamente entre dados contraditórios. Comparar o candidato com o seu
+  registo oficial e calcular `official_match.distance_km`. Definir evidência para futuras
+  avaliações de correspondência e isenção.
+- [x] Diagrama com todos os candidatos no total Airbnb, candidatos com número AL na
+  sobreposição e candidatos sem número na área exclusiva Airbnb; sem bolha separada.
+  Números repetidos contam por candidato, independentemente da avaliação RNAL.
+- [x] Distribuição NUTS II de listings com registo fora de Lisboa a partir de `official_match.district`,
+  contando IDs distintos e mantendo regiões em falta ou contraditórias por resolver.
+- [x] Distribuição de distâncias por número AL repetido, usando a maior distância de um candidato ao RNAL;
+  headline em listings distintos, intervalos até 500 m, 500 m–1 km, 1–2 km, 2–5 km e mais de 5 km.
+- [ ] Capacidade fica para uma etapa posterior.
+- [ ] Substituir a orquestração antiga e os workflows de publicação pelo novo pipeline;
+  retirar histórico, snapshots/relatórios antigos e utilitários de apresentação sem uso.
+  Trocar a seleção de fixture em `_config.yml` pelo snapshot real em `data/snapshots/candidate/`.
+
+As tarefas abaixo referem-se ao sistema anterior e serão revistas ao substituir o pipeline.
+
 ## Primeiro lançamento e arquivo de fontes
 
 Prioridade: publicar uma primeira análise com o par de fontes atual. Guardar as

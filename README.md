@@ -2,6 +2,85 @@
 
 Análise investigativa de snapshots de anúncios Airbnb em Lisboa comparados com o registo oficial português de alojamento local. Os resultados são indicadores para verificação oficial, não conclusões jurídicas.
 
+## Protótipo v2: snapshot de candidatos
+
+O site mantém a apresentação existente e lê um único `snapshot.json` com três
+secções: `rnal` (resumo oficial), `listings` (totais originais antes do agrupamento)
+e `candidates` (candidatos com referências aos listings), mais `source_dates`.
+As datas são ISO 8601 (`YYYY-MM-DD`): `rnal_fetched_on` e `airbnb_fetched_on`
+registam o download de cada fonte; `airbnb_snapshot_date` é a data do arquivo Airbnb,
+usada no rótulo «Anúncios de». Descarregar um arquivo antigo não altera a sua data.
+O pipeline real será implementado na próxima etapa. Por agora, `_config.yml`
+seleciona `test/fixtures/pipeline/snapshots/candidate`, também usado nos testes.
+O snapshot não contém flags de teste, modos sintéticos nem um formato alternativo.
+O destino previsto para a futura saída real é `data/snapshots/candidate/`.
+
+```bash
+bundle exec rake site:build
+DESTINATION=tmp/v2-site bundle exec rake site:build
+bundle exec rake 'report:build[test/fixtures/pipeline/snapshots/candidate]'
+# Selecionar outro snapshot sem alterar o formato:
+SNAPSHOT=data/snapshots/candidate bundle exec rake site:build
+```
+
+Os builds publicam o ficheiro em `snapshots/candidate/snapshot.json` e o relatório em
+`report.html` / `report.pdf`. O site preserva os cartões de comparação, citações,
+sinais, diagramas, mapas e páginas de freguesia. O diagrama compara números RNAL
+e candidatos Airbnb, incluindo candidatos sem número; não há bolha separada.
+A sobreposição conta candidatos com `al_number` preenchido; a área exclusiva
+Airbnb conta candidatos com `al_number: null`. Cada candidato conta uma vez,
+mesmo quando partilha o número com outros. A existência do número no RNAL e a
+correspondência com o alojamento são avaliações separadas. A área restante RNAL
+representa a diferença entre o total RNAL e os candidatos com número. Se estes
+excederem o total RNAL, mostramos as contagens sem círculos proporcionais.
+Medidas ainda não calculadas aparecem como `???`; zero mantém-se zero.
+
+- **Listing**: registo da fonte Airbnb; a saída guarda apenas referências aos IDs.
+- **Candidato**: unidade AL estimada, com ID próprio, zero ou um número AL e um ou
+  vários `listing_ids`. Um listing pode contribuir para vários candidatos.
+- Cada candidato conta uma vez na freguesia atribuída ou em localização desconhecida.
+  Esses totais somam Lisboa. Os totais originais de listings são independentes,
+  usam a freguesia declarada na fonte e também somam Lisboa, incluindo desconhecidos.
+  A freguesia atribuída a um candidato pode diferir da original; números distintos
+  podem aparecer em várias freguesias.
+- O RNAL tem uma única contagem de números AL distintos em cada âmbito. Linhas
+  repetidas da fonte não aumentam essa contagem. Encontrar um número não confirma
+  a correspondência com o alojamento; essa avaliação fica para uma etapa posterior.
+- Isenções declaradas usam `registration_status: "exempt"`, sem avaliação nesta etapa.
+  Capacidade fica adiada.
+
+`listings.lisbon.count` e `listings.parishes[].count` guardam os totais da população
+original de listings, sem os recalcular a partir dos candidatos. `rnal.lisbon`
+guarda apenas `count`, também disponível em `rnal.parishes[].count`.
+A estrutura é validada por `schema/candidate_snapshot.schema.json`; Ruby verifica
+relações de contabilidade entre registos. Cada candidato tem `official_match`: um
+único registo RNAL quando `registration_status` é `found`, ou `null` nos restantes
+casos. O registo guarda município, freguesia, tipo, `district` (região oficial) e
+`distance_km` (distância do candidato ao registo, ou `null` quando desconhecida). A distribuição de licenças fora de Lisboa conta
+listings distintos e usa «Região por resolver» se a região faltar ou houver
+regiões contraditórias para o mesmo listing.
+A distribuição de distâncias conta cada número AL repetido uma vez, pela maior
+`official_match.distance_km` entre os seus candidatos. Mede a distância ao registo
+RNAL, incluindo quando há três ou mais candidatos; não calcula uma média.
+Intervalos: até 500 m, 500 m–1 km, 1–2 km, 2–5 km e mais de 5 km (limite superior incluído).
+Se faltar a correspondência ou a distância de algum candidato do grupo, o número fica por resolver.
+O número de candidatos com cada AL é derivado dos candidatos; não há objeto `reuse` no snapshot.
+O total do cartão conta IDs de listing distintos, independentemente destes intervalos.
+
+A fixture inventada tem 12 candidatos, 13 listings originais e 7 números AL;
+o resumo RNAL tem 17 números AL distintos. Inclui agrupamento,
+listings partilhados, reutilização, isenções e conflitos de localização. Arroios tem 8 listings originais e 5 candidatos;
+Estrela tem 0 listings originais e 1 candidato atribuído por coordenadas. IDs
+`demo-*` são referências de teste sem links reais; IDs numéricos permitem links
+Airbnb sem flags no snapshot. A fixture é uma entrada de teste, não resultados reais.
+
+O contrato permite IDs, números normalizados, freguesias e sinais. Continua a
+excluir nomes, anfitriões, endereços, texto original de licenças e coordenadas exatas.
+`CandidateDataset` e a auditoria validam campos e contabilidade. A análise anterior
+não produz o novo snapshot e não atualiza este site. Próximas etapas em `TODO.md`.
+
+## Pipeline anterior (a substituir)
+
 ## Execução
 
 ```bash

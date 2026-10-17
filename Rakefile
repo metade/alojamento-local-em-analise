@@ -48,37 +48,38 @@ desc "Update sources, analyse into public outputs, then build the site"
 task refresh: ["sources:update", :rebuild]
 
 namespace :site do
-  desc "Build and validate the public site from existing snapshots"
+  desc "Build and validate the site from cleaned RNAL and candidate data"
   task :build do
     require_relative "lib/alojamento_local"
-    command = ["bundle", "exec", "jekyll", "build"]
+    destination = File.expand_path(ENV["DESTINATION"] || "_site", __dir__)
+    command = ["bundle", "exec", "jekyll", "build", "--destination", destination]
     command.concat(["--baseurl", ENV["JEKYLL_BASEURL"]]) if ENV["JEKYLL_BASEURL"]
     sh(*command)
-    result = AlojamentoLocal::SiteChecker.check(File.join(__dir__, "_site"))
-    sh "bundle", "exec", "ruby", "scripts/audit_publication.rb", "--artifact", "_site"
-    puts "Site Jekyll criado em _site (#{result[:districts]} freguesias)."
+    result = AlojamentoLocal::SiteChecker.check(File.expand_path(ENV["DESTINATION"] || "_site", __dir__), required: AlojamentoLocal::SiteChecker::REQUIRED_FILES + %w[report.html report.pdf snapshots/candidate/snapshot.json])
+    sh "bundle", "exec", "ruby", "scripts/audit_publication.rb", "--artifact", destination
+    puts "Site Jekyll criado em #{destination} (#{result[:districts]} freguesias)."
   end
 
   desc "Check the generated site's structure"
   task :check do
     require_relative "lib/alojamento_local"
-    result = AlojamentoLocal::SiteChecker.check(File.join(__dir__, "_site"))
+    result = AlojamentoLocal::SiteChecker.check(File.expand_path(ENV["DESTINATION"] || "_site", __dir__), required: AlojamentoLocal::SiteChecker::REQUIRED_FILES + %w[report.html report.pdf snapshots/candidate/snapshot.json])
     puts "Site verificado: #{result[:html_pages]} páginas HTML, #{result[:districts]} freguesias."
   end
 
   desc "Build the site and capture screenshots (optional page path)"
   task :screenshots, [:page] => :build do |_task, args|
-    sh "node", "scripts/capture_homepage.mjs", args[:page] || "index.html"
+    sh "node", "scripts/capture_homepage.mjs", args[:page] || "index.html", ENV["DESTINATION"] || "_site"
   end
 end
 
 namespace :report do
-  desc "Build standalone HTML and PDF from an aggregate snapshot (DESTINATION overrides output)"
+  desc "Build standalone HTML/PDF from a candidate dataset directory (DESTINATION overrides output)"
   task :build, [:run_dir] do |_task, args|
     require_relative "lib/alojamento_local"
     raise "Usage: rake 'report:build[run_dir]'" unless args[:run_dir]
     input = File.expand_path(args[:run_dir])
-    AlojamentoLocal::PublicSnapshot.load(input)
+    AlojamentoLocal::CandidateDataset.new(input)
     destination = File.expand_path(ENV["DESTINATION"] || File.join("tmp", "reports", File.basename(input)))
     sh({"REPORT_RUN" => input}, "bundle", "exec", "jekyll", "build", "--destination", destination)
     html = "report.html"

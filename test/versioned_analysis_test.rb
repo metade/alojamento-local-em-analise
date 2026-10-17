@@ -245,22 +245,5 @@ end
 require_relative "registration_metrics_test"
 require_relative "site_data_overlap_test"
 
-class VersionedAnalysisTest
-  def test_report_category_bars_use_number_groups_as_denominator
-    data = JSON.parse(File.read(File.expand_path("fixtures/pipeline/expected/public/snapshot.json", __dir__)))
-    data["summary"]["licence_groups"] = 100
-    data["summary"]["listings"] = 400
-    data["summary"]["classifications"] = {"unique" => 75, "outside" => 25}
-    source = File.read(File.expand_path("../site/report.html", __dir__)).sub(/\A---.*?---\n/m, "")
-    template = Liquid::Template.parse(source)
-    html = template.render!("page" => {"report" => data})
-    assert_equal ["75", "25"], html.scan(/style="width:(\d+)%"/).flatten
-    data["summary"]["licence_groups"] = 0
-    html = template.render!("page" => {"report" => data})
-    assert_equal ["0", "0"], html.scan(/style="width:(\d+)%"/).flatten
-
-  end
-end
-
 require_relative "prepared_sources_test"
 require_relative "pipeline_regression_test"

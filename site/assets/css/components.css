@@ -247,19 +247,3 @@ td {
 .overlap-diagram:has([data-overlap="airbnb-total"]:is(:hover, :focus-visible)) .overlap-base--airbnb {
   stroke-width: 4;
 }
-
-.overlap-label--unresolved {
-  fill: #735400;
-}
-
-.overlap-unresolved-bubble {
-  fill: color-mix(in srgb, var(--color-yellow) 15%, transparent);
-  stroke: var(--color-yellow);
-  stroke-width: 2;
-}
-
-.overlap-label--unresolved:is(:hover, :focus-visible) .overlap-unresolved-bubble {
-  fill: color-mix(in srgb, var(--color-yellow) 35%, transparent);
-  stroke: #735400;
-  stroke-width: 3;
-}

@@ -6,7 +6,7 @@ import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
 const root = resolve(import.meta.dirname, "..");
-const site = join(root, "_site");
+const site = resolve(root, process.argv[3] || "_site");
 const output = join(root, "tmp", "screenshots");
 const preview = join(site, `.screenshot-preview-${process.pid}.html`);
 

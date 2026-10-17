@@ -1,177 +1,151 @@
-require "csv"
 require "json"
 
 module AlojamentoLocal
+  # Derives presentation values from the candidate snapshot. Templates retain
+  # the established site layout; unavailable measures remain nil.
   class SiteData
     ROOT = File.expand_path("../..", __dir__)
-    SNAPSHOTS = File.join(ROOT, "data", "snapshots")
     SOURCE = File.join(ROOT, "site")
-    QUOTES = File.join(ROOT, "site_content", "quotes.json")
-    DISTANCE_HISTORY = File.join(ROOT, "data", "history", "distance_ranges.csv")
-    OUTSIDE_REGION_HISTORY = File.join(ROOT, "data", "history", "outside_regions.csv")
-    DISTANCE_LABELS = {
-      "500_m_1_km" => "500 m–1 km",
-      "1_2_km" => "1–2 km",
-      "2_5_km" => "2–5 km",
-      "over_5_km" => "Mais de 5 km"
-    }.freeze
-    LABELS = {
-      "localização observada não identificada" => "Localização observada não identificada",
-      "número sem correspondência no RNAL" => "Número sem correspondência no RNAL",
-      "geografia oficial não identificada" => "Geografia oficial não identificada",
-      "sem licença" => "Sem licença",
-      "sem licença identificável" => "Sem licença identificável",
-      "licença repetida em várias localizações" => "Licença repetida em diferentes localizações",
-      "licença oficial fora de Lisboa" => "Licença registada fora de Lisboa",
-      "licença única em Lisboa" => "Licença única em Lisboa",
-      "provável estabelecimento com anúncios múltiplos" => "Provável estabelecimento com anúncios múltiplos",
-      "licença repetida na mesma localização" => "Licença repetida na mesma localização"
-    }.freeze
 
-    def initialize(snapshots: SNAPSHOTS, distance_history: DISTANCE_HISTORY, outside_region_history: OUTSIDE_REGION_HISTORY, quotes: QUOTES)
-      @snapshots = snapshots
-      @distance_history = distance_history
-      @outside_region_history = outside_region_history
-      @quotes = quotes
-      @documents = {}
+    def initialize(dataset:)
+      @dataset = dataset
     end
 
-    def pretty(value)
-      AlojamentoLocal::Geography.display_name(value)
-    end
-
-    def counts(rows)
-      rows.each_with_object(Hash.new { |h, k| h[k] = {"listings" => 0, "licences" => 0, "estimate" => 0} }) do |row, out|
-        value = out[row["classification"]]
-        value["listings"] += row.fetch("announcements")
-        value["licences"] += row.fetch("announcements_with_identifiable_number")
-        value["estimate"] += row.fetch("estimated_establishments")
+    def site_data
+      districts = Geography::PARISHES.map do |parish|
+        route = Geography.route_name(parish)
+        slug = Geography.key(route).gsub(/[^a-z0-9]+/, "-")
+        summary(parish).merge("name" => parish, "display_name" => parish, "slug" => slug)
       end
-    end
-
-    def snapshot(path)
-      @documents[path] ||= PublicSnapshot.load(path)
-    end
-
-    def public_runs
-      Dir.children(@snapshots).filter_map do |name|
-        path = File.join(@snapshots, name)
-        path if File.directory?(path) && name.match?(/\A\d{4}-\d{2}-\d{2}__\d{4}-\d{2}-\d{2}\z/)
-      end.sort_by do |path|
-        metadata = snapshot(path).fetch("metadata")
-        [metadata.fetch("source_dates").fetch("airbnb_snapshot_date"), metadata.fetch("source_dates").fetch("official_register_download_date"), Gem::Version.new(metadata.fetch("methodology_version")), Gem::Version.new(metadata.fetch("analysis_version"))]
-      end.reverse
-    end
-
-    def distance_ranges(run_id, summary)
-      return [] unless File.file?(@distance_history)
-
-      rows = CSV.read(@distance_history, headers: true).select { |row| row["run_id"] == run_id }
-      return [] if rows.empty?
-
-      keys = rows.map { |row| row["range"] }
-      raise "Invalid distance ranges for #{run_id}" unless keys.sort == DISTANCE_LABELS.keys.sort &&
-        rows.all? { |row| row["distance_method"] == "max_cross_cluster_pair_km_v1" && row["licence_groups"].to_s.match?(/\A\d+\z/) }
-
-      counts = rows.to_h { |row| [row["range"], row["licence_groups"].to_i] }
-      expected = summary.fetch("classifications").fetch("licença repetida em várias localizações", 0)
-      raise "Distance range count differs from licence groups for #{run_id}" unless counts.values.sum == expected
-
-      DISTANCE_LABELS.map { |key, label| {"key" => key, "label" => label, "count" => counts.fetch(key)} }
-    end
-
-    def outside_regions(run_id, announcements)
-      expected = announcements.select { |row| row["classification"] == "licença oficial fora de Lisboa" }
-        .sum { |row| row.fetch("announcements") }
-      return {"rows" => [], "total" => 0, "unresolved_municipality" => 0, "unresolved_region" => 0} if expected.zero?
-
-      raise "Missing outside region counts for #{run_id}" unless File.file?(@outside_region_history)
-
-      rows = CSV.read(@outside_region_history, headers: true).select { |row| row["run_id"] == run_id }
-      keys = rows.map { |row| [row["resolution"], row["official_region"].to_s.strip] }
-      unless rows.any? && keys.uniq.size == keys.size && rows.all? { |row|
-        region = row["official_region"].to_s.strip
-        resolution = row["resolution"]
-        row["region_method"] == "official_register_nutsii_v1" && row["listings"].to_s.match?(/\A[1-9]\d*\z/) &&
-          ((resolution == "resolved" && !region.empty?) || (%w[municipality_missing region_missing].include?(resolution) && region.empty?))
-      }
-        raise "Invalid outside region counts for #{run_id}"
-      end
-
-      counts = rows.to_h { |row| [[row["resolution"], row["official_region"].to_s.strip], row["listings"].to_i] }
-      raise "Outside region count differs from listings for #{run_id}" unless counts.values.sum == expected
-
-      unresolved_municipality = counts.delete(["municipality_missing", ""]).to_i
-      unresolved_region = counts.delete(["region_missing", ""]).to_i
-      chart = counts.sort_by { |(_, name), count| [-count, name] }.map { |(_, name), count| {"name" => name, "count" => count} }
-      chart << {"name" => "Município não identificado", "count" => unresolved_municipality, "unresolved" => true} if unresolved_municipality.positive?
-      chart << {"name" => "Região não identificada", "count" => unresolved_region, "unresolved" => true} if unresolved_region.positive?
-      maximum = chart.map { |row| row["count"] }.max
-      chart.each do |row|
-        row["percent"] = (row["count"] * 100.0 / expected).round(1)
-        row["width"] = (row["count"] * 100.0 / maximum).round(1)
-      end
-      {"rows" => chart, "total" => expected, "unresolved_municipality" => unresolved_municipality, "unresolved_region" => unresolved_region}
-    end
-
-    def site_data(runs)
-      run_dir = runs.first || raise("No public snapshots")
-      document = snapshot(run_dir)
-      run_id = document.fetch("metadata").fetch("run_id")
-      summary = document.fetch("summary")
-      metadata = document.fetch("metadata")
-      announcements = document.fetch("announcements_by_parish_and_classification")
-      freguesias = document.fetch("parish_totals")
-      grouped = announcements.group_by { |row| row["freguesia"] }.transform_values { |rows| counts(rows) }
-      ranges = distance_ranges(run_id, summary)
-      regions = outside_regions(run_id, announcements)
-      # Geometry belongs to the site; do not mutate validated source metrics.
-      metrics = JSON.parse(JSON.generate(document.fetch("registration_metrics")))
-      measures = metrics.fetch("rows").to_h do |row|
-        row["geometry"] = Overlap.geometry(row["rnal"], row["airbnb"], row["intersection"])
-        row["overlap_labels"] = Overlap.labels(row["geometry"], row["rnal_only"], row["intersection"], row["airbnb_only"])
-        row["unresolved"] = row["empty_licence"] + row["unrecognised_licence"]
-        row["bubble_radius"] = row["announcements"].zero? ? 0 : (85*Math.sqrt(row["unresolved"].to_f/row["announcements"])).round(3)
-        [row["geography"], row]
-      end
-      measures.fetch("Lisboa")["observed_unknown_parish"] = measures.fetch(AlojamentoLocal::Geography::UNKNOWN).fetch("announcements")
-      measures.fetch("Lisboa")["official_unknown_parish"] = metrics.fetch("diagnostics").fetch("lisbon_entries_unresolved_parish")
-      districts = freguesias.reject { |row| row["freguesia"] == AlojamentoLocal::Geography::UNKNOWN }.map do |row|
-        raw_name = row["freguesia"]
-        # Keep the published routes while analysis now uses canonical parish names.
-        route_name = AlojamentoLocal::Geography.route_name(raw_name)
-        {
-          "metrics" => measures.fetch(raw_name),
-          "name" => raw_name,
-          "display_name" => pretty(raw_name),
-          "slug" => route_name.downcase.tr("áàâãäéêëíìîïóôõöúùûüç", "aaaaaeeeiiiioooouuuuc").gsub(/[^a-z0-9]+/, "-").gsub(/\A-|-$|\A\z/, ""),
-          "listings" => row.fetch("announcements"),
-          # This snapshot field counts listing rows, not distinct registration numbers.
-          "listings_with_identifiable_licence" => row.fetch("announcements_with_identifiable_number"),
-          "establishments_estimate" => row.fetch("estimated_establishments"),
-          "categories" => LABELS.filter_map do |key, label|
-            value = grouped.dig(raw_name, key)
-            value && value["listings"].positive? ? {"key" => key, "label" => label, **value} : nil
-          end
-        }
-      end
-
+      city = summary
+      regions = outside_regions
+      repeated = @dataset.candidates.select { |candidate| candidate["al_number"] }.group_by { |candidate| candidate["al_number"] }.values.select { |group| group.size > 1 }
+      distances = distance_distribution(repeated)
       {
-        "run_id" => run_id,
-        "metrics" => measures.fetch("Lisboa"),
-        "summary" => summary,
-        "metadata" => metadata,
-        "official_count" => summary["official_registers_lisbon"],
-        "announcements_by_parish_and_classification" => announcements,
-        "repeated_listings" => announcements.select { |row| row["classification"] == "licença repetida em várias localizações" }.sum { |row| row.fetch("announcements") },
-        "distance_ranges" => ranges,
-        "distance_total" => ranges.sum { |range| range["count"] },
-        "distance_max" => ranges.map { |range| range["count"] }.max.to_i,
-        "outside_regions" => regions,
+        "snapshot_name" => File.basename(@dataset.path),
+        "source_dates" => @dataset.document.fetch("source_dates"),
+        "summary" => city,
+        "rnal" => @dataset.rnal,
+        "listings" => @dataset.listings,
+        "metrics" => city.fetch("metrics"),
         "districts" => districts,
-        "labels" => LABELS.values,
-        "quotes" => File.exist?(@quotes) ? JSON.parse(File.read(@quotes)) : [],
-        "runs" => runs.map { |path| File.basename(path) }
+        "unknown" => summary(nil),
+        "candidates" => @dataset.candidates,
+        "quotes" => JSON.parse(File.read(File.join(ROOT, "site_content", "quotes.json"))),
+        "metadata" => {
+          "source_urls" => {"airbnb" => Analysis::Data::AIRBNB_DATA_PAGE, "official" => Analysis::Data::OFFICIAL_URL}
+        },
+        "signals" => unidentified_licence_counts.merge(
+          "repeated_listings" => listing_ids(repeated.flatten).size,
+          "outside_listings" => regions.fetch("total")
+        ),
+        "distance_ranges" => distances.fetch("rows"),
+        "distance_total" => repeated.size,
+        "outside_regions" => regions
+      }
+    end
+
+    private
+
+    def listing_ids(candidates)
+      candidates.flat_map { |c| c.fetch("listing_ids") }.uniq
+    end
+
+    def unidentified_licence_counts
+      candidates = @dataset.candidates
+      empty = listing_ids(candidates.select { |candidate| candidate["registration_status"] == "absent" })
+      unrecognised = listing_ids(candidates.select { |candidate| candidate["registration_status"] == "unrecognised" })
+      {
+        "empty_licence_listings" => empty.size,
+        "unrecognised_licence_listings" => unrecognised.size,
+        "unidentified_licence_listings" => (empty | unrecognised).size
+      }
+    end
+
+    def distance_distribution(groups)
+      return {"rows" => []} if groups.empty?
+
+      ranges = [[0.5, "Até 500 m"], [1, "500 m–1 km"], [2, "1–2 km"], [5, "2–5 km"], [Float::INFINITY, "Mais de 5 km"]]
+      counts = Array.new(ranges.size + 1, 0)
+      groups.each do |candidates|
+        distances = candidates.map { |candidate| candidate.dig("official_match", "distance_km") }
+        index = if distances.any?(&:nil?)
+          ranges.size
+        else
+          ranges.index { |upper, _| distances.max <= upper }
+        end
+        counts[index] += 1
+      end
+      rows = ranges.each_with_index.map { |(_, label), index| {"label" => label, "count" => counts[index]} }
+      rows << {"label" => "Distância por resolver", "count" => counts.last, "unresolved" => true} if counts.last > 0
+      rows.each { |row| row["width"] = (row.fetch("count") * 100.0 / counts.max).round(1) }
+      {"rows" => rows}
+    end
+
+    def outside_regions
+      regions_by_listing = Hash.new { |hash, id| hash[id] = [] }
+      @dataset.candidates.each do |candidate|
+        record = candidate.fetch("official_match")
+        next unless record
+
+        municipality = Geography.municipality(record["municipality"])
+        next unless municipality && municipality != "Lisboa"
+
+        region = record["district"]&.strip
+        region = nil if region.to_s.empty?
+        candidate.fetch("listing_ids").each { |id| regions_by_listing[id] << region }
+      end
+      counts = regions_by_listing.values.each_with_object(Hash.new(0)) do |regions, totals|
+        distinct = regions.uniq
+        totals[distinct.size == 1 ? distinct.first : nil] += 1
+      end
+      maximum = counts.values.max
+      rows = counts.sort_by { |name, count| [name.nil? ? 1 : 0, -count, name.to_s] }.map do |name, count|
+        {"name" => name || "Região por resolver", "count" => count, "unresolved" => name.nil?, "width" => (count * 100.0 / maximum).round(1)}
+      end
+      {"rows" => rows, "total" => regions_by_listing.size}
+    end
+
+    def summary(parish = "Lisboa")
+      candidates = @dataset.candidates.select { |c| parish == "Lisboa" || c["freguesia"] == parish }
+      official = if parish == "Lisboa"
+        @dataset.rnal.fetch("lisbon")
+      else
+        @dataset.rnal.fetch("parishes").find { |row| row["freguesia"] == parish }
+      end
+      original_listings = if parish == "Lisboa"
+        @dataset.listings.fetch("lisbon")
+      else
+        @dataset.listings.fetch("parishes").find { |row| row["freguesia"] == parish }
+      end
+      numbered = candidates.count { |candidate| !candidate["al_number"].nil? }
+      rnal_count = official.fetch("count")
+      geometry = Overlap.geometry(rnal_count, candidates.size, numbered) if numbered <= rnal_count
+      labels = geometry ? Overlap.labels(geometry, rnal_count - numbered, numbered, candidates.size - numbered) : []
+      titles = {"rnal" => "Restante RNAL", "common" => "Com número AL", "airbnb" => "Sem número AL"}
+      labels.each { |label| label["title"] = titles.fetch(label.fetch("key")) }
+      metrics = {
+        "geography" => parish || Geography::UNKNOWN,
+        "rnal" => official.fetch("count"),
+        "airbnb" => candidates.size,
+        "geometry" => geometry,
+        "overlap_labels" => labels,
+        "intersection" => numbered,
+        "airbnb_only" => candidates.size - numbered,
+        "rnal_only" => rnal_count - numbered,
+        "another_lisbon_parish" => nil,
+        "another_municipality" => nil,
+        "no_national_match" => nil,
+        "unresolved_official_geography" => nil
+      }
+      {
+        "candidate_count" => candidates.size,
+        "listing_count" => original_listings.fetch("count"),
+        "distinct_al_numbers" => candidates.filter_map { |c| c["al_number"] }.uniq.size,
+        "official_numbers" => official.fetch("count"),
+        "identifiable_listings" => nil,
+        "metrics" => metrics,
+        "categories" => nil
       }
     end
   end

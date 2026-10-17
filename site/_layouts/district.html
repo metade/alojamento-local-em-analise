@@ -2,7 +2,7 @@
 layout: default
 ---
 {% assign district = page.district %}
-{% assign collapsed = district.listings | minus: district.establishments_estimate %}
+
 <section
   class="py-14 sm:py-20"
   aria-labelledby="district-title"
@@ -25,8 +25,8 @@ layout: default
           em {{ district.display_name }}.
         </h1>
         <p class="mt-7 max-w-[60ch] text-lg">
-          Dos anúncios Airbnb observados nesta freguesia aos estabelecimentos estimados: o que muda
-          quando agrupamos anúncios que podem pertencer ao mesmo alojamento?
+          Dos anúncios Airbnb observados nesta freguesia aos candidatos AL: o que muda quando
+          agrupamos anúncios que podem pertencer ao mesmo alojamento?
         </p>
         <div class="mt-10 grid gap-6 py-6 sm:grid-cols-[minmax(0,1fr)_minmax(0,2.4fr)] sm:gap-8">
           <div class="min-w-0 border-t-4 border-[var(--color-blue)] pt-4">
@@ -44,11 +44,11 @@ layout: default
             </h2>
             <div
               class="mt-6 grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1.15fr)] items-start gap-3"
-              aria-label="Dos anúncios observados aos estabelecimentos estimados"
+              aria-label="Dos anúncios observados aos candidatos AL"
             >
               <div class="min-w-0">
                 <strong class="block whitespace-nowrap font-[family-name:var(--font-serif)] text-[clamp(3rem,5vw,5rem)] font-normal leading-none tracking-tight tabular-nums">
-                  {{- district.listings | pt_number -}}
+                  {{- district.listing_count | pt_number -}}
                 </strong>
                 <p class="mt-3 text-base">anúncios observados</p>
               </div>
@@ -60,16 +60,15 @@ layout: default
               </span>
               <div class="min-w-0">
                 <strong class="block whitespace-nowrap font-[family-name:var(--font-serif)] text-[clamp(3rem,5vw,5rem)] font-normal leading-none tracking-tight text-[var(--color-blue)] tabular-nums">
-                  {{- district.establishments_estimate | pt_number -}}
+                  {{- district.candidate_count | pt_number -}}
                 </strong>
-                <p class="mt-3 text-base">estabelecimentos estimados</p>
+                <p class="mt-3 text-base">candidatos AL</p>
               </div>
             </div>
             <p class="mt-6 max-w-[65ch] text-sm text-[var(--color-ink)]/75">
-              O agrupamento nas categorias de menor risco reduz a contagem em
-              {{ collapsed | pt_number }} anúncios. Os casos de possível reutilização do número em
-              locais diferentes permanecem separados. Esta estimativa não é uma contagem oficial de
-              AL ativos.
+              Vários anúncios podem pertencer ao mesmo candidato; um anúncio com vários números pode
+              contribuir para vários candidatos. A possível reutilização em locais diferentes mantém
+              candidatos separados. Esta estimativa não é uma contagem oficial de AL ativos.
             </p>
             <a
               class="inline-block text-sm font-semibold text-[var(--color-blue)] underline underline-offset-4"
@@ -100,8 +99,8 @@ layout: default
         as duas fontes?
       </h2>
       <p class="mt-7 max-w-[58ch] text-lg">
-        Comparámos o número de registo AL indicado nos anúncios com o RNAL. Que números aparecem nas
-        duas fontes — e quais aparecem apenas numa?
+        Comparamos o registo oficial com os candidatos AL estimados a partir dos anúncios. A
+        contagem Airbnb inclui todos os candidatos, mesmo sem número AL identificável.
       </p>
       <aside class="mt-7 max-w-[58ch] border-l-2 border-[var(--color-blue)] bg-white/40 p-5 text-sm">
         <strong class="text-[var(--color-blue)]">O que é o número de registo AL?</strong>
@@ -128,9 +127,10 @@ layout: default
         O que encontrámos?
       </h2>
       <p class="mt-6 max-w-[55ch]">
-        {{ district.listings_with_identifiable_licence | pt_number }} dos
-        {{ district.listings | pt_number }} anúncios têm um número de registo AL identificável pelo
-        método. Contamos anúncios, não números distintos: o mesmo número pode aparecer várias vezes.
+        {{ district.identifiable_listings | pt_number }} dos
+        {{ district.listing_count | pt_number }} anúncios têm um número de registo AL identificável
+        pelo método. Contamos anúncios, não números distintos: o mesmo número pode aparecer várias
+        vezes.
       </p>
       <p class="text-sm text-[var(--color-ink)]/75">
         Identificar um número não confirma a correspondência com o RNAL. As categorias são
@@ -147,7 +147,7 @@ layout: default
       <table class="w-full border-collapse text-sm sm:text-base [&_th]:normal-case! [&_th]:tracking-normal! [&_th]:text-[length:inherit]! [&_th]:text-[var(--color-ink)]! [&_th]:px-0! [&_td]:px-0!">
         <caption class="mb-5 text-left text-sm text-[var(--color-ink)]/75">
           Classificação dos
-          {{ district.listings | pt_number }}
+          {{ district.listing_count | pt_number }}
           anúncios de
           {{ district.display_name }}
         </caption>
@@ -184,6 +184,16 @@ layout: default
                 {{ category.listings | pt_number }}
               </td>
             </tr>
+          {% else %}
+            <tr class="border-b border-[var(--color-line)]">
+              <th
+                scope="row"
+                class="py-4! text-left font-normal"
+              >
+                Classificação por anúncio por calcular
+              </th>
+              <td class="py-4 text-right tabular-nums">???</td>
+            </tr>
           {% endfor %}
         </tbody>
         <tfoot>
@@ -195,15 +205,15 @@ layout: default
               Total
             </th>
             <td class="py-4 text-right font-semibold tabular-nums">
-              {{ district.listings | pt_number }}
+              {{ district.listing_count | pt_number }}
             </td>
           </tr>
         </tfoot>
       </table>
       <p class="mt-5 text-sm text-[var(--color-ink)]/75">
-        «Licença única em Lisboa» indica um número presente num único anúncio da cidade e encontrado
-        no RNAL com concelho Lisboa. A classificação de números repetidos considera anúncios de toda
-        a cidade.
+        Os anúncios originais usam a freguesia declarada na fonte Airbnb. Os candidatos usam a
+        freguesia atribuída pela análise, que pode ser diferente. Ambos incluem localização
+        desconhecida no total da cidade; números distintos podem aparecer em várias freguesias.
       </p>
     </div>
   </div>
@@ -211,15 +221,11 @@ layout: default
 
 <section class="border-t border-[var(--color-line)] py-8">
   <div class="wrap flex flex-wrap items-center gap-x-8 gap-y-4 text-sm">
-    {% assign public_data_file = 'snapshot.json' %}
-    {% if site.data.site.metadata.output_schema_version == '4.0.0' -%}
-      {%- assign public_data_file = 'metadata.json' -%}
-    {%- endif %}
     <a
       class="font-semibold text-[var(--color-blue)] underline underline-offset-4"
-      href="{{ '/runs/' | append: site.data.site.run_id | append: '/' | append: public_data_file | relative_url }}"
+      href="{{ '/snapshots/candidate/snapshot.json' | relative_url }}"
     >
-      Consultar os dados agregados deste snapshot →
+      Consultar os dados deste snapshot →
     </a>
     <a
       class="text-[var(--color-blue)] underline underline-offset-4"

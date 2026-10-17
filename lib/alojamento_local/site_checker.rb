@@ -25,7 +25,10 @@ module AlojamentoLocal
         text.scan(/href=["']([^"']+)["']/).flatten.each do |href|
           next if href.match?(%r{\Ahttps?://}) || href.start_with?("#")
           route = CGI.unescapeHTML(href).split(/[?#]/).first
-          target = if route&.start_with?("/") && route.include?("/runs/")
+          candidate_route = !route&.include?("/runs/") && route&.match(%r{/(?:snapshots/candidate/snapshot\.json|report\.(?:html|pdf))\z})
+          target = if candidate_route
+            File.join(root, candidate_route[0].delete_prefix("/"))
+          elsif route&.start_with?("/") && route.include?("/runs/")
             File.join(root, "runs", route.split("/runs/", 2).last)
           elsif report && route && !route.start_with?("/")
             File.expand_path(route, File.dirname(path))

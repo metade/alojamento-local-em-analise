@@ -3,10 +3,8 @@
 require_relative "../../lib/alojamento_local"
 
 Jekyll::Hooks.register :site, :post_read, priority: :high do |site|
-  next if ENV["REPORT_RUN"]
-  builder = AlojamentoLocal::SiteData.new
-  runs = builder.public_runs
-  raise "Não existem snapshots públicos em #{AlojamentoLocal::SiteData::SNAPSHOTS}." if runs.empty?
-  site.config["report_runs"] = runs
-  site.data["site"] = builder.site_data(runs)
+  path = ENV["REPORT_RUN"] || ENV["SNAPSHOT"] || site.config["snapshot"] || AlojamentoLocal::CandidateDataset::DEFAULT_PATH
+  dataset = AlojamentoLocal::CandidateDataset.new(File.expand_path(path, AlojamentoLocal::SiteData::ROOT))
+  site.config["candidate_dataset"] = dataset
+  site.data["site"] = AlojamentoLocal::SiteData.new(dataset: dataset).site_data
 end

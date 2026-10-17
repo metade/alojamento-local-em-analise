@@ -9,23 +9,23 @@
     role="group"
     aria-labelledby="parish-map-title parish-map-description"
   >
-    <title id="parish-map-title">Estabelecimentos estimados por freguesia de Lisboa</title>
+    <title id="parish-map-title">Candidatos AL por freguesia de Lisboa</title>
     <desc id="parish-map-description">As cores representam contagens por freguesia, não densidade. Cada freguesia liga à sua página de dados.</desc>
     {% for district in site.data.site.districts %}
-      {% assign estimate = district.establishments_estimate %}
+      {% assign estimate = district.candidate_count %}
       {% if estimate < 200 %}{% assign shade = 'fill-[var(--color-terra)]/15' %}
       {% elsif estimate < 500 %}{% assign shade = 'fill-[var(--color-terra)]/30' %}
       {% elsif estimate < 1000 %}{% assign shade = 'fill-[var(--color-terra)]/50' %}
       {% elsif estimate < 2000 %}{% assign shade = 'fill-[var(--color-terra)]/75' %}
       {% else %}{% assign shade = 'fill-[var(--color-terra)]' %}{% endif %}
-      <a href="{{ '/freguesias/' | append: district.slug | append: '/' | relative_url }}" class="group" data-parish-name="{{ district.display_name | escape }}" data-parish-estimate="{{ estimate }}" aria-label="{{ district.display_name }}: {{ estimate | pt_number }} estabelecimentos estimados">
-        <title>{{ district.display_name }} · {{ estimate | pt_number }} estabelecimentos estimados</title>
+      <a href="{{ '/freguesias/' | append: district.slug | append: '/' | relative_url }}" class="group" data-parish-name="{{ district.display_name | escape }}" data-parish-estimate="{{ estimate }}" aria-label="{{ district.display_name }}: {{ estimate | pt_number }} candidatos AL">
+        <title>{{ district.display_name }} · {{ estimate | pt_number }} candidatos AL</title>
         <path d="{{ map.paths[district.display_name] }}" fill-rule="evenodd" class="{{ shade }} stroke-[var(--color-paper)] transition-colors group-hover:fill-[var(--color-blue)] group-focus-visible:fill-[var(--color-blue)]" stroke-width="1.5" stroke-linejoin="round" />
       </a>
     {% endfor %}
   </svg>
   <figcaption class="mt-5 text-xs text-[var(--color-ink)]/75">
-    <strong class="block font-semibold">Estabelecimentos estimados</strong>
+    <strong class="block font-semibold">Candidatos AL</strong>
     <ul
       class="mt-3 grid grid-cols-5 gap-2 text-center"
       aria-label="Legenda de contagens por freguesia"
@@ -87,7 +87,7 @@
       data-tooltip-count
       class="mt-2 block font-[family-name:var(--font-serif)] text-4xl leading-none text-[var(--color-yellow)]"
     ></span>
-    <span class="mt-2 block text-xs text-[var(--color-paper)]/80">estabelecimentos estimados</span>
+    <span class="mt-2 block text-xs text-[var(--color-paper)]/80">candidatos AL</span>
   </div>
 </figure>
 

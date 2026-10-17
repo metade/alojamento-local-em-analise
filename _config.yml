@@ -3,6 +3,8 @@ description: Uma investigação de dados sobre o alojamento local em Lisboa.
 source: site
 destination: _site
 baseurl: ""
+# Temporary input while the v2 source pipeline is built.
+snapshot: test/fixtures/pipeline/snapshots/candidate
 exclude:
   - assets/css
   - README.md

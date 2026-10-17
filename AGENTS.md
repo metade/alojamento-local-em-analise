@@ -6,6 +6,63 @@ This project compares Airbnb listing snapshots for Lisbon with the official Port
 
 The analysis is investigative. A result is an indicator for verification, not a legal finding that a listing or establishment is illegal.
 
+## V2 presentation milestone
+
+The site consumes one `snapshot.json` with `rnal`, `listings` and `candidates` through
+`CandidateDataset` and `SiteData`. `_config.yml` temporarily selects
+`test/fixtures/pipeline/snapshots/candidate`, the same fixture used by tests.
+Future real output belongs in `data/snapshots/candidate`; `SNAPSHOT` overrides
+selection. Source dates live in `source_dates`: `rnal_fetched_on`,
+`airbnb_fetched_on` and `airbnb_snapshot_date`, all ISO dates. Fetch dates describe
+downloads; the Airbnb snapshot date describes the source archive and drives
+“Anúncios de”. Never substitute download time or listing-level last_scraped for it.
+There are no synthetic flags or separate test/production formats.
+Preserve the existing homepage, parish layouts, quotes, signal cards, overlap
+component, map and report styling. Change data bindings and necessary terminology,
+not the UX. The separate yellow bubble has been removed at the user's request.
+The diagram's Airbnb total counts all candidates, including unnumbered candidates;
+RNAL counts distinct registrations. The intersection counts candidates with a
+non-null `al_number`; the Airbnb-only area counts candidates with `al_number: null`.
+Count repeated numbers once per candidate, independently of RNAL lookup and
+correspondence assessments. If numbered candidates exceed RNAL, show the counts
+without impossible proportional geometry.
+Unknown measures display `???` and must not create measured chart areas.
+The user handles screenshots for now; use tests and build checks without capturing them.
+
+Use **listing** and **candidate** in code/data. Portuguese public copy uses **anúncio**
+and **candidato**. A candidate has zero or one AL number and
+references one or more listings. Each candidate has one parish or unknown, so
+candidate totals are additive. Original listing totals are stored separately,
+overall and by the Airbnb source parish, and are also additive with unknown
+geography. Candidate geography stores only `coordinate_freguesia` and `airbnb_freguesias`;
+assignment reasons and boundary checks are deferred. Do not derive original listing
+totals from candidates or candidate geography. Numbers
+remain deduplicated per scope and are not necessarily additive.
+Capacity is deferred. RNAL summaries expose one `count` of distinct AL numbers,
+not separate entry and number totals. JSON Schema in
+`schema/candidate_snapshot.schema.json` validates structure; Ruby validates
+accounting relationships. Correspondence and exemption assessments are deferred; do not
+add placeholder fields. Declared exemptions use `registration_status: "exempt"`.
+Each candidate has one nullable `official_match`, required as an object only for
+`registration_status: "found"`. Its `distance_km` is the distance from the candidate
+to that RNAL location. Reuse counts are derived by grouping non-null AL numbers;
+there is no `reuse` object. The repeated-number chart counts each AL number once,
+using the largest `official_match.distance_km` among its candidates, with missing
+matches/distances explicitly unresolved. Resolve duplicate
+source rows before constructing this single official record; do not select the
+first row to conceal conflicting source data.
+Public fields allow listing IDs and normalized numbers; continue excluding names,
+host details, addresses, exact coordinates and raw licence text. Test IDs do not
+receive live listing links; numeric IDs do, without snapshot modes.
+
+`site:build` builds from the configured snapshot. `DESTINATION=tmp/v2-site` isolates
+output. `report:build[test/fixtures/pipeline/snapshots/candidate]` uses the same
+canonical report. Published data is `snapshots/candidate/snapshot.json`.
+The existing analysis and outputs are unchanged and do not feed this site. The
+old site snapshot/run-route/private-report instructions below are superseded for
+this branch; old analysis instructions still apply. Do not download sources,
+regenerate old outputs or deploy during this milestone. Next work is in TODO.md.
+
 ## Running the project
 
 Install dependencies:

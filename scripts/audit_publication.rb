@@ -5,7 +5,7 @@ require "open3"
 require "json"
 require_relative "../lib/alojamento_local"
 
-PUBLIC_ROOTS = ["data/snapshots/", "data/history/"].freeze
+PUBLIC_ROOTS = ["data/snapshots/", "data/history/", "test/fixtures/pipeline/snapshots/"].freeze
 ARTIFACT_ROOTS = ["_site/"].freeze
 PRIVATE_PATHS = [
   %r{\Adata_sources/},
@@ -56,6 +56,10 @@ def audit_snapshot(text, label, validate_schema: true)
   errors = []
   begin
     data = JSON.parse(text)
+    if data.is_a?(Hash) && data.key?("candidates")
+      AlojamentoLocal::CandidateDataset.validate!(data)
+      return errors
+    end
     inspect_keys = lambda do |value|
       case value
       when Hash
@@ -72,6 +76,10 @@ def audit_snapshot(text, label, validate_schema: true)
     errors << "snapshot inválido em #{label}: #{error.message}"
   end
   errors
+end
+
+def candidate_link_text(text)
+  text.gsub(%r{https://www\.airbnb\.com/rooms/[0-9]+(?=["'\s<]|$)}, "")
 end
 
 def audit_worktree
@@ -91,8 +99,9 @@ def audit_worktree
       text.lines.first.to_s.split(",").map { |value| value.strip.downcase }.include?(field)
     end
     errors << "campo proibido em #{path}: #{fields.join(', ')}" unless fields.empty?
-    errors << "URL de anúncio em #{path}" if text.match?(LISTING_URL)
-    errors << "padrão de identificador em #{path}" if text.match?(AIRBNB_IDENTIFIER)
+    checked_text = path.start_with?("data/snapshots/candidate/") || artifact_file?(path) ? candidate_link_text(text) : text
+    errors << "URL de anúncio em #{path}" if checked_text.match?(LISTING_URL)
+    errors << "padrão de identificador em #{path}" if checked_text.match?(AIRBNB_IDENTIFIER)
     errors << "referência a fonte local em #{path}" if text.match?(RAW_SOURCE_PATH)
     errors << "relatório privado em #{path}" if text.include?('name="al-private-report"') || text.include?("/private-reports/")
 
@@ -162,8 +171,9 @@ def audit_artifact(root)
     header = text.lines.first.to_s.split(",").map { |value| value.strip.downcase }
     fields = FORBIDDEN_PUBLIC_FIELDS & header
     errors << "campo proibido em #{relative}: #{fields.join(', ')}" unless fields.empty?
-    errors << "URL de anúncio em #{relative}" if text.match?(LISTING_URL)
-    errors << "padrão de identificador em #{relative}" if text.match?(AIRBNB_IDENTIFIER)
+    checked_text = candidate_link_text(text)
+    errors << "URL de anúncio em #{relative}" if checked_text.match?(LISTING_URL)
+    errors << "padrão de identificador em #{relative}" if checked_text.match?(AIRBNB_IDENTIFIER)
     errors << "referência a fonte local em #{relative}" if text.match?(RAW_SOURCE_PATH)
     errors << "relatório privado em #{relative}" if text.include?('name="al-private-report"') || text.include?("/private-reports/")
 
