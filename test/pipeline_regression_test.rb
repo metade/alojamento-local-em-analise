@@ -1,6 +1,7 @@
 require "minitest/autorun"
 require "minitest/mock"
 require_relative "support/pipeline_fixture"
+require_relative "support/candidate_fixture"
 
 class PipelineRegressionTest < Minitest::Test
   def test_source_to_snapshot_regression_and_independent_accounting
@@ -9,26 +10,27 @@ class PipelineRegressionTest < Minitest::Test
       loaded = AlojamentoLocal::CandidateDataset.new(result[:path])
       built = AlojamentoLocal::Analysis::DatasetBuilder.new(sources: PipelineFixture.pair(airbnb, official)).build
       assert_instance_of AlojamentoLocal::CandidateDataset, built
-      assert_equal loaded.document, built.document
+      assert_equal loaded.summary_document, built.summary_document
+      assert_equal loaded.details_document, built.details_document
       assert_equal result[:summary], loaded.summary
       assert_equal loaded.summary, built.summary
-      document = loaded.document
-      expected = JSON.parse(File.read(File.join(PipelineFixture::EXPECTED, "public", "snapshot.json")))
+      document = CandidateFixture.documents(loaded)
+      expected = CandidateFixture.documents(AlojamentoLocal::CandidateDataset.new(File.join(PipelineFixture::EXPECTED, "public")))
       assert_equal expected, document
       assert_equal({listings: 11, candidates: 11, distinct_al_numbers: 4, rnal: 3}, result[:summary])
       assert_equal (1..11).map(&:to_s).sort, document["candidates"].flat_map { |c| c["listing_ids"] }.uniq.sort
       assert_equal 12, document["candidates"].sum { |c| c["listing_count"] }
       assert_equal 2, document["candidates"].count { |c| c["listing_ids"].include?("4") }
       assert_equal 2, document["candidates"].count { |c| c["registration_status"] == "exempt" }
-      assert_equal 4, document["rnal"]["parishes"].sum { |r| r["count"] }, "Distinct parish sets are nonadditive"
-      assert_equal 11, document["listings"]["parishes"].sum { |r| r["count"] }
-      assert_equal 1, document["listings"]["parishes"].find { |r| r["freguesia"].nil? }["count"]
+      assert_equal 4, document["parishes"].sum { |r| r["official_count"] }, "Distinct parish sets are nonadditive"
+      assert_equal 11, document["parishes"].sum { |r| r["listings_count"] }
+      assert_equal 1, document["parishes"].find { |r| r["freguesia"].nil? }["listings_count"]
       assert_equal %i[path run_id summary], result.keys.sort
-      assert_equal ["snapshot.json"], Dir.children(result[:path])
+      assert_equal AlojamentoLocal::CandidateDataset::FILES.sort, Dir.children(result[:path]).sort
       refute Dir.exist?(File.join(root, "private"))
-      before = File.binread(File.join(result[:path], "snapshot.json"))
+      before = AlojamentoLocal::CandidateDataset::FILES.map { |file| File.binread(File.join(result[:path], file)) }
       assert_equal result[:summary], PipelineFixture.run(root, airbnb, official)[:summary]
-      assert_equal before, File.binread(File.join(result[:path], "snapshot.json"))
+      assert_equal before, AlojamentoLocal::CandidateDataset::FILES.map { |file| File.binread(File.join(result[:path], file)) }
     end
   end
 
@@ -43,7 +45,7 @@ class PipelineRegressionTest < Minitest::Test
       %w[municipality freguesia coordinates district].each { |key| assert_nil records["200"][key] }
       assert_nil records["300"]["coordinates"]
       assert_equal "Faro", records["400"]["municipality"]
-      document = AlojamentoLocal::Analysis::DatasetBuilder.new(sources: pair).build.document
+      document = AlojamentoLocal::Analysis::DatasetBuilder.new(sources: pair).build.then { |dataset| CandidateFixture.documents(dataset) }
       conflict = document["candidates"].find { |c| c["al_number"] == "200" }
       assert_equal "found", conflict["registration_status"]
       assert_nil conflict["official_match"]["distance_km"]
@@ -75,7 +77,7 @@ class PipelineRegressionTest < Minitest::Test
   def test_source_change_interruption_or_invalid_output_preserves_previous_snapshot
     PipelineFixture.with_sources do |root, airbnb, official|
       previous = PipelineFixture.run(root, airbnb, official)
-      json = File.join(previous[:path], "snapshot.json")
+      json = File.join(previous[:path], "summary.json")
       before = File.binread(json)
       sources = PipelineFixture.pair(airbnb, official)
       dataset = AlojamentoLocal::Analysis::DatasetBuilder.new(sources: sources).build
@@ -84,8 +86,8 @@ class PipelineRegressionTest < Minitest::Test
         assert_raises(Interrupt) { publisher.publish(dataset: dataset, sources: sources) }
       end
       assert_equal before, File.binread(json)
-      assert_equal ["snapshot.json"], Dir.children(previous[:path])
-      dataset.document["candidates"].first["listing_count"] = 99
+      assert_equal AlojamentoLocal::CandidateDataset::FILES.sort, Dir.children(previous[:path]).sort
+      dataset.candidates.first["listing_count"] = 99
       assert_raises(ArgumentError) { publisher.publish(dataset: dataset, sources: sources) }
       assert_equal before, File.binread(json)
       File.open(airbnb, "a") { |file| file.write("\n") }
@@ -100,35 +102,35 @@ class PipelineRegressionTest < Minitest::Test
       previous = PipelineFixture.run(root, airbnb, official)
       other = File.join(root, "public", "2024-01-01__2024-02-01")
       FileUtils.mkdir_p(other)
-      File.write(File.join(other, "snapshot.json"), "other pair")
-      json = File.join(previous[:path], "snapshot.json")
+      File.write(File.join(other, "summary.json"), "other pair")
+      json = File.join(previous[:path], "summary.json")
       before = File.binread(json)
       sources = PipelineFixture.pair(airbnb, official)
       dataset = AlojamentoLocal::Analysis::DatasetBuilder.new(sources: sources).build
       publisher = AlojamentoLocal::Analysis::ResultPublisher.new(destination: previous[:path])
       real_rename = File.method(:rename)
       rename = ->(from, to) do
-        raise IOError, "final rename failed" if to == json
+        raise IOError, "final rename failed" if to == previous[:path] && from.include?(".candidate-")
         real_rename.call(from, to)
       end
       File.stub(:rename, rename) do
         assert_raises(IOError) { publisher.publish(dataset: dataset, sources: sources) }
       end
       assert_equal before, File.binread(json)
-      assert_equal "other pair", File.read(File.join(other, "snapshot.json"))
+      assert_equal "other pair", File.read(File.join(other, "summary.json"))
     end
   end
 
   def test_listing_order_does_not_change_groups_ids_or_medoid
     PipelineFixture.with_sources do |_, airbnb, official|
-      first = AlojamentoLocal::Analysis::DatasetBuilder.new(sources: PipelineFixture.pair(airbnb, official)).build.document
+      first = AlojamentoLocal::Analysis::DatasetBuilder.new(sources: PipelineFixture.pair(airbnb, official)).build.then { |dataset| CandidateFixture.documents(dataset) }
       table = CSV.read(airbnb, headers: true)
       CSV.open(airbnb, "w") { |csv|
         csv << table.headers
         table.reverse_each { |row| csv << row.fields }
       }
       File.delete("#{airbnb}.manifest.json")
-      second = AlojamentoLocal::Analysis::DatasetBuilder.new(sources: PipelineFixture.pair(airbnb, official)).build.document
+      second = AlojamentoLocal::Analysis::DatasetBuilder.new(sources: PipelineFixture.pair(airbnb, official)).build.then { |dataset| CandidateFixture.documents(dataset) }
       assert_equal first, second
       merged = first["candidates"].find { |c| c["listing_ids"] == %w[1 2] }
       assert_equal 0, merged["official_match"]["distance_km"], "Two-member medoid ties select ID 1"

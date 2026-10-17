@@ -22,7 +22,8 @@ without network requests. It returns `{run_id:, path:, summary:}`.
 There is no `analysis[run_id]`, parallel pipeline, legacy snapshot reader, output
 version infrastructure or historical comparison subsystem.
 
-The sole analysis output is `data/snapshots/<airbnb-archive-date>__<rnal-source-file-date>/snapshot.json`.
+The sole analysis output is exactly `summary.json` and `candidates.json.gz` in
+`data/snapshots/<airbnb-archive-date>__<rnal-source-file-date>/`.
 Do not generate diagnostics or private outputs. Source manifests stay beside CSVs.
 Folder dates identify
 selected files; they do not prove download dates. Reanalysis safely replaces that
@@ -43,7 +44,8 @@ Collaborators:
 - `CandidateDataset`: the shared result object for generated and loaded documents;
   owns document validation, accessors and the analysis summary.
 - `ResultPublisher`: stage, validate, reread, recheck sources,
-  atomically rename snapshot as final commit; lock the destination directory.
+  replace the complete dated directory with backup/rollback; lock its stable parent.
+  Validate staging before locking exclusively. Readers and download copies share the parent lock.
 
 Preserve Zeitwerk conventions. Require gems/standard libraries explicitly; do not
 require individual project files. Use responsible collaborators directly in
@@ -52,10 +54,19 @@ sets up the loader and shared licence/coordinate helpers.
 
 ## Contract and accounting
 
-`CandidateDataset` and `schema/candidate_snapshot.schema.json` define the sole
-public contract. JSON Schema validates structure; Ruby validates relationships.
-The document has `source_dates`, `rnal`, `listings`, `candidates` and
-`grouping_assessments`. No synthetic flags or test/production formats.
+`CandidateDataset`, `schema/candidate_summary.schema.json` and
+`schema/candidate_details.schema.json` define the sole public contract.
+JSON Schema validates structure; Ruby validates relationships and summary/detail agreement.
+The summary has `source_dates`, `lisbon`, `parishes`, `signals`,
+`repeated_number_distances` and `outside_regions`. Scopes contain independent
+`official_count` and `listings_count`, plus `candidates_count`,
+`numbered_candidates_count` and `distinct_al_numbers_count`; include all parishes
+and unknown last. The decoded details contain `candidates` and `grouping_assessments`.
+Use compact UTF-8 JSON with a trailing newline, Zlib level 9, mtime zero and no
+filename/comment. No synthetic flags or test/production formats.
+`CandidateDataset` exposes `summary_document`, `details_document`, `candidates`
+and `grouping_assessments`; `summary` preserves the four-value Ruby analysis summary.
+Share candidate aggregate construction and validation in `candidate_aggregates`.
 
 `airbnb_snapshot_date` is required and drives “Anúncios de”. Fetch dates
 `airbnb_fetched_on` and `rnal_fetched_on` may be null. Never infer them from mtime,
@@ -116,8 +127,8 @@ reuse object or placeholder correspondence/exemption/capacity assessment.
 Default selection is the latest dated snapshot directory; validate it and fail
 without falling back. `SNAPSHOT` overrides selection explicitly. The invented
 presentation fixture remains `test/fixtures/pipeline/snapshots/candidate`.
-Publish the selected dataset at `/snapshots/<folder>/snapshot.json`; derive every
-download path from it. Public `report.html` and `report.pdf` stay at the site root.
+Publish both files at `/snapshots/<folder>/`; derive every
+download path from the selected dataset. Verify file hashes during download copies. Public `report.html` and `report.pdf` stay at the site root.
 There is one report, shared by public builds and local serving; do not add a
 private report generator, template or route. Both site and standalone report
 builds use canonical `site/report.html`, with
@@ -182,7 +193,7 @@ history requires recoverable backup and coordinated approval.
 
 Monthly CI tests first, restores retained sources, updates explicitly, stages the
 selected pair plus manifests with renewed 90-day retention, analyses, stages only
-the generated dated snapshot, audits, builds and inspects `_site/report.pdf`.
+the two files in the generated dated directory, audits, builds and inspects `_site/report.pdf`.
 Site-only CI builds on human main pushes/manual runs; it skips the monthly bot
 push. Both publish a separate audited Pages artifact. Never commit raw sources,
 generated sites. Airbnb/RNAL CSV sources, manifests, legacy `data/private/`

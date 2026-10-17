@@ -186,7 +186,8 @@ layout: null
       correspondência com o alojamento.
     </p>
     <p>
-      <a href="{{ d.snapshot_download | remove_first: '/' }}">Snapshot JSON ↓</a>
+      <a href="{{ d.summary_download | remove_first: '/' }}">Resumo JSON ↓</a>
+      <a href="{{ d.candidates_download | remove_first: '/' }}">Candidatos JSON.gz ↓</a>
     </p>
     <p>
       RNAL descarregado em {{ d.source_dates.rnal_fetched_on | default: '???' }} · Anúncios de

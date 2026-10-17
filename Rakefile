@@ -47,9 +47,9 @@ task rebuild: [:analysis, "site:build"]
 desc "Update sources, analyse into public outputs, then build the site"
 task refresh: ["sources:update", :rebuild]
 
-def selected_download
+def selected_downloads
   path = ENV["SNAPSHOT"] || AlojamentoLocal::CandidateDataset.default_path
-  AlojamentoLocal::CandidateDataset.new(path).download_path.delete_prefix("/")
+  AlojamentoLocal::CandidateDataset.new(path).download_paths.map { |path| path.delete_prefix("/") }
 end
 
 namespace :site do
@@ -60,7 +60,7 @@ namespace :site do
     command = ["bundle", "exec", "jekyll", "build", "--destination", destination]
     command.concat(["--baseurl", ENV["JEKYLL_BASEURL"]]) if ENV["JEKYLL_BASEURL"]
     sh(*command)
-    result = AlojamentoLocal::SiteChecker.check(File.expand_path(ENV["DESTINATION"] || "_site", __dir__), required: AlojamentoLocal::SiteChecker::REQUIRED_FILES + ["report.html", "report.pdf", selected_download])
+    result = AlojamentoLocal::SiteChecker.check(File.expand_path(ENV["DESTINATION"] || "_site", __dir__), required: AlojamentoLocal::SiteChecker::REQUIRED_FILES + ["report.html", "report.pdf"] + selected_downloads)
     sh "bundle", "exec", "ruby", "scripts/audit_publication.rb", "--artifact", destination
     puts "Site Jekyll criado em #{destination} (#{result[:districts]} freguesias)."
   end
@@ -68,7 +68,7 @@ namespace :site do
   desc "Check the generated site's structure"
   task :check do
     require_relative "lib/alojamento_local"
-    result = AlojamentoLocal::SiteChecker.check(File.expand_path(ENV["DESTINATION"] || "_site", __dir__), required: AlojamentoLocal::SiteChecker::REQUIRED_FILES + ["report.html", "report.pdf", selected_download])
+    result = AlojamentoLocal::SiteChecker.check(File.expand_path(ENV["DESTINATION"] || "_site", __dir__), required: AlojamentoLocal::SiteChecker::REQUIRED_FILES + ["report.html", "report.pdf"] + selected_downloads)
     puts "Site verificado: #{result[:html_pages]} páginas HTML, #{result[:districts]} freguesias."
   end
 

@@ -2,7 +2,7 @@ Alojamento Ilegal — aviso de atribuição
 
 O projeto utiliza dados públicos do Inside Airbnb e do registo oficial de
 alojamento local disponibilizado pelo Turismo de Portugal. Consulte os links
-e as datas de cada fonte no campo metadata de snapshot.json do respetivo run.
+e as datas de cada fonte em source_dates de summary.json da respetiva análise.
 
 Os outputs publicados são agregados e destinam-se a investigação e verificação.
 Não constituem conclusões legais nem representam necessariamente a posição das

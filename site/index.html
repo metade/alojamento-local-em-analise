@@ -68,7 +68,7 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
           Registo oficial · RNAL
         </h3>
         <strong class="mt-10 block font-[family-name:var(--font-serif)] text-[clamp(4rem,7vw,7rem)] font-normal leading-none tracking-tight text-[var(--color-blue)]">
-          {{- d.rnal.lisbon.count | pt_number -}}
+          {{- d.summary.official_numbers | pt_number -}}
         </strong>
         <p class="mt-2 text-xl font-semibold">registos no concelho de Lisboa</p>
         <p class="mt-7 max-w-[34ch] text-[var(--color-ink)]/75">
@@ -137,9 +137,16 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
           ·
           <a
             class="underline underline-offset-4"
-            href="{{ site.data.site.snapshot_download | relative_url }}"
+            href="{{ site.data.site.summary_download | relative_url }}"
           >
-            snapshot ↗
+            Resumo JSON ↗
+          </a>
+          ·
+          <a
+            class="underline underline-offset-4"
+            href="{{ site.data.site.candidates_download | relative_url }}"
+          >
+            Candidatos JSON.gz ↗
           </a>
           <br>
           Anúncios de

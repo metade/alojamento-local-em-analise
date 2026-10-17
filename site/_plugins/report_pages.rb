@@ -23,8 +23,7 @@ Jekyll::Hooks.register :site, :post_write, priority: :low do |site|
   dataset = site.config.fetch("candidate_dataset")
   destination = File.join(site.dest, "snapshots", File.basename(dataset.path))
   FileUtils.mkdir_p(destination)
-  file = AlojamentoLocal::CandidateDataset::FILE
-  FileUtils.cp(File.join(dataset.path, file), destination)
+  dataset.copy_downloads(destination)
   pdf = File.join(site.dest, "report.pdf")
   if site.config["skip_report_pdfs"]
     FileUtils.rm_f(pdf)

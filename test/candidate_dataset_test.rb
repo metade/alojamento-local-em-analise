@@ -4,9 +4,9 @@ require "fileutils"
 require_relative "support/candidate_fixture"
 
 class CandidateDatasetTest < Minitest::Test
-  def document = JSON.parse(JSON.generate(CandidateFixture.dataset.document))
+  def document = CandidateFixture.documents(CandidateFixture.dataset)
 
-  def data(doc = document) = AlojamentoLocal::SiteData.new(dataset: AlojamentoLocal::CandidateDataset.new(document: doc)).site_data
+  def data(doc = document) = AlojamentoLocal::SiteData.new(dataset: CandidateFixture.from_documents(doc, refresh: true)).site_data
 
   def test_presentation_counts_and_many_to_many_accounting_are_preserved
     site = data
@@ -53,8 +53,8 @@ class CandidateDatasetTest < Minitest::Test
 
   def test_numbered_candidates_exceeding_rnal_keep_counts_without_invalid_geometry
     doc = document
-    doc["rnal"]["lisbon"]["count"] = 0
-    doc["rnal"]["parishes"].each { |row| row["count"] = 0 }
+    doc["lisbon"]["official_count"] = 0
+    doc["parishes"].each { |row| row["official_count"] = 0 }
     metrics = data(doc)["metrics"]
     assert_equal [12, 8, 4], metrics.values_at("airbnb", "intersection", "airbnb_only")
     assert_nil metrics["geometry"]
@@ -76,11 +76,11 @@ class CandidateDatasetTest < Minitest::Test
     doc = document
     assert_equal "2024-06-01", data(doc)["source_dates"]["airbnb_snapshot_date"]
     %w[airbnb_fetched_on rnal_fetched_on].each { |key| doc["source_dates"][key] = nil }
-    AlojamentoLocal::CandidateDataset.validate!(doc)
+    CandidateFixture.from_documents(doc)
     [nil, "2024-02-30", "01/07/2024"].each do |date|
       invalid = document
       invalid["source_dates"]["airbnb_snapshot_date"] = date
-      assert_raises(ArgumentError) { AlojamentoLocal::CandidateDataset.validate!(invalid) }
+      assert_raises(ArgumentError) { CandidateFixture.from_documents(invalid) }
     end
   end
 
@@ -98,9 +98,9 @@ class CandidateDatasetTest < Minitest::Test
       ->(d) { d["candidates"].first["official_match"] = nil },
       ->(d) { d["candidates"].first["official_match"]["distance_km"] = -1 },
       ->(d) { d["candidates"].first["signals"] = ["invented"] },
-      ->(d) { d["listings"]["lisbon"]["count"] += 1 },
-      ->(d) { d["listings"]["parishes"].first["count"] += 1 },
-      ->(d) { d["rnal"]["lisbon"]["count"] += 1 },
+      ->(d) { d["lisbon"]["listings_count"] += 1 },
+      ->(d) { d["parishes"].first["listings_count"] += 1 },
+      ->(d) { d["lisbon"]["official_count"] += 1 },
       ->(d) { d["candidates"] = [] },
       ->(d) { d["grouping_assessments"] = [] },
       ->(d) { d["grouping_assessments"] << d["grouping_assessments"].first },
@@ -111,7 +111,7 @@ class CandidateDatasetTest < Minitest::Test
     mutations.each_with_index do |mutation, index|
       doc = document
       mutation.call(doc)
-      assert_raises(ArgumentError, "mutation #{index}") { AlojamentoLocal::CandidateDataset.validate!(doc) }
+      assert_raises(ArgumentError, "mutation #{index}") { CandidateFixture.from_documents(doc) }
     end
   end
 
@@ -129,7 +129,7 @@ class CandidateDatasetTest < Minitest::Test
       else
         doc["candidates"] << candidate.merge("id" => "duplicate-unnumbered-contribution")
       end
-      assert_raises(ArgumentError) { AlojamentoLocal::CandidateDataset.validate!(doc) }
+      assert_raises(ArgumentError) { CandidateFixture.from_documents(doc) }
     end
   end
 
@@ -137,10 +137,10 @@ class CandidateDatasetTest < Minitest::Test
     doc = document
     doc["candidates"] = []
     doc["grouping_assessments"] = []
-    doc["listings"]["lisbon"]["count"] = 0
-    doc["listings"]["parishes"].each { |row| row["count"] = 0 }
-    doc["rnal"]["lisbon"]["count"] = 1
-    doc["rnal"]["parishes"].each { |row| row["count"] = %w[Arroios Estrela].include?(row["freguesia"]) ? 1 : 0 }
+    doc["lisbon"]["listings_count"] = 0
+    doc["parishes"].each { |row| row["listings_count"] = 0 }
+    doc["lisbon"]["official_count"] = 1
+    doc["parishes"].each { |row| row["official_count"] = %w[Arroios Estrela].include?(row["freguesia"]) ? 1 : 0 }
     site = data(doc)
     assert_equal [0, 0], site["summary"].values_at("listing_count", "candidate_count")
     assert_empty site["distance_ranges"]
@@ -152,10 +152,11 @@ class CandidateDatasetTest < Minitest::Test
       older = File.join(root, "2024-06-01__2024-07-01")
       latest = File.join(root, "2024-07-01__2024-08-01")
       FileUtils.mkdir_p([older, latest])
-      FileUtils.cp(File.join(CandidateFixture::PATH, "snapshot.json"), older)
+      CandidateFixture.dataset.write_files(older)
       assert_equal latest, AlojamentoLocal::CandidateDataset.default_path(root: root)
       assert_raises(Errno::ENOENT) { AlojamentoLocal::CandidateDataset.new(AlojamentoLocal::CandidateDataset.default_path(root: root)) }
-      File.write(File.join(latest, "snapshot.json"), "{}")
+      CandidateFixture.dataset.write_files(latest)
+      File.write(File.join(latest, "summary.json"), "{}")
       assert_raises(ArgumentError) { AlojamentoLocal::CandidateDataset.new(latest) }
     end
   end

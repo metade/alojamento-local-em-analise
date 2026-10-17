@@ -83,13 +83,13 @@ jobs:
           bundle exec rake analysis
           bundle exec ruby -Ilib -ralojamento_local -e '
             dates = AlojamentoLocal::Analysis::Data.local_paths!.map { |path| AlojamentoLocal::Analysis::Data.source_date(path).to_s }
-            puts "snapshot=#{File.join("data/snapshots", dates.join("__"), "snapshot.json")}"
+            puts "snapshot=#{File.join("data/snapshots", dates.join("__"))}"
           ' >> "$GITHUB_OUTPUT"
       - name: Preparar e validar outputs públicos
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add -- "${{ steps.analysis.outputs.snapshot }}"
+          git add -- "${{ steps.analysis.outputs.snapshot }}/summary.json" "${{ steps.analysis.outputs.snapshot }}/candidates.json.gz"
           bundle exec ruby scripts/audit_publication.rb
       - name: Construir site público
         env:

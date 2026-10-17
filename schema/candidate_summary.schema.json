@@ -1,0 +1,223 @@
+{
+  "type": "object",
+  "properties": {
+    "source_dates": {
+      "type": "object",
+      "properties": {
+        "rnal_fetched_on": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date"
+        },
+        "airbnb_fetched_on": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date"
+        },
+        "airbnb_snapshot_date": {
+          "type": "string",
+          "format": "date"
+        }
+      },
+      "required": [
+        "rnal_fetched_on",
+        "airbnb_fetched_on",
+        "airbnb_snapshot_date"
+      ],
+      "additionalProperties": false
+    },
+    "lisbon": {
+      "type": "object",
+      "properties": {
+        "official_count": {
+          "$ref": "#/$defs/count"
+        },
+        "listings_count": {
+          "$ref": "#/$defs/count"
+        },
+        "candidates_count": {
+          "$ref": "#/$defs/count"
+        },
+        "numbered_candidates_count": {
+          "$ref": "#/$defs/count"
+        },
+        "distinct_al_numbers_count": {
+          "$ref": "#/$defs/count"
+        }
+      },
+      "required": [
+        "official_count",
+        "listings_count",
+        "candidates_count",
+        "numbered_candidates_count",
+        "distinct_al_numbers_count"
+      ],
+      "additionalProperties": false
+    },
+    "parishes": {
+      "type": "array",
+      "minItems": 25,
+      "maxItems": 25,
+      "items": {
+        "type": "object",
+        "properties": {
+          "freguesia": {
+            "$ref": "#/$defs/parish"
+          },
+          "official_count": {
+            "$ref": "#/$defs/count"
+          },
+          "listings_count": {
+            "$ref": "#/$defs/count"
+          },
+          "candidates_count": {
+            "$ref": "#/$defs/count"
+          },
+          "numbered_candidates_count": {
+            "$ref": "#/$defs/count"
+          },
+          "distinct_al_numbers_count": {
+            "$ref": "#/$defs/count"
+          }
+        },
+        "required": [
+          "freguesia",
+          "official_count",
+          "listings_count",
+          "candidates_count",
+          "numbered_candidates_count",
+          "distinct_al_numbers_count"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "signals": {
+      "type": "object",
+      "properties": {
+        "empty_licence_listings": {
+          "$ref": "#/$defs/count"
+        },
+        "unrecognised_licence_listings": {
+          "$ref": "#/$defs/count"
+        },
+        "unidentified_licence_listings": {
+          "$ref": "#/$defs/count"
+        },
+        "repeated_listings": {
+          "$ref": "#/$defs/count"
+        },
+        "outside_listings": {
+          "$ref": "#/$defs/count"
+        }
+      },
+      "required": [
+        "empty_licence_listings",
+        "unrecognised_licence_listings",
+        "unidentified_licence_listings",
+        "repeated_listings",
+        "outside_listings"
+      ],
+      "additionalProperties": false
+    },
+    "repeated_number_distances": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "properties": {
+          "range": {
+            "enum": [
+              "up_to_500_m",
+              "500_m_1_km",
+              "1_2_km",
+              "2_5_km",
+              "over_5_km",
+              "unresolved"
+            ]
+          },
+          "count": {
+            "$ref": "#/$defs/count"
+          }
+        },
+        "required": [
+          "range",
+          "count"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "outside_regions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "district": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1
+          },
+          "count": {
+            "$ref": "#/$defs/count"
+          }
+        },
+        "required": [
+          "district",
+          "count"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "source_dates",
+    "lisbon",
+    "parishes",
+    "signals",
+    "repeated_number_distances",
+    "outside_regions"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "parish": {
+      "enum": [
+        "Ajuda",
+        "Alcântara",
+        "Alvalade",
+        "Areeiro",
+        "Arroios",
+        "Avenidas Novas",
+        "Beato",
+        "Belém",
+        "Benfica",
+        "Campo de Ourique",
+        "Campolide",
+        "Carnide",
+        "Estrela",
+        "Lumiar",
+        "Marvila",
+        "Misericórdia",
+        "Olivais",
+        "Parque das Nações",
+        "Penha de França",
+        "Santa Clara",
+        "Santa Maria Maior",
+        "Santo António",
+        "São Domingos de Benfica",
+        "São Vicente",
+        null
+      ]
+    }
+  }
+}

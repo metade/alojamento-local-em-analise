@@ -1,37 +1,46 @@
 require "fileutils"
-require "json"
 require "tmpdir"
 
 module AlojamentoLocal
   module Analysis
-    # Validate staged bytes before atomically replacing the sole output file.
+    # Stage and validate a complete pair before installing under the parent lock.
     class ResultPublisher
       def initialize(destination:)
-        @destination = destination
+        @destination = File.expand_path(destination)
       end
 
       def publish(dataset:, sources:)
-        FileUtils.mkdir_p(@destination)
-        # The stable destination directory also serializes writers without a
-        # separate lock file or auxiliary output directory.
-        File.open(@destination, "r") do |lock|
-          lock.flock(File::LOCK_EX)
-          Dir.mktmpdir(".candidate-", @destination) do |stage|
-            write_snapshot(File.join(stage, CandidateDataset::FILE), dataset.document)
-            CandidateDataset.new(stage)
+        parent = File.dirname(@destination)
+        FileUtils.mkdir_p(parent)
+        stage = Dir.mktmpdir(".candidate-", parent)
+        backup = nil
+        committed = false
+        begin
+          dataset.write_files(stage)
+          CandidateDataset.new(stage)
+          CandidateDataset.with_lock(@destination, File::LOCK_EX) do
             sources.verify_unchanged!
-            File.rename(File.join(stage, CandidateDataset::FILE), File.join(@destination, CandidateDataset::FILE))
+            installed = false
+            begin
+              Thread.handle_interrupt(Interrupt => :never) do
+                if File.exist?(@destination)
+                  backup = Dir.mktmpdir(".previous-", parent)
+                  Dir.rmdir(backup)
+                  File.rename(@destination, backup)
+                end
+                installed = true
+                File.rename(stage, @destination)
+              end
+              committed = true
+            rescue Exception
+              FileUtils.rm_rf(@destination) if installed
+              File.rename(backup, @destination) if backup && File.exist?(backup)
+              raise
+            end
           end
-        end
-      end
-
-      private
-
-      def write_snapshot(path, snapshot)
-        File.open(path, "w") do |file|
-          file.write(JSON.pretty_generate(snapshot) + "\n")
-          file.flush
-          file.fsync
+        ensure
+          FileUtils.rm_rf(stage) if stage && File.exist?(stage)
+          FileUtils.rm_rf(backup) if committed && backup && File.exist?(backup)
         end
       end
     end

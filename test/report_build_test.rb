@@ -13,7 +13,7 @@ class ReportBuildTest < Minitest::Test
     Dir.mktmpdir do |root|
       path = File.join(root, "candidate")
       FileUtils.mkdir_p(path)
-      FileUtils.cp(Dir[File.join(CandidateFixture::PATH, "*.json")], path)
+      FileUtils.cp(Dir[File.join(CandidateFixture::PATH, "*")], path)
       yield root, path
     end
   end
@@ -47,9 +47,11 @@ class ReportBuildTest < Minitest::Test
       assert_includes html, "Município oficial diferente do observado"
       assert_includes html, "???"
       refute_includes html, "https://www.airbnb.com/rooms/"
-      file = AlojamentoLocal::CandidateDataset::FILE
-      assert_equal [file], Dir.children(File.join(destination, "snapshots", "candidate"))
-      assert_equal File.binread(File.join(path, file)), File.binread(File.join(destination, "snapshots", "candidate", file))
+      files = AlojamentoLocal::CandidateDataset::FILES
+      assert_equal files.sort, Dir.children(File.join(destination, "snapshots", "candidate")).sort
+      files.each do |file|
+        assert_equal File.binread(File.join(path, file)), File.binread(File.join(destination, "snapshots", "candidate", file))
+      end
       assert_raises(RuntimeError) { build(path, path: path) }
       assert_equal before, inputs(path)
     end
@@ -73,6 +75,10 @@ class ReportBuildTest < Minitest::Test
         html = File.read(File.join(full, file))
         refute_match(/NaN|Infinity/, html)
         refute_includes html, "/runs/"
+        if file != "freguesias/index.html"
+          assert_includes html, "/preview/snapshots/candidate/summary.json"
+          assert_includes html, "/preview/snapshots/candidate/candidates.json.gz"
+        end
         visible = html.gsub(/<[^>]*>/, " ")
         refute_match(/\blistings?\b|fixtures?|pipeline|snapshot de teste/i, visible)
       end
@@ -105,7 +111,8 @@ class ReportBuildTest < Minitest::Test
       assert_includes homepage, "Freguesias com mais candidatos AL"
       assert_includes homepage, "Não há possibilidade de saber a realidade"
       refute_includes homepage, "Dados sintéticos de demonstração"
-      assert_includes homepage, "/preview/snapshots/candidate/snapshot.json"
+      assert_includes homepage, "/preview/snapshots/candidate/summary.json"
+      assert_includes homepage, "/preview/snapshots/candidate/candidates.json.gz"
       assert_includes homepage, %(href="#{CGI.escapeHTML(AlojamentoLocal::Analysis::Data::OFFICIAL_URL)}")
       methodology = File.read(File.join(full, "metodologia.html"))
       assert_includes methodology, %(href="#{CGI.escapeHTML(AlojamentoLocal::Analysis::Data::OFFICIAL_URL)}")
@@ -132,12 +139,12 @@ class ReportBuildTest < Minitest::Test
 
   def test_escaping_and_zero_distance
     with_data do |root, path|
-      file = File.join(path, "snapshot.json")
-      data = JSON.parse(File.read(file))
+      file = File.join(path, "summary.json")
+      data = CandidateFixture.documents(AlojamentoLocal::CandidateDataset.new(File.dirname(file)))
       data["candidates"][0]["official_match"]["type"] = '<script>alert("example")</script>'
       data["candidates"][0]["official_match"]["distance_km"] = 0
       data["candidates"][0]["signals"] = ["partial_licence_extraction"]
-      File.write(file, JSON.generate(data))
+      CandidateFixture.from_documents(data, refresh: true).write_files(File.dirname(file))
       output = File.join(root, "report")
       build(output, path: path)
       html = File.read(File.join(output, "report.html"))
@@ -149,10 +156,10 @@ class ReportBuildTest < Minitest::Test
 
   def test_report_skips_unflagged_matches_but_preserves_totals_and_download
     with_data do |root, path|
-      file = File.join(path, "snapshot.json")
-      document = JSON.parse(File.read(file))
+      file = File.join(path, "summary.json")
+      document = CandidateFixture.documents(AlojamentoLocal::CandidateDataset.new(path))
       document["candidates"].first["official_match"]["distance_km"] = 0
-      File.write(file, JSON.generate(document))
+      CandidateFixture.from_documents(document, refresh: true).write_files(path)
       output = File.join(root, "report")
       build(output, path: path)
       html = File.read(File.join(output, "report.html"))
@@ -161,7 +168,7 @@ class ReportBuildTest < Minitest::Test
       assert_includes html, "candidate-007", "National nonmatches remain visible"
       assert_includes html, "candidate-008", "Declared exemptions remain unresolved"
       assert_includes html, "<b>12</b>"
-      assert_equal document, JSON.parse(File.read(File.join(output, "snapshots", "candidate", "snapshot.json")))
+      assert_equal document, CandidateFixture.documents(AlojamentoLocal::CandidateDataset.new(File.join(output, "snapshots", "candidate")))
     end
   end
 
@@ -184,21 +191,23 @@ class ReportBuildTest < Minitest::Test
   def test_public_build_removes_stale_private_and_historical_outputs
     with_data do |root, _|
       output = File.join(root, "site")
-      %w[private-reports/example runs/old snapshots/old].each do |folder|
+      %w[private-reports/example runs/old snapshots/old snapshots/candidate].each do |folder|
         FileUtils.mkdir_p(File.join(output, folder))
         File.write(File.join(output, folder, "report.html"), "private")
       end
+      File.write(File.join(output, "snapshots", "candidate", "snapshot.json"), "obsolete")
       build(output)
+      refute File.exist?(File.join(output, "snapshots", "candidate", "snapshot.json"))
       refute Dir.exist?(File.join(output, "private-reports"))
       refute Dir.exist?(File.join(output, "runs"))
       assert_equal ["candidate"], Dir.children(File.join(output, "snapshots"))
       text, status = Open3.capture2e(RbConfig.ruby, File.expand_path("../scripts/audit_publication.rb", __dir__), "--artifact", output)
       assert status.success?, text
       # New public fields are allowed, extra detailed fields are rejected.
-      file = File.join(output, "snapshots", "candidate", "snapshot.json")
-      data = JSON.parse(File.read(file))
+      file = File.join(output, "snapshots", "candidate", "summary.json")
+      data = CandidateFixture.documents(AlojamentoLocal::CandidateDataset.new(File.dirname(file)))
       data["candidates"][0]["name"] = "private name"
-      File.write(file, JSON.generate(data))
+      File.binwrite(File.join(File.dirname(file), "candidates.json.gz"), AlojamentoLocal::CandidateDataset.compress(data.slice("candidates", "grouping_assessments")))
       text, status = Open3.capture2e(RbConfig.ruby, File.expand_path("../scripts/audit_publication.rb", __dir__), "--artifact", output)
       refute status.success?, text
       assert_includes text, "snapshot inválido"
@@ -209,18 +218,20 @@ class ReportBuildTest < Minitest::Test
     with_data do |root, path|
       dated = File.join(root, "2024-06-01__2024-07-01")
       File.rename(path, dated)
-      file = File.join(dated, "snapshot.json")
-      data = JSON.parse(File.read(file))
+      file = File.join(dated, "summary.json")
+      data = CandidateFixture.documents(AlojamentoLocal::CandidateDataset.new(File.dirname(file)))
       data["source_dates"]["rnal_fetched_on"] = nil
       data["source_dates"]["airbnb_fetched_on"] = nil
-      File.write(file, JSON.generate(data))
+      CandidateFixture.from_documents(data, refresh: true).write_files(File.dirname(file))
       output = File.join(root, "report")
       build(output, path: dated)
       html = File.read(File.join(output, "report.html"))
-      assert_includes html, 'href="snapshots/2024-06-01__2024-07-01/snapshot.json"'
+      assert_includes html, 'href="snapshots/2024-06-01__2024-07-01/summary.json"'
       assert_includes html.gsub(/\s+/, " "), "RNAL descarregado em ???"
       assert_includes html.gsub(/\s+/, " "), "Anúncios de 2024-06-01 (descarregados em ???)"
-      assert File.file?(File.join(output, "snapshots", "2024-06-01__2024-07-01", "snapshot.json"))
+      assert File.file?(File.join(output, "snapshots", "2024-06-01__2024-07-01", "summary.json"))
+      assert_includes html, 'href="snapshots/2024-06-01__2024-07-01/candidates.json.gz"'
+      assert File.file?(File.join(output, "snapshots", "2024-06-01__2024-07-01", "candidates.json.gz"))
     end
   end
 

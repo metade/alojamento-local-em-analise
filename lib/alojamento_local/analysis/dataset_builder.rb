@@ -28,13 +28,17 @@ module AlojamentoLocal
         candidates.group_by { |row| row["al_number"] }.each do |number, group|
           group.each { |row| row["signals"] << "shared_number" } if number && group.size > 1
         end
-        document = {"source_dates" => sources.source_dates,
-                    "rnal" => counts(sources.official.lisbon_entries, distinct: true),
-                    "listings" => counts(sources.airbnb.entries),
-                    "candidates" => candidates.sort_by { |row| row["id"] },
-                    "grouping_assessments" => assessments}
-        assert_sources!(document)
-        CandidateDataset.new(document: document)
+        candidates.sort_by! { |row| row["id"] }
+        rnal = counts(sources.official.lisbon_entries, distinct: true)
+        listings = counts(sources.airbnb.entries)
+        summary = CandidateDataset.candidate_aggregates(candidates)
+        summary["source_dates"] = sources.source_dates
+        summary["lisbon"].merge!("official_count" => rnal.dig("lisbon", "count"), "listings_count" => listings.dig("lisbon", "count"))
+        summary["parishes"].each_with_index do |row, index|
+          row.merge!("official_count" => rnal["parishes"][index]["count"], "listings_count" => listings["parishes"][index]["count"])
+        end
+        assert_sources!({"candidates" => candidates, "rnal" => rnal, "listings" => listings})
+        CandidateDataset.new(summary_document: summary, details_document: {"candidates" => candidates, "grouping_assessments" => assessments})
       end
 
       private

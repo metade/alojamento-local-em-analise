@@ -1,54 +1,147 @@
 require "json"
 require "json_schemer"
 require "date"
+require "set"
+require "zlib"
+require "stringio"
+require "digest"
+require "fileutils"
 
 module AlojamentoLocal
   # The sole public contract, shared by builders, presentation and audits.
   class CandidateDataset
     ROOT = File.expand_path("../../data/snapshots", __dir__)
-    FILE = "snapshot.json"
-    SCHEMA = JSONSchemer.schema(JSON.parse(File.read(File.expand_path("../../schema/candidate_snapshot.schema.json", __dir__))))
+    FILES = %w[summary.json candidates.json.gz].freeze
+    SCHEMAS = %w[summary details].map do |name|
+      JSONSchemer.schema(JSON.parse(File.read(File.expand_path("../../schema/candidate_#{name}.schema.json", __dir__))))
+    end.freeze
+    DISTANCE_RANGES = %w[up_to_500_m 500_m_1_km 1_2_km 2_5_km over_5_km unresolved].freeze
 
-    attr_reader :path, :document
+    attr_reader :path, :summary_document, :details_document
 
     def self.default_path(root: ROOT)
-      path = Dir.glob(File.join(root, "????-??-??__????-??-??")).select { |item| File.directory?(item) }.max
-      raise "No dated candidate snapshot in #{root}" unless path
-      path
+      with_lock(File.join(root, ".selection")) do
+        path = Dir.glob(File.join(root, "????-??-??__????-??-??")).select { |item| File.directory?(item) }.max
+        raise "No dated candidate snapshot in #{root}" unless path
+        path
+      end
     end
 
-    def initialize(path = nil, document: nil)
-      @path = File.expand_path(path || (document ? ROOT : self.class.default_path))
-      @document = document || JSON.parse(File.read(File.join(@path, FILE)))
-      error = SCHEMA.validate(@document).first
-      raise ArgumentError, "Invalid candidate snapshot schema at #{error.fetch("data_pointer")}: #{error.fetch("error")}" if error
+    def self.with_lock(path, mode = File::LOCK_SH)
+      File.open(File.dirname(File.expand_path(path)), "r") do |lock|
+        lock.flock(mode)
+        yield
+      ensure
+        lock.flock(File::LOCK_UN) if lock
+      end
+    end
+
+    def initialize(path = nil, summary_document: nil, details_document: nil)
+      raise ArgumentError, "Supply both summary and details" if !!summary_document != !!details_document
+      @path = File.expand_path(path || (summary_document ? ROOT : self.class.default_path))
+      if summary_document
+        @summary_document, @details_document = summary_document, details_document
+      else
+        self.class.with_lock(@path) do
+          bytes = FILES.map { |file| File.binread(File.join(@path, file)) }
+          @source_hashes = bytes.map { |value| Digest::SHA256.hexdigest(value) }
+          @summary_document = JSON.parse(bytes.first)
+          io = StringIO.new(bytes.last)
+          gzip = Zlib::GzipReader.new(io)
+          @details_document = JSON.parse(gzip.read)
+          raise ArgumentError, "Trailing gzip data" if gzip.unused || io.pos < bytes.last.bytesize
+          gzip.close
+        end
+      end
+      [@summary_document, @details_document].zip(SCHEMAS).each do |document, schema|
+        error = schema.validate(document).first
+        raise ArgumentError, "Invalid candidate snapshot schema at #{error.fetch("data_pointer")}: #{error.fetch("error")}" if error
+      end
       validate_accounting!
       if File.basename(@path).match?(/\A[0-9]{4}-[0-9]{2}-[0-9]{2}__[0-9]{4}-[0-9]{2}-[0-9]{2}\z/)
         dates = File.basename(@path).split("__")
         dates.each { |date| Date.iso8601(date) }
-        check(dates.first == @document.dig("source_dates", "airbnb_snapshot_date"), "folder archive date differs")
+        check(dates.first == @summary_document.dig("source_dates", "airbnb_snapshot_date"), "folder archive date differs")
       end
     end
 
-    def self.validate!(document)
-      new(document: document)
-      document
+    def download_paths
+      FILES.map { |file| "/snapshots/#{File.basename(path)}/#{file}" }
     end
 
-    def download_path
-      "/snapshots/#{File.basename(path)}/#{FILE}"
+    def copy_downloads(destination)
+      self.class.with_lock(path) do
+        bytes = FILES.map { |file| File.binread(File.join(path, file)) }
+        check(@source_hashes == bytes.map { |value| Digest::SHA256.hexdigest(value) }, "source files changed during build")
+        FileUtils.mkdir_p(destination)
+        FILES.zip(bytes).each { |file, value| File.binwrite(File.join(destination, file), value) }
+      end
     end
 
-    def rnal = document.fetch("rnal")
+    def write_files(destination)
+      FileUtils.mkdir_p(destination)
+      bytes = [JSON.pretty_generate(summary_document) + "\n", self.class.compress(details_document)]
+      FILES.zip(bytes).each do |name, value|
+        File.open(File.join(destination, name), "wb") do |file|
+          file.write(value)
+          file.flush
+          file.fsync
+        end
+      end
+    end
 
-    def listings = document.fetch("listings")
+    def self.compress(document)
+      io = StringIO.new("".b)
+      gzip = Zlib::GzipWriter.new(io, 9)
+      gzip.mtime = 0
+      gzip.write(JSON.generate(document).encode(Encoding::UTF_8) + "\n")
+      gzip.close
+      io.string
+    end
 
-    def candidates = document.fetch("candidates")
+    def candidates = details_document.fetch("candidates")
+    def grouping_assessments = details_document.fetch("grouping_assessments")
 
     def summary
-      {listings: listings.dig("lisbon", "count"), candidates: candidates.size,
-       distinct_al_numbers: candidates.filter_map { |candidate| candidate["al_number"] }.uniq.size,
-       rnal: rnal.dig("lisbon", "count")}
+      scope = summary_document.fetch("lisbon")
+      {listings: scope.fetch("listings_count"), candidates: scope.fetch("candidates_count"),
+       distinct_al_numbers: scope.fetch("distinct_al_numbers_count"), rnal: scope.fetch("official_count")}
+    end
+
+    def self.candidate_aggregates(candidates)
+      ids = ->(rows) { rows.flat_map { |c| c.fetch("listing_ids") }.uniq }
+      scope = ->(rows) {
+        numbers = rows.filter_map { |c| c["al_number"] }
+        {"candidates_count" => rows.size, "numbered_candidates_count" => numbers.size, "distinct_al_numbers_count" => numbers.uniq.size}
+      }
+      empty = ids.call(candidates.select { |c| c["registration_status"] == "absent" })
+      unrecognised = ids.call(candidates.select { |c| c["registration_status"] == "unrecognised" })
+      repeated = candidates.select { |c| c["al_number"] }.group_by { |c| c["al_number"] }.values.select { |group| group.size > 1 }
+      distances = Array.new(6, 0)
+      repeated.each do |group|
+        values = group.map { |c| c.dig("official_match", "distance_km") }
+        index = values.any?(&:nil?) ? 5 : [0.5, 1, 2, 5, Float::INFINITY].index { |upper| values.max <= upper }
+        distances[index] += 1
+      end
+      regions_by_listing = Hash.new { |hash, id| hash[id] = [] }
+      candidates.each do |candidate|
+        record = candidate["official_match"]
+        next unless record
+        municipality = Geography.municipality(record["municipality"])
+        next unless municipality && municipality != "Lisboa"
+        region = record["district"]&.strip
+        region = nil if region.to_s.empty?
+        candidate["listing_ids"].each { |id| regions_by_listing[id] << region }
+      end
+      regions = Hash.new(0)
+      regions_by_listing.each_value { |values| regions[values.uniq.size == 1 ? values.first : nil] += 1 }
+      {"lisbon" => scope.call(candidates),
+       "parishes" => (Geography::PARISHES + [nil]).map { |parish| {"freguesia" => parish}.merge(scope.call(candidates.select { |c| c["freguesia"] == parish })) },
+       "signals" => {"empty_licence_listings" => empty.size, "unrecognised_licence_listings" => unrecognised.size,
+                     "unidentified_licence_listings" => (empty | unrecognised).size, "repeated_listings" => ids.call(repeated.flatten).size,
+                     "outside_listings" => regions_by_listing.size},
+       "repeated_number_distances" => DISTANCE_RANGES.zip(distances).map { |range, count| {"range" => range, "count" => count} },
+       "outside_regions" => regions.sort_by { |name, count| [name.nil? ? 1 : 0, -count, name.to_s] }.map { |name, count| {"district" => name, "count" => count} }}
     end
 
     private
@@ -58,13 +151,22 @@ module AlojamentoLocal
     end
 
     def validate_accounting!
-      [rnal, listings].each do |population|
-        parishes = population.fetch("parishes").map { |row| row.fetch("freguesia") }
-        check(parishes.sort_by(&:to_s) == (Geography::PARISHES + [nil]).sort_by(&:to_s), "expected every parish and unknown once")
+      parishes = summary_document.fetch("parishes")
+      check(parishes.map { |row| row["freguesia"] } == Geography::PARISHES + [nil], "expected every parish and unknown in order")
+      city = summary_document.fetch("lisbon")
+      check(parishes.sum { |row| row["listings_count"] } == city["listings_count"], "original listing totals differ")
+      counts = parishes.map { |row| row["official_count"] }
+      check(city["official_count"].between?(counts.max, counts.sum), "RNAL counts disagree across geographies")
+      aggregates = self.class.candidate_aggregates(candidates)
+      aggregates.each do |key, expected|
+        actual = summary_document.fetch(key)
+        if key == "lisbon"
+          actual = actual.slice(*expected.keys)
+        elsif key == "parishes"
+          actual = actual.map { |row| row.slice(*expected.first.keys) }
+        end
+        check(actual == expected, "summary/detail disagreement: #{key}")
       end
-      check(listings["parishes"].sum { |row| row["count"] } == listings.dig("lisbon", "count"), "original listing totals differ")
-      counts = rnal["parishes"].map { |row| row["count"] }
-      check(rnal.dig("lisbon", "count").between?(counts.max, counts.sum), "RNAL counts disagree across geographies")
       check(candidates.map { |c| c["id"] }.uniq.size == candidates.size, "duplicate candidate ID")
       contributions = {}
       raw_values = {}
@@ -84,7 +186,7 @@ module AlojamentoLocal
           raw_values[id] = raw
         end
       end
-      check(raw_values.size == listings.dig("lisbon", "count"), "candidate listing coverage differs")
+      check(raw_values.size == city["listings_count"], "candidate listing coverage differs")
       by_listing = contributions.keys.group_by(&:last)
       by_id = candidates.to_h { |candidate| [candidate["id"], candidate] }
       raw_values.each do |id, raw|
@@ -98,7 +200,7 @@ module AlojamentoLocal
         end
       end
       assessments = {}
-      document.fetch("grouping_assessments").each do |pair|
+      grouping_assessments.each do |pair|
         ids = pair["listing_ids"].sort
         number = pair["al_number"]
         key = [number, *ids]

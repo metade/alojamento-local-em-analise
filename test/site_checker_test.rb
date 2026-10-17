@@ -33,13 +33,13 @@ class SiteCheckerTest < Minitest::Test
     with_site do |root|
       path = File.join(root, "snapshots", "2024-06-01__2024-07-01")
       FileUtils.mkdir_p(path)
-      File.write(File.join(root, "index.html"), '<a href="/base/snapshots/2024-06-01__2024-07-01/snapshot.json">download</a>')
+      File.write(File.join(root, "index.html"), '<a href="/base/snapshots/2024-06-01__2024-07-01/candidates.json.gz">download</a>')
       assert_raises(RuntimeError) { AlojamentoLocal::SiteChecker.check(root) }
-      File.write(File.join(path, "snapshot.json"), "{}")
+      File.write(File.join(path, "candidates.json.gz"), "{}")
       File.write(File.join(root, "index.html"), '<a href="/base/report.html">report</a>')
       assert_raises(RuntimeError) { AlojamentoLocal::SiteChecker.check(root) }
       html = File.join(root, "report.html")
-      File.write(html, '<a href="snapshots/2024-06-01__2024-07-01/snapshot.json">Dados</a>')
+      File.write(html, '<a href="snapshots/2024-06-01__2024-07-01/candidates.json.gz">Dados</a>')
       File.write(File.join(root, "report.pdf"), "invalid")
       assert_raises(RuntimeError) { AlojamentoLocal::SiteChecker.check(root) }
       File.write(File.join(root, "report.pdf"), "%PDF-test")

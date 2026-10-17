@@ -442,9 +442,9 @@ title: Metodologia e proveniência
         sinais, declarações originais de licença e avaliações de pares. Os restantes campos excluem
         anfitriões, nomes, endereços e coordenadas exatas dos anúncios.
       </p>
-      {% assign public_data_file = 'snapshot.json' %}
       <div class="mt-6 flex flex-wrap gap-x-6 gap-y-4 text-sm text-[var(--color-blue)] [&_a]:underline [&_a]:underline-offset-4">
-        <a href="{{ site.data.site.snapshot_download | relative_url }}">Dados do snapshot →</a>
+        <a href="{{ site.data.site.summary_download | relative_url }}">Resumo JSON →</a>
+        <a href="{{ site.data.site.candidates_download | relative_url }}">Candidatos JSON.gz →</a>
         <a href="{{ '/report.html' | relative_url }}">Relatório técnico ↗</a>
         {% unless site.skip_report_pdfs %}
           ·

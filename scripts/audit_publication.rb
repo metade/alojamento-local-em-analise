@@ -3,9 +3,11 @@
 
 require "open3"
 require "json"
+require "zlib"
+require "stringio"
 require_relative "../lib/alojamento_local"
 
-PUBLIC_ROOTS = ["data/snapshots/", "data/history/", "test/fixtures/pipeline/snapshots/"].freeze
+PUBLIC_ROOTS = ["data/snapshots/", "data/history/", "test/fixtures/pipeline/snapshots/", "test/fixtures/pipeline/expected/public/"].freeze
 ARTIFACT_ROOTS = ["_site/"].freeze
 PRIVATE_PATHS = [
   %r{\Adata_sources/(?!lisboa-freguesias\.geojson\z)},
@@ -51,30 +53,33 @@ rescue Errno::ENOENT
   nil
 end
 
-# Parse the nested document: a CSV-header scan cannot detect nested fields.
-def audit_snapshot(text, label, validate_schema: true)
+# Historical safety inspection parses arbitrary JSON without a legacy dataset reader.
+def audit_historical_document(text, label)
   errors = []
   begin
     data = JSON.parse(text)
-    if validate_schema
-      AlojamentoLocal::CandidateDataset.validate!(data)
-    else
-      inspect_keys = lambda do |value|
-        case value
-        when Hash
-          forbidden = value.keys & (FORBIDDEN_PUBLIC_FIELDS + %w[path])
-          errors << "campo proibido em #{label}: #{forbidden.join(", ")}" unless forbidden.empty?
-          value.each_value { |item| inspect_keys.call(item) }
-        when Array
-          value.each { |item| inspect_keys.call(item) }
-        end
+    inspect_keys = lambda do |value|
+      case value
+      when Hash
+        forbidden = value.keys & (FORBIDDEN_PUBLIC_FIELDS + %w[path])
+        errors << "campo proibido em #{label}: #{forbidden.join(", ")}" unless forbidden.empty?
+        value.each_value { |item| inspect_keys.call(item) }
+      when Array
+        value.each { |item| inspect_keys.call(item) }
       end
-      inspect_keys.call(data)
     end
+    inspect_keys.call(data)
   rescue => error
     errors << "snapshot inválido em #{label}: #{error.message}"
   end
   errors
+end
+
+def audit_pair(path)
+  AlojamentoLocal::CandidateDataset.new(File.dirname(path))
+  []
+rescue => error
+  ["snapshot inválido em #{path}: #{error.message}"]
 end
 
 def candidate_link_text(text)
@@ -93,11 +98,12 @@ def audit_worktree
 
     text = file_text(path)
     next unless text
-    if File.basename(path) == "snapshot.json"
-      errors.concat(audit_snapshot(text, path))
+    if AlojamentoLocal::CandidateDataset::FILES.include?(File.basename(path))
+      errors.concat(audit_pair(path))
       next
     end
 
+    errors << "snapshot obsoleto em #{path}" if File.basename(path) == "snapshot.json"
     fields = FORBIDDEN_PUBLIC_FIELDS.select do |field|
       text.lines.first.to_s.split(",").map { |value| value.strip.downcase }.include?(field)
     end
@@ -133,7 +139,17 @@ def audit_history
       text, text_status = Open3.capture2("git", "show", "#{commit}:#{path}")
       next unless text_status.success?
 
-      errors.concat(audit_snapshot(text, "#{commit[0, 12]} #{path}", validate_schema: false)) if File.basename(path) == "snapshot.json"
+      if File.basename(path) == "candidates.json.gz"
+        begin
+          text = Zlib::GzipReader.new(StringIO.new(text)).read
+        rescue => error
+          errors << "#{commit[0, 12]} gzip inválido em #{path}: #{error.message}"
+          next
+        end
+      end
+      if (AlojamentoLocal::CandidateDataset::FILES + ["snapshot.json"]).include?(File.basename(path))
+        errors.concat(audit_historical_document(text, "#{commit[0, 12]} #{path}"))
+      end
 
       header = text.lines.first.to_s.split(",").map { |value| value.strip.downcase }
       fields = FORBIDDEN_PUBLIC_FIELDS & header
@@ -159,11 +175,12 @@ def audit_artifact(root)
     end
     text = file_text(path)
     next unless text
-    if File.basename(path) == "snapshot.json"
-      errors.concat(audit_snapshot(text, relative))
+    if AlojamentoLocal::CandidateDataset::FILES.include?(File.basename(path))
+      errors.concat(audit_pair(path))
       next
     end
 
+    errors << "snapshot obsoleto em #{relative}" if File.basename(path) == "snapshot.json"
     header = text.lines.first.to_s.split(",").map { |value| value.strip.downcase }
     fields = FORBIDDEN_PUBLIC_FIELDS & header
     errors << "campo proibido em #{relative}: #{fields.join(", ")}" unless fields.empty?

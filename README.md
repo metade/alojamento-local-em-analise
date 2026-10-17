@@ -14,7 +14,8 @@ bundle exec rake analysis          # recalcula o último par local, sem rede
 DESTINATION=tmp/candidate-site bundle exec rake site:build
 ```
 
-`analysis` escreve `data/snapshots/<data-arquivo-airbnb>__<data-ficheiro-rnal>/snapshot.json`
+`analysis` escreve exatamente `summary.json` e `candidates.json.gz` em
+`data/snapshots/<data-arquivo-airbnb>__<data-ficheiro-rnal>/`
 como único output da análise. Não são gerados diagnósticos nem outputs privados.
 Reanalisar substitui esse snapshot. Outros pares permanecem intactos. Não existem comparações
 históricas, versões de output, leitores de formatos antigos ou fallback.
@@ -28,7 +29,8 @@ SNAPSHOT=test/fixtures/pipeline/snapshots/candidate DESTINATION=tmp/fixture-site
 DESTINATION=tmp/candidate-report bundle exec rake 'report:build[data/snapshots/2026-06-23__2026-09-26]'
 ```
 
-O site publica `/snapshots/<pasta-selecionada>/snapshot.json`, `/report.html` e
+O site publica `/snapshots/<pasta-selecionada>/summary.json` e
+`/snapshots/<pasta-selecionada>/candidates.json.gz`, `/report.html` e
 `/report.pdf`. Há um único relatório, comum ao site, ao servidor local e ao build autónomo,
 com o mesmo template e os mesmos cálculos. Não existe um relatório privado.
 Builds não executam análise nem alteram as fontes ou snapshots. O Jekyll remove
@@ -81,17 +83,27 @@ Os manifestos de proveniência permanecem junto dos CSVs em `data_sources/`.
 
 ## Contrato e unidades
 
-`schema/candidate_snapshot.schema.json` valida a estrutura; `CandidateDataset`
-valida a contabilidade. Um único documento contém:
+`schema/candidate_summary.schema.json` e `schema/candidate_details.schema.json`
+validam as duas estruturas estritas; `CandidateDataset` valida as relações entre elas.
 
-- `source_dates`: arquivo e downloads conhecidos.
-- `rnal`: números AL distintos em registos que declaram Lisboa, globalmente e
-  por freguesia oficial, incluindo desconhecida. Os totais locais podem sobrepor-se.
-- `listings`: anúncios originais antes da expansão/agrupamento, globalmente e pela
-  freguesia declarada pelo Airbnb. Incluem desconhecida e somam Lisboa.
-- `candidates`: cada candidato tem zero ou um número AL e um ou mais anúncios.
-- `grouping_assessments`: todos os pares de anúncios com o mesmo número não nulo,
-  com pontuação, resultado final e motivos enumerados.
+- `summary.json` contém `source_dates`, `lisbon`, as 24 `parishes` e uma linha
+  desconhecida no fim. Cada âmbito tem `official_count`, `listings_count`,
+  `candidates_count`, `numbered_candidates_count` e `distinct_al_numbers_count`.
+  As contagens RNAL e dos anúncios originais vêm independentemente das fontes.
+  Os totais de anúncios e candidatos são aditivos; números distintos podem sobrepor-se.
+- O resumo inclui as cinco contagens de sinais em `signals`,
+  `repeated_number_distances` (seis intervalos, incluindo por resolver) e
+  `outside_regions` (NUTS II, com `district: null` para regiões por resolver).
+  Guarda apenas contagens; etiquetas, percentagens e geometria pertencem à apresentação.
+- `candidates.json.gz` descodifica para `candidates` e `grouping_assessments`,
+  incluindo todos os candidatos e declarações originais, mesmo os omitidos da tabela.
+  Usa JSON UTF-8 compacto com newline final, Zlib nível 9, mtime zero, sem nome
+  original nem comentário. Entradas idênticas reproduzem bytes no runtime suportado.
+
+`CandidateDataset` expõe `summary_document`, `details_document`, `candidates` e
+`grouping_assessments`; `summary` mantém os quatro valores Ruby de `Analysis.run`.
+Os agregados derivados de candidatos são partilhados pelo builder e pela validação
+através de `CandidateDataset.candidate_aggregates`.
 
 Os IDs distintos referenciados têm de cobrir exatamente a população original.
 Cada contribuição anúncio–número aparece uma única vez. Candidatos sem número
@@ -199,11 +211,13 @@ objeto de dados usado para snapshots gerados e carregados, incluindo o resumo.
 nomes/caminhos coerentes.
 
 O builder compara contribuições e resumos diretamente com as fontes preparadas.
-A publicação prepara o JSON em staging, valida e relê os bytes por
-`CandidateDataset`, verifica novamente os hashes das fontes e substitui
-`snapshot.json` por rename atómico. Exceções e interrupções anteriores preservam
-o snapshot existente. Um lock na própria pasta de destino serializa escritores
-do mesmo par, sem ficheiros auxiliares ou diretório privado. Os manifestos das
+A publicação prepara os dois ficheiros numa pasta irmã temporária, fecha e sincroniza
+os ficheiros, valida e relê o par por `CandidateDataset` antes de obter o lock exclusivo.
+Verifica novamente os hashes das fontes e substitui a pasta datada com backup e rollback
+em caso de exceção ou interrupção. O lock está na pasta mãe estável; leitores e cópias
+para downloads usam locks partilhados. As cópias verificam os hashes dos ficheiros usados
+na renderização e falham se estes mudarem durante o build.
+Os manifestos das
 fontes e a atribuição/hash dos limites ficam junto dos respetivos inputs.
 Não há diagnósticos persistidos nem histórico analítico separado.
 
@@ -245,7 +259,7 @@ para validar mudanças locais.
 
 O workflow mensal testa, restaura fontes, atualiza explicitamente quando necessário,
 arquiva só o par selecionado e manifestos, executa análise, audita e faz staging
-apenas do snapshot datado gerado. Constrói o site e inspeciona `_site/report.pdf`.
+apenas de `summary.json` e `candidates.json.gz` da pasta datada gerada. Constrói o site e inspeciona `_site/report.pdf`.
 O workflow de site constrói sem análise. Ambos usam a auditoria do contrato de
 candidatos. CSVs brutos e manifestos locais ficam fora do Git.
 `ruby scripts/audit_publication.rb --history` audita segurança do histórico sem

@@ -1,43 +1,6 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Alojamento Local candidate snapshot",
   "type": "object",
   "properties": {
-    "source_dates": {
-      "type": "object",
-      "properties": {
-        "rnal_fetched_on": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "date"
-        },
-        "airbnb_fetched_on": {
-          "type": [
-            "string",
-            "null"
-          ],
-          "format": "date"
-        },
-        "airbnb_snapshot_date": {
-          "type": "string",
-          "format": "date"
-        }
-      },
-      "required": [
-        "rnal_fetched_on",
-        "airbnb_fetched_on",
-        "airbnb_snapshot_date"
-      ],
-      "additionalProperties": false
-    },
-    "rnal": {
-      "$ref": "#/$defs/geographic_counts"
-    },
-    "listings": {
-      "$ref": "#/$defs/geographic_counts"
-    },
     "candidates": {
       "type": "array",
       "items": {
@@ -111,13 +74,11 @@
     }
   },
   "required": [
-    "source_dates",
-    "rnal",
-    "listings",
     "candidates",
     "grouping_assessments"
   ],
   "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$defs": {
     "count": {
       "type": "integer",
@@ -158,50 +119,6 @@
         "null"
       ],
       "minimum": 0
-    },
-    "geographic_counts": {
-      "type": "object",
-      "properties": {
-        "lisbon": {
-          "type": "object",
-          "properties": {
-            "count": {
-              "$ref": "#/$defs/count"
-            }
-          },
-          "required": [
-            "count"
-          ],
-          "additionalProperties": false
-        },
-        "parishes": {
-          "type": "array",
-          "minItems": 25,
-          "maxItems": 25,
-          "uniqueItems": true,
-          "items": {
-            "type": "object",
-            "properties": {
-              "freguesia": {
-                "$ref": "#/$defs/parish"
-              },
-              "count": {
-                "$ref": "#/$defs/count"
-              }
-            },
-            "required": [
-              "freguesia",
-              "count"
-            ],
-            "additionalProperties": false
-          }
-        }
-      },
-      "required": [
-        "lisbon",
-        "parishes"
-      ],
-      "additionalProperties": false
     },
     "candidate": {
       "type": "object",

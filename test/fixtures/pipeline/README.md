@@ -45,14 +45,16 @@ The independent Lisbon RNAL summary has **3 distinct numbers**. Arroios has
 than the city total 3. Unknown official parish has zero. No source row is dropped
 when resolving national conflicts.
 
-`expected/public/snapshot.json` is the full canonical candidate document.
-It is the sole analysis output; no private directory or diagnostic files are generated.
+`expected/public/summary.json` and `expected/public/candidates.json.gz` are the
+reviewed canonical pair. The gzip decodes to all candidates and pair assessments.
+These are the sole analysis outputs; no private directory or diagnostic files are generated.
 Source manifests remain beside the copied CSV inputs.
 Review diffs and independently recount these relationships before updating.
 
 ## Presentation fixture
 
-`snapshots/candidate/snapshot.json` is a separate invented dataset for the
+`snapshots/candidate/summary.json` and `snapshots/candidate/candidates.json.gz`
+form a separate invented dataset for the
 established site/report UX. It has **13 original listings**, **12 candidates**,
 **7 distinct candidate numbers** and **17 distinct RNAL numbers**. It includes a
 three-listing merged candidate, a listing contributing to two numbers, unknown
