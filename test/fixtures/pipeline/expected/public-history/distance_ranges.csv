@@ -1,5 +1,0 @@
-run_id,distance_method,range,licence_groups
-2024-06-01__2024-07-01,max_cross_cluster_pair_km_v1,500_m_1_km,0
-2024-06-01__2024-07-01,max_cross_cluster_pair_km_v1,1_2_km,0
-2024-06-01__2024-07-01,max_cross_cluster_pair_km_v1,2_5_km,0
-2024-06-01__2024-07-01,max_cross_cluster_pair_km_v1,over_5_km,1

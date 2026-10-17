@@ -2,7 +2,7 @@
 layout: default
 title: Freguesias de Lisboa
 ---
-{% assign districts = site.data.site.districts | sort: 'establishments_estimate' | reverse %}
+{% assign districts = site.data.site.districts | sort: 'candidate_count' | reverse %}
 <section
   class="py-14 sm:py-20"
   aria-labelledby="districts-title"
@@ -15,7 +15,7 @@ title: Freguesias de Lisboa
       Onde estão?
     </h1>
     <p class="mt-7 max-w-[68ch] text-lg">
-      Veja como os anúncios Airbnb e os estabelecimentos estimados se distribuem pelas
+      Veja como os anúncios Airbnb e os candidatos AL se distribuem pelas
       {{ districts.size }} freguesias de Lisboa. Escolha uma freguesia no mapa ou na lista para
       explorar os seus dados.
     </p>
@@ -87,15 +87,11 @@ title: Freguesias de Lisboa
                   type="button"
                   disabled
                   data-sort-key="estimate"
-                  data-sort-label="estabelecimentos estimados"
+                  data-sort-label="candidatos AL"
                   data-initial-direction="descending"
                   class="inline-flex min-h-11 cursor-pointer items-center justify-end gap-2 text-right hover:text-[var(--color-blue)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-blue)] disabled:cursor-default"
                 >
-                  <span>
-                    Estabelecimentos
-                    <br>
-                    estimados
-                  </span>
+                  <span>Candidatos AL</span>
                   <span
                     data-sort-indicator
                     aria-hidden="true"
@@ -112,8 +108,8 @@ title: Freguesias de Lisboa
               <tr
                 class="border-b border-[var(--color-line)]"
                 data-name="{{ district.display_name | escape }}"
-                data-listings="{{ district.listings }}"
-                data-estimate="{{ district.establishments_estimate }}"
+                data-listings="{{ district.listing_count }}"
+                data-estimate="{{ district.candidate_count }}"
               >
                 <th
                   scope="row"
@@ -127,10 +123,10 @@ title: Freguesias de Lisboa
                   </a>
                 </th>
                 <td class="text-right tabular-nums text-[var(--color-ink)]/75">
-                  {{ district.listings | pt_number }}
+                  {{ district.listing_count | pt_number }}
                 </td>
                 <td class="text-right font-semibold tabular-nums">
-                  {{ district.establishments_estimate | pt_number }}
+                  {{ district.candidate_count | pt_number }}
                 </td>
               </tr>
             {% endfor %}
@@ -143,10 +139,13 @@ title: Freguesias de Lisboa
           aria-live="polite"
           aria-atomic="true"
         >
-          Ordenado por estabelecimentos estimados, por ordem decrescente.
+          Ordenado por candidatos AL, por ordem decrescente.
         </p>
         <p class="mt-6 text-sm text-[var(--color-ink)]/75">
-          A estimativa resulta do agrupamento de anúncios; não é uma contagem oficial de AL ativos.
+          Os candidatos contam uma vez na freguesia atribuída. Freguesia por identificar:
+          {{ site.data.site.unknown.candidate_count | pt_count: 'candidato', 'candidatos' }}. Os
+          anúncios originais usam a freguesia declarada na fonte Airbnb, que pode diferir da
+          atribuída aos candidatos.
           <a
             class="text-[var(--color-blue)] underline underline-offset-4"
             href="{{ '/metodologia.html#listagens-airbnb' | relative_url }}"

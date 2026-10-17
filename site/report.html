@@ -1,28 +1,16 @@
 ---
 layout: null
 ---
-{% assign r = page.report | default: site.data.report %}
-{% assign data_file = 'snapshot.json' %}
-{% assign metrics_file = 'snapshot.json' %}
-
+{% assign d = site.data.site %}
 <!doctype html>
-<html lang="pt">
+<html lang="pt-PT">
   <head>
     <meta charset="utf-8">
     <meta
       name="viewport"
       content="width=device-width,initial-scale=1"
     >
-    {% if page.private_tables %}
-      <meta
-        name="al-private-report"
-        content="true"
-      >
-    {% endif %}
-    <title>
-      Alojamento Local em Lisboa —
-      {{ r.summary.run_id | escape }}
-    </title>
+    <title>Candidatos AL · Relatório</title>
     <style>
       * {
         box-sizing: border-box;
@@ -57,6 +45,9 @@ layout: null
         border-collapse: collapse;
         width: 100%;
         min-width: 760px;
+      }
+      small {
+        display: block;
       }
       .long-value {
         max-height: 12rem;
@@ -188,341 +179,188 @@ layout: null
   <body>
     <header>
       <h1>Alojamento Local em Lisboa</h1>
-      <p>
-        Run {{ r.summary.run_id | escape }} · gerado em
-        {{ r.summary.generated_at | escape }}
-      </p>
-      <p>Indicador para verificação oficial</p>
-      {% if page.private_tables %}
-        <p><a href="#diagnosticos">Consultar diagnósticos privados ↓</a></p>
-      {% elsif site.private_report_runs contains r.metadata.run_id %}
-        <p>
-          <a href="{{ '/private-reports/' | append: r.metadata.run_id | append: '/report.html' | relative_url }}">
-            Relatório detalhado · uso local ↗
-          </a>
-        </p>
-      {% endif %}
+      <p>Candidatos AL · Indicadores para verificação oficial</p>
     </header>
-    <section>
-      <h2>Resumo</h2>
-      <div class="cards">
-        <div class="card">
-          <b>{{ r.summary.listings | escape }}</b>
-          <br>
-          listagens
-        </div>
-        <div class="card">
-          <b>{{ r.summary.licence_groups | escape }}</b>
-          <br>
-          grupos de licença
-        </div>
-        <div class="card">
-          <b>{{ r.summary.establishment_estimate | escape }}</b>
-          <br>
-          estimativa de estabelecimentos
-        </div>
+    <p>
+      Indicadores para verificação oficial. Encontrar um número no RNAL não confirma a
+      correspondência com o alojamento.
+    </p>
+    <p>
+      <a href="{{ d.snapshot_download | remove_first: '/' }}">Snapshot JSON ↓</a>
+    </p>
+    <p>
+      RNAL descarregado em {{ d.source_dates.rnal_fetched_on | default: '???' }} · Anúncios de
+      {{ d.source_dates.airbnb_snapshot_date }} (descarregados em
+      {{ d.source_dates.airbnb_fetched_on | default: '???' }}).
+    </p>
+    <div class="cards">
+      <div class="card">
+        <b>{{ d.summary.candidate_count | pt_number }}</b>
+        Candidatos
       </div>
-      {% for classification in r.summary.classifications %}
-        {% assign width = 0 %}
-        {% if r.summary.licence_groups > 0 %}
-          {% assign width = classification[1]
-            | times: 100
-            | divided_by: r.summary.licence_groups
-            | at_most: 100
-          %}
-        {% endif %}
-        <p>{{ classification[0] | escape }}: {{ classification[1] | escape }}</p>
-        <div
-          class="bar"
-          style="width:{{ width | escape }}%"
-        ></div>
-      {% endfor %}
-    </section>
-    <section>
-      <h2>Grupos de licenças (agregado)</h2>
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Classificação</th>
-              <th>Concelho oficial</th>
-              <th>Tipo oficial</th>
-              <th>Grupos</th>
-              <th>Listagens</th>
-              <th>Localizações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for row in r.licence_group_aggregates %}
-              <tr>
-                <td>{{ row.classification | escape }}</td>
-                <td>{{ row.official_municipality | escape }}</td>
-                <td>{{ row.official_type | escape }}</td>
-                <td>{{ row.licence_groups | escape }}</td>
-                <td>{{ row.announcements | escape }}</td>
-                <td>{{ row.spatial_locations | escape }}</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+      <div class="card">
+        <b>{{ d.summary.listing_count | pt_number }}</b>
+        Anúncios originais
       </div>
-    </section>
-    <section>
-      <h2>Por freguesia e classificação</h2>
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Freguesia</th>
-              <th>Classificação</th>
-              <th>Listagens</th>
-              <th>Licenças identificáveis</th>
-              <th>Estimativa</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for row in r.announcements_by_parish_and_classification %}
-              <tr>
-                <td>{{ row.freguesia | escape }}</td>
-                <td>{{ row.classification | escape }}</td>
-                <td>{{ row.announcements | escape }}</td>
-                <td>{{ row.announcements_with_identifiable_number | escape }}</td>
-                <td>{{ row.estimated_establishments | escape }}</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+      <div class="card">
+        <b>{{ d.summary.distinct_al_numbers | pt_number }}</b>
+        Números AL declarados distintos
       </div>
-    </section>
-    <section>
-      <h2>Exemplos ilustrativos</h2>
-      <p>
-        Os exemplos seguintes são sintéticos e servem apenas para explicar os sinais. Não
-        correspondem a anúncios, operadores, números de licença, endereços ou casos individuais.
-      </p>
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Sinal</th>
-              <th>Padrão ilustrativo</th>
-              <th>Leitura prudente</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <th scope="row">Sem licença identificável</th>
-              <td>Um anúncio não apresenta um número que possa ser normalizado como registo AL.</td>
-              <td>
-                É um sinal para verificação; pode refletir um campo vazio, uma isenção ou um formato
-                não reconhecido.
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Provável estabelecimento com anúncios múltiplos</th>
-              <td>
-                Vários anúncios com a mesma licença aparecem agrupados na mesma zona e descrevem
-                quartos ou unidades.
-              </td>
-              <td>
-                Pode corresponder a um único estabelecimento com várias ofertas, não a várias
-                licenças independentes.
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Licença repetida em várias localizações</th>
-              <td>A mesma licença normalizada surge em agrupamentos espaciais distintos.</td>
-              <td>
-                É uma possível reutilização ou divergência que requer confirmação no registo
-                oficial.
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Licença oficial fora de Lisboa</th>
-              <td>
-                A licença é encontrada no registo oficial, mas o concelho oficial não é Lisboa.
-              </td>
-              <td>
-                A diferença pode resultar de localização, cobertura do snapshot ou qualidade dos
-                dados; não prova uma infração.
-              </td>
-            </tr>
-            <tr>
-              <th scope="row">Possível divergência de localização</th>
-              <td>
-                A localização aproximada do anúncio não é consistente com a localização indicada no
-                registo.
-              </td>
-              <td>
-                A comparação é indicativa e deve ser validada sem divulgar coordenadas ou endereços.
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="card">
+        <b>{{ d.summary.official_numbers | pt_number }}</b>
+        Números RNAL em Lisboa
       </div>
-    </section>
-    <section>
-      <h2>Proveniência e método</h2>
-      <p>
-        Fontes:
-        <a href="{{ r.metadata.source_urls.airbnb | escape }}">Airbnb</a>
-        e
-        <a href="{{ r.metadata.source_urls.official | escape }}">registo oficial</a>
-        . Datas e hashes SHA-256 estão em
-        <a href="{{ data_file | escape }}">{{ data_file | escape }}</a>
-        . Metodologia {{ r.metadata.methodology_version | escape }}; análise
-        {{ r.metadata.analysis_version | escape }}.
-      </p>
-      <dl>
-        {% for date in r.metadata.source_dates %}
-          <dt>{{ date[0] | escape }}</dt>
-          <dd>{{ date[1] | default: 'Não disponível' | escape }}</dd>
-        {% endfor -%}
-        {%- for source in r.metadata.source_files %}
-          <dt>SHA-256 · {{ source[0] | escape }}</dt>
-          <dd>
-            <code>{{ source[1].sha256 | escape }}</code>
-          </dd>
-        {% endfor %}
-        <dt>Git</dt>
-        <dd>
-          {{ r.metadata.git_commit | escape -}}
-          {%- if r.metadata.git_worktree_dirty %}(alterações locais){% endif %}
-        </dd>
-        <dt>Schema</dt>
-        <dd>{{ r.metadata.output_schema_version | escape }}</dd>
-      </dl>
-      <p>
-        As classificações são indicadores analíticos e não conclusões legais. Requerem verificação
-        junto das fontes oficiais.
-      </p>
-    </section>
-    <section>
-      <h2>Números distintos e anúncios</h2>
-      <p>
-        Métricas {{ r.registration_metrics.metric_version | escape }}; unidades e definições em
-        {{ metrics_file | escape }}.
-      </p>
-      <div class="table-container">
-        <table class="metrics-table">
-          <thead>
+    </div>
+    <p>
+      Um candidato pode ter vários anúncios; um anúncio pode contribuir para vários candidatos. Cada
+      candidato tem no máximo um número AL. Capacidade não é calculada nesta etapa.
+    </p>
+    <h2>Por freguesia</h2>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Freguesia</th>
+            <th>RNAL: números</th>
+            <th>Anúncios originais</th>
+            <th>Candidatos</th>
+            <th>Números declarados</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for district in d.districts %}
             <tr>
-              <th>Geografia</th>
-              {% for column in r.registration_metrics.rows.first %}
-                {% unless column[0] == 'geography' %}
-                  <th>{{ column[0] | escape }}</th>
-                {% endunless %}
-              {% endfor %}
+              <th scope="row">{{ district.display_name }}</th>
+              <td>{{ district.official_numbers | pt_number }}</td>
+              <td>{{ district.listing_count | pt_number }}</td>
+              <td>{{ district.candidate_count | pt_number }}</td>
+              <td>{{ district.distinct_al_numbers | pt_number }}</td>
             </tr>
-          </thead>
-          <tbody>
-            {% for row in r.registration_metrics.rows %}
-              <tr>
-                <th>{{ row.geography | escape }}</th>
-                {% for column in r.registration_metrics.rows.first %}
-                  {% assign key = column[0] %}
-                  {% unless key == 'geography' %}
-                    <td>{{ row[key] | escape }}</td>
-                  {% endunless %}
+          {% endfor %}
+          <tr>
+            <th scope="row">Freguesia por identificar</th>
+            <td>{{ d.unknown.official_numbers | pt_number }}</td>
+            <td>{{ d.unknown.listing_count | pt_number }}</td>
+            <td>{{ d.unknown.candidate_count | pt_number }}</td>
+            <td>{{ d.unknown.distinct_al_numbers | pt_number }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      Os candidatos das freguesias, incluindo localização desconhecida, somam o total de Lisboa. Os
+      totais de anúncios originais usam a freguesia declarada na fonte Airbnb. Os candidatos usam a
+      freguesia atribuída; números distintos não são necessariamente aditivos.
+    </p>
+    <h2>Candidatos</h2>
+    <p>
+      A tabela mostra {{ d.report_candidates.size | pt_count: 'candidato', 'candidatos' }} com
+      sinais ou informação por resolver. Omite os casos sem sinais, com número encontrado no RNAL,
+      freguesias concordantes e distância até 500 m. Os totais e o download incluem todos os
+      candidatos. Esta seleção não certifica a legalidade dos casos omitidos nem das isenções
+      declaradas.
+    </p>
+    <div class="table-container">
+      <table class="diagnostics-table">
+        <thead>
+          <tr>
+            <th>Candidato / AL</th>
+            <th>Anúncios</th>
+            <th>Localização observada</th>
+            <th>RNAL</th>
+            <th>Sinais</th>
+            <th>Agrupamento</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for candidate in d.report_candidates %}
+            <tr>
+              <td>
+                {{ candidate.id | escape }}
+                <small>
+                  AL:
+                  {% if candidate.al_number %}
+                    {{- candidate.al_number | escape -}}
+                  {% else -%}
+                    —
+                  {% endif %}
+                </small>
+                <small>{{ candidate.registration_status | candidate_label }}</small>
+              </td>
+              <td>
+                {{ candidate.listing_count | pt_count: 'anúncio', 'anúncios' }}
+                {% for id in candidate.listing_ids %}
+                  <small>
+                    {% assign source_url = id | listing_url %}
+                    {% if source_url %}
+                      <a href="{{ source_url }}">{{ id | escape }}</a>
+                    {% else -%}
+                      {{- id | escape -}}
+                    {% endif %}
+                  </small>
                 {% endfor %}
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      <dl>
-        {% for definition in r.registration_metrics.definitions %}
-          <dt>{{ definition[0] | escape }}</dt>
-          <dd>{{ definition[1] | escape }}</dd>
-        {% endfor %}
-      </dl>
-    </section>
-    {%- if page.private_tables -%}
-      <section id="diagnosticos">
-        <h2>Diagnósticos privados</h2>
-        <p>
-          Inclui dados individuais para verificação. Estes ficheiros pertencem apenas ao build
-          local.
-        </p>
-        <p>
-          <a href="listings_detailed.csv">Descarregar CSV completo de anúncios</a>
-          · {{ page.private_listing_count }} linhas
-        </p>
-      </section>
-      {%- for table in page.private_tables -%}
-        <section>
-          <h2>{{ table.title | escape }}</h2>
-          <p>
-            <a href="{{ table.filename | escape }}">Descarregar CSV detalhado</a>
-            · {{ table.total_rows }} linhas no CSV
-          </p>
-          <p>{{ table.rows.size }} grupos para verificação. O CSV inclui todos os grupos.</p>
-          {% if table.rows.size == 0 %}
-            <p>Sem grupos para verificação nesta análise.</p>
-          {% else %}
-            <div class="table-container">
-              <table class="diagnostics-table">
-                <thead>
-                  <tr>
-                    {%- for header in table.headers -%}
-                      <th>{{ header | escape }}</th>
-                    {%- endfor -%}
-                  </tr>
-                </thead>
-                <tbody>
-                  {%- for row in table.rows -%}
-                    <tr>
-                      {%- for header in table.headers -%}
-                        {%- assign value = row[header] | default: '' -%}
-                        <td>
-                          {%- if value.size > 200 -%}
-                            <details>
-                              <summary>{{ value | truncate: 100 | escape }}</summary>
-                              <div class="long-value">{{- value | escape -}}</div>
-                            </details>
-                          {%- else -%}
-                            {{- value | escape -}}
-                          {%- endif -%}
-                        </td>
-                      {%- endfor -%}
-                    </tr>
-                  {%- endfor -%}
-                </tbody>
-              </table>
-            </div>
-          {% endif %}
-        </section>
-      {%- endfor -%}
-    {%- endif -%}
-    <section class="history-section">
-      <h2>Comparação histórica</h2>
-      <div class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Run</th>
-              <th>Estado</th>
-              <th>Listagens</th>
-              <th>Grupos de licença</th>
+              </td>
+              <td>
+                {{ candidate.freguesia | default: 'Por identificar' | escape }}
+                <small>
+                  Coordenadas:
+                  {{ candidate.geography.coordinate_freguesia | default: '???' | escape }}
+                </small>
+                <small>
+                  Airbnb: {{ candidate.geography.airbnb_freguesias | join: ', ' | escape }}
+                </small>
+              </td>
+              <td>
+                {% assign record = candidate.official_match %}
+                {% if record %}
+                  {{- record.municipality | default: '???' | escape }}
+                  <small>{{ record.freguesia | default: '???' | escape }}</small>
+                  <small>{{ record.type | default: '???' | escape }}</small>
+                  <small>NUTS II: {{ record.district | default: 'Por resolver' | escape }}</small>
+                  <small>
+                    Distância RNAL (km):
+                    {% if record.distance_km != null %}
+                      {{- record.distance_km | escape -}}
+                    {% else -%}
+                      ???
+                    {% endif %}
+                  </small>
+                {% else -%}
+                  —
+                {% endif %}
+              </td>
+              <td>
+                {% for signal in candidate.signals %}
+                  <small>Sinal: {{ signal | candidate_label | escape }}</small>
+                {% endfor %}
+              </td>
+              <td>
+                {{ candidate.grouping_reason | candidate_label | escape }}
+                {% if candidate.minimum_merge_score %}
+                  <small>Pontuação mínima dos pares: {{ candidate.minimum_merge_score }}</small>
+                {% endif %}
+                {% if candidate.grouping_review_count > 0 %}
+                  <small>{{ candidate.grouping_review_count }} pares por rever</small>
+                {% endif %}
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {% for row in r.summary.historical_comparisons %}
-              <tr>
-                <td>{{ row.run_id | escape }}</td>
-                <td>{{ row.status | escape }}</td>
-                <td>{{ row.metrics.listings | default: '—' | escape }}</td>
-                <td>{{ row.metrics.licence_groups | default: '—' | escape }}</td>
-              </tr>
-            {% else %}
-              <tr>
-                <td colspan="4">Sem runs anteriores.</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-      <p>Comparações incompatíveis são identificadas quando a versão da metodologia muda.</p>
-    </section>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <h2>Distância máxima ao RNAL · números AL</h2>
+    <p>
+      {{ d.distance_total | pt_count: 'número AL repetido', 'números AL repetidos' }},
+      {% if d.distance_total == 1 %}associado{% else %}associados{% endif %}
+      a {{ d.signals.repeated_listings | pt_count: 'anúncio distinto', 'anúncios distintos' }}. Cada
+      número conta uma vez, segundo a maior distância de um candidato ao respetivo registo RNAL.
+    </p>
+    <ul>
+      {% for range in d.distance_ranges %}
+        <li>{{ range.label }}: {{ range.count | pt_number }}</li>
+      {% else %}
+        <li>Nenhum número AL partilhado por candidatos separados.</li>
+      {% endfor %}
+    </ul>
   </body>
 </html>

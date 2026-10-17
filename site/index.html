@@ -4,28 +4,11 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
 ---
 {% assign d = site.data.site -%}
 {%- assign s = d.summary %}
-{% assign collapsed = s.listings | minus: s.establishment_estimate %}
-{% assign missing = 0 -%}
-{%- assign unrecognised = 0 -%}
-{%- assign repeated = 0 -%}
-{%- assign outside = 0 %}
-{% for row in d.announcements_by_parish_and_classification %}
-  {% if row.classification == 'sem licença' -%}
-    {%- assign missing = missing | plus: row.announcements -%}
-  {%- endif %}
-  {% if row.classification == 'sem licença identificável' -%}
-    {%- assign unrecognised = unrecognised | plus: row.announcements -%}
-  {%- endif %}
-  {% if row.classification == 'licença repetida em várias localizações' -%}
-    {%- assign repeated = repeated | plus: row.announcements -%}
-  {%- endif %}
-  {% if row.classification == 'licença oficial fora de Lisboa' -%}
-    {%- assign outside = outside | plus: row.announcements -%}
-  {%- endif %}
-{% endfor %}
-{% assign unresolved = missing | plus: unrecognised %}
-{% assign split_available = false -%}
-{%- if s.methodology_version != '1.0.0' %}{% assign split_available = true %}{% endif %}
+{% assign missing = d.signals.empty_licence_listings %}
+{% assign unrecognised = d.signals.unrecognised_licence_listings %}
+{% assign unresolved = d.signals.unidentified_licence_listings %}
+{% assign repeated = d.signals.repeated_listings %}
+{% assign outside = d.signals.outside_listings %}
 
 <section
   class="bg-[var(--color-paper)] py-14 sm:py-20 lg:py-24"
@@ -85,22 +68,23 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
           Registo oficial · RNAL
         </h3>
         <strong class="mt-10 block font-[family-name:var(--font-serif)] text-[clamp(4rem,7vw,7rem)] font-normal leading-none tracking-tight text-[var(--color-blue)]">
-          {%- if d.official_count %}{{ d.official_count | pt_number }}{% else %}—{% endif -%}
+          {{- d.rnal.lisbon.count | pt_number -}}
         </strong>
         <p class="mt-2 text-xl font-semibold">registos no concelho de Lisboa</p>
         <p class="mt-7 max-w-[34ch] text-[var(--color-ink)]/75">
-          O RNAL conta inscrições oficiais. Uma inscrição não equivale necessariamente a um
+          No RNAL, contamos números AL distintos. Um registo não equivale necessariamente a um
           estabelecimento ativo ou anunciado no Airbnb.
         </p>
         <p class="mt-auto pt-8 text-sm text-[var(--color-ink)]/75">
           <a
             class="underline underline-offset-4"
-            href="{{ d.metadata.source_urls.official }}"
+            href="{{ d.metadata.source_urls.official | escape }}"
           >
             Fonte: RNAL ↗
           </a>
           <br>
-          Descarregado em {{ d.metadata.source_dates.official_register_download_date }}
+          Descarregado em
+          {{ d.source_dates.rnal_fetched_on | default: '???' }}
         </p>
         <a
           class="mt-3 font-semibold text-[var(--color-blue)] underline underline-offset-4"
@@ -115,11 +99,11 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
         </h3>
         <div
           class="mt-10 grid gap-5 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1.15fr)] sm:items-start"
-          aria-label="Dos anúncios observados aos estabelecimentos estimados"
+          aria-label="Dos anúncios observados aos candidatos AL"
         >
           <div class="min-w-0">
             <strong class="block whitespace-nowrap font-[family-name:var(--font-serif)] text-[clamp(4rem,7vw,7rem)] font-normal leading-none tracking-tight">
-              {{- s.listings | pt_number -}}
+              {{- s.listing_count | pt_number -}}
             </strong>
             <p class="mt-2 text-xl font-semibold">anúncios observados</p>
           </div>
@@ -132,16 +116,16 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
           </span>
           <div class="min-w-0">
             <strong class="block whitespace-nowrap font-[family-name:var(--font-serif)] text-[clamp(4rem,7vw,7rem)] font-normal leading-none tracking-tight text-[var(--color-blue)]">
-              {{- s.establishment_estimate | pt_number -}}
+              {{- s.candidate_count | pt_number -}}
             </strong>
-            <p class="mt-2 text-xl font-semibold">estabelecimentos estimados</p>
+            <p class="mt-2 text-xl font-semibold">candidatos AL</p>
           </div>
         </div>
         <p class="mt-7 text-[var(--color-ink)]/75">
-          Agrupar anúncios nas categorias de menor risco reduz a contagem em
-          <strong class="text-[var(--color-terra)]">{{ collapsed | pt_number }}</strong>
-          . Os casos de possível reutilização do número em locais diferentes permanecem separados.
-          Esta é uma estimativa, não uma contagem oficial de AL ativos.
+          Vários anúncios podem pertencer ao mesmo candidato; um anúncio com vários números AL pode
+          contribuir para vários candidatos. Os casos de possível reutilização em localizações
+          diferentes permanecem separados. Esta é uma estimativa, não uma contagem oficial de AL
+          ativos.
         </p>
         <p class="mt-auto pt-8 text-sm text-[var(--color-ink)]/75">
           <a
@@ -153,7 +137,7 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
           ·
           <a
             class="underline underline-offset-4"
-            href="{{ d.metadata.source_urls.airbnb }}"
+            href="{{ site.data.site.snapshot_download | relative_url }}"
           >
             snapshot ↗
           </a>
@@ -161,9 +145,11 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
           Anúncios de
           <time
             class="whitespace-nowrap"
-            datetime="{{ d.metadata.source_dates.airbnb_snapshot_date }}"
+            {% if d.source_dates.airbnb_snapshot_date %}
+              datetime="{{ d.source_dates.airbnb_snapshot_date }}"
+            {% endif %}
           >
-            {{- d.metadata.source_dates.airbnb_snapshot_date -}}
+            {{- d.source_dates.airbnb_snapshot_date | default: '???' -}}
           </time>
         </p>
         <a
@@ -191,8 +177,8 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
         <em>as duas fontes?</em>
       </h2>
       <p class="mt-7 max-w-[58ch] text-lg">
-        Comparámos o número de registo AL indicado nos anúncios com o RNAL. Que números aparecem nas
-        duas fontes — e quais aparecem apenas numa?
+        Comparamos o registo oficial com os candidatos AL estimados a partir dos anúncios. A
+        contagem Airbnb inclui todos os candidatos, mesmo sem número AL identificável.
       </p>
       <aside class="mt-7 max-w-[58ch] border-l-2 border-[var(--color-blue)] bg-white/40 p-5 text-sm">
         <strong class="text-[var(--color-blue)]">O que é o número de registo AL?</strong>
@@ -218,8 +204,8 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
       O que encontrámos?
     </h2>
     <p class="mt-6 max-w-[75ch] text-lg text-[var(--color-paper)]/85">
-      Ao cruzar as fontes, encontrámos anúncios sem número identificável, números repetidos em
-      locais diferentes e licenças registadas fora de Lisboa.
+      Ao cruzar as fontes, encontrámos anúncios sem número identificável, números partilhados por
+      candidatos separados e licenças registadas fora de Lisboa.
     </p>
     <div class="mt-12 grid gap-5 xl:grid-cols-3">
       <article
@@ -231,47 +217,49 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
           class="font-[family-name:var(--font-serif)] text-3xl leading-tight"
         >
           <span class="block text-5xl text-[var(--color-yellow)]">
-            {%- if split_available %}{{ unresolved | pt_number }}{% else %}—{% endif -%}
+            {{- unresolved | pt_number -}}
           </span>
-          anúncios sem licença identificável
+          {% if unresolved == 1 %}
+            anúncio sem licença identificável
+          {% else -%}
+            anúncios sem licença identificável
+          {% endif %}
         </h3>
         <p class="mt-4 text-sm text-[var(--color-paper)]/85">
           O campo da licença está vazio ou contém um valor que o método não reconhece como registo
           AL.
         </p>
-        {% if split_available %}
-          <figure class="mt-8 mb-6">
-            <figcaption class="mb-4 text-xs font-bold uppercase tracking-wider text-[var(--color-paper)]/85">
-              Composição deste sinal · anúncios
-            </figcaption>
-            <ul class="space-y-4 text-sm">
-              <li>
-                <div class="flex justify-between gap-3">
-                  <span>Campo vazio</span>
-                  <strong>{{ missing | pt_number }}</strong>
-                </div>
-                <div class="mt-1 h-3 bg-white/15">
-                  <div
-                    class="h-3 bg-[var(--color-yellow)]"
-                    style="width:{{ missing | times: 100.0 | divided_by: unresolved | round: 1 }}%"
-                  ></div>
-                </div>
-              </li>
-              <li>
-                <div class="flex justify-between gap-3">
-                  <span>Valor não reconhecido</span>
-                  <strong>{{ unrecognised | pt_number }}</strong>
-                </div>
-                <div class="mt-1 h-3 bg-white/15">
-                  <div
-                    class="h-3 bg-[var(--color-yellow)]"
-                    style="width:{{ unrecognised | times: 100.0 | divided_by: unresolved | round: 1 }}%"
-                  ></div>
-                </div>
-              </li>
-            </ul>
-          </figure>
-        {% endif %}
+        <figure class="mt-8 mb-6">
+          <figcaption class="mb-4 text-xs font-bold uppercase tracking-wider text-[var(--color-paper)]/85">
+            Composição deste sinal · anúncios
+          </figcaption>
+          <ul class="space-y-4 text-sm">
+            <li>
+              <div class="flex justify-between gap-3">
+                <span>Campo vazio</span>
+                <strong>{{ missing | pt_number }}</strong>
+              </div>
+              <div class="mt-1 h-3 bg-white/15">
+                <div
+                  class="h-3 bg-[var(--color-yellow)]"
+                  style="width:{% if unresolved > 0 %}{{ missing | times: 100.0 | divided_by: unresolved | round: 1 }}{% else %}0{% endif %}%"
+                ></div>
+              </div>
+            </li>
+            <li>
+              <div class="flex justify-between gap-3">
+                <span>Valor não reconhecido</span>
+                <strong>{{ unrecognised | pt_number }}</strong>
+              </div>
+              <div class="mt-1 h-3 bg-white/15">
+                <div
+                  class="h-3 bg-[var(--color-yellow)]"
+                  style="width:{% if unresolved > 0 %}{{ unrecognised | times: 100.0 | divided_by: unresolved | round: 1 }}{% else %}0{% endif %}%"
+                ></div>
+              </div>
+            </li>
+          </ul>
+        </figure>
         <p class="mt-auto text-sm text-[var(--color-paper)]/85">
           Não identificar um número no anúncio não demonstra ausência de licença ou ilegalidade.
         </p>
@@ -291,20 +279,25 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
           class="font-[family-name:var(--font-serif)] text-3xl leading-tight"
         >
           <span class="block text-5xl text-[var(--color-yellow)]">{{ repeated | pt_number }}</span>
-          anúncios com o mesmo número em localizações diferentes
+          {% if repeated == 1 %}
+            anúncio com o mesmo número em candidatos separados
+          {% else -%}
+            anúncios com o mesmo número em candidatos separados
+          {% endif %}
         </h3>
         <p class="mt-4 text-sm text-[var(--color-paper)]/85">
-          Um número normalizado surge em mais de um agrupamento espacial, após aplicar o limite de
-          500 metros.
+          Um número normalizado surge em candidatos separados. O sinal exige verificação individual.
         </p>
         <figure class="mt-8 mb-6">
           <figcaption class="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--color-paper)]/85">
-            Distância máxima entre localizações
+            Distância máxima ao RNAL · números AL
           </figcaption>
           {% if d.distance_ranges.size > 0 %}
             <p class="mb-4 text-xs text-[var(--color-paper)]/75">
-              {{ d.distance_total | pt_number }} números de licença, associados a
-              {{ d.repeated_listings | pt_number }} anúncios
+              {{ d.distance_total | pt_count: 'número AL', 'números AL' }},
+              {% if d.distance_total == 1 %}associado{% else %}associados{% endif %}
+              a {{ repeated | pt_count: 'anúncio', 'anúncios' }} · maior distância de um candidato
+              ao respetivo registo RNAL
             </p>
             <ul class="space-y-3 text-sm">
               {% for range in d.distance_ranges %}
@@ -315,20 +308,20 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
                   </div>
                   <div class="mt-1 h-3 bg-white/15">
                     <div
-                      class="h-3 bg-[var(--color-yellow)]"
-                      style="width:{{ range.count | times: 100.0 | divided_by: d.distance_max | round: 1 }}%"
+                      class="h-3 {% if range.unresolved %}bg-white/50{% else %}bg-[var(--color-yellow)]{% endif %}"
+                      style="width:{{ range.width }}%"
                     ></div>
                   </div>
                 </li>
               {% endfor %}
             </ul>
           {% else %}
-            <p class="text-sm">Não há distâncias agregadas disponíveis para este snapshot.</p>
+            <p class="text-sm">Nenhum número AL partilhado por candidatos separados.</p>
           {% endif %}
         </figure>
         <p class="mt-auto text-sm text-[var(--color-paper)]/85">
-          Anúncios próximos podem ser quartos ou unidades do mesmo estabelecimento. Distâncias
-          maiores pedem análise detalhada; as posições dos anúncios são aproximadas.
+          Vários anúncios podem representar quartos ou unidades do mesmo estabelecimento. Distâncias
+          maiores ao registo RNAL pedem análise detalhada; as posições dos anúncios são aproximadas.
         </p>
         <a
           class="mt-5 font-semibold text-[var(--color-yellow)] underline underline-offset-4"
@@ -346,7 +339,11 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
           class="font-[family-name:var(--font-serif)] text-3xl leading-tight"
         >
           <span class="block text-5xl text-[var(--color-yellow)]">{{ outside | pt_number }}</span>
-          anúncios com licença registada fora de Lisboa
+          {% if outside == 1 %}
+            anúncio com licença registada fora de Lisboa
+          {% else -%}
+            anúncios com licença registada fora de Lisboa
+          {% endif %}
         </h3>
         <p class="mt-4 text-sm text-[var(--color-paper)]/85">
           O anúncio está no conjunto de Lisboa, mas a licença corresponde no RNAL a outro município.
@@ -356,7 +353,9 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
             Região oficial da licença · anúncios
           </figcaption>
           <p class="mb-4 text-xs text-[var(--color-paper)]/75">
-            Distribuição por NUTS II dos {{ d.outside_regions.total | pt_number }} anúncios
+            Distribuição por NUTS II
+            {% if outside == 1 %}do{% else %}dos{% endif %}
+            {{ outside | pt_count: 'anúncio', 'anúncios' }}
           </p>
           <ul class="space-y-3 text-sm">
             {% for region in d.outside_regions.rows %}
@@ -372,6 +371,8 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
                   ></div>
                 </div>
               </li>
+            {% else %}
+              <li>Nenhum anúncio com licença registada fora de Lisboa.</li>
             {% endfor %}
           </ul>
         </figure>
@@ -403,8 +404,8 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
         Onde estão?
       </h2>
       <p class="mt-7 max-w-[55ch] text-lg">
-        Os estabelecimentos estimados a partir dos anúncios Airbnb concentram-se em algumas
-        freguesias, com maior peso no centro histórico.
+        Os candidatos AL a partir dos anúncios Airbnb concentram-se em algumas freguesias, com maior
+        peso no centro histórico.
       </p>
       <a
         class="mt-3 inline-block font-semibold text-[var(--color-blue)] underline underline-offset-4"
@@ -414,11 +415,11 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
       </a>
     </div>
     {% include freguesia-map.html %}
-    {% assign top = d.districts | sort: 'establishments_estimate' | reverse | slice: 0, 5 %}
+    {% assign top = d.districts | sort: 'candidate_count' | reverse | slice: 0, 5 %}
     <div class="min-w-0">
       <table class="w-full border-collapse text-sm">
         <caption class="mb-5 text-left font-[family-name:var(--font-serif)] text-2xl leading-tight">
-          Freguesias com mais estabelecimentos estimados
+          Freguesias com mais candidatos AL
         </caption>
         <thead>
           <tr class="border-b border-[var(--color-line)] text-xs text-[var(--color-ink)]/75">
@@ -451,7 +452,7 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
                 </a>
               </th>
               <td class="py-4 pl-4 text-right font-semibold tabular-nums">
-                {{ district.establishments_estimate | pt_number }}
+                {{ district.candidate_count | pt_number }}
               </td>
             </tr>
           {% endfor %}

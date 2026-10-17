@@ -1,923 +1,637 @@
 {
-  "schema_version": "7.0.0",
-  "metadata": {
-    "run_id": "2024-06-01__2024-07-01",
-    "source_urls": {
-      "airbnb": "https://data.insideairbnb.com/portugal/lisbon/lisbon/2024-06-01/data/listings.csv.gz",
-      "official": "https://hub.arcgis.com/api/download/v1/items/4e62eb1977564991bd01e61d7aa8266f/csv?redirect=false&layers=6"
-    },
-    "source_dates": {
-      "airbnb_snapshot_date": "2024-06-01",
-      "official_register_date": "2020-01-01",
-      "official_register_download_date": "2024-07-01"
-    },
-    "source_files": {
-      "airbnb": {
-        "sha256": "2d7e61df283d0e1b42049682117dbf401d64d56e6c06ac9dc64702eac5819279"
-      },
-      "official": {
-        "sha256": "2bb9c11d6f9c3c19f717387e1d43100c231dfcd831ab6d8413de9b4c8dcca13b"
-      }
-    },
-    "git_commit": "<git_commit>",
-    "git_worktree_dirty": "<git_worktree_dirty>",
-    "analysis_version": "3.9.0",
-    "methodology_version": "2.3.0",
-    "output_schema_version": "7.0.0"
+  "source_dates": {
+    "airbnb_snapshot_date": "2024-06-01",
+    "airbnb_fetched_on": null,
+    "rnal_fetched_on": null
   },
-  "summary": {
-    "run_id": "2024-06-01__2024-07-01",
-    "source_dates": {
-      "airbnb_snapshot_date": "2024-06-01",
-      "official_register_date": "2020-01-01",
-      "official_register_download_date": "2024-07-01"
+  "rnal": {
+    "lisbon": {
+      "count": 3
     },
-    "methodology_version": "2.3.0",
-    "listings": 34,
-    "licence_groups": 18,
-    "official_registers_lisbon": 19,
-    "establishment_estimate": 28,
-    "classifications": {
-      "provável estabelecimento com anúncios múltiplos": 1,
-      "geografia oficial não identificada": 6,
-      "licença única em Lisboa": 4,
-      "localização observada não identificada": 1,
-      "licença repetida na mesma localização": 2,
-      "licença repetida em várias localizações": 1,
-      "licença oficial fora de Lisboa": 2,
-      "número sem correspondência no RNAL": 1
-    },
-    "generated_at": "<generated_at>",
-    "historical_comparisons": [
+    "parishes": [
       {
-        "run_id": "2024-05-01__2024-06-01",
-        "status": "incompatível — metodologia diferente",
-        "metrics": {}
+        "freguesia": "Ajuda",
+        "count": 0
       },
       {
-        "run_id": "2023-05-01__2023-06-01",
-        "status": "incompatível — metodologia diferente",
-        "metrics": {}
+        "freguesia": "Alcântara",
+        "count": 0
       },
       {
-        "run_id": "2024-05-02__2024-06-02",
-        "status": "comparável",
-        "metrics": {
-          "listings": 10,
-          "licence_groups": 7,
-          "establishment_estimate": 8
-        }
+        "freguesia": "Alvalade",
+        "count": 0
+      },
+      {
+        "freguesia": "Areeiro",
+        "count": 0
+      },
+      {
+        "freguesia": "Arroios",
+        "count": 2
+      },
+      {
+        "freguesia": "Avenidas Novas",
+        "count": 0
+      },
+      {
+        "freguesia": "Beato",
+        "count": 0
+      },
+      {
+        "freguesia": "Belém",
+        "count": 2
+      },
+      {
+        "freguesia": "Benfica",
+        "count": 0
+      },
+      {
+        "freguesia": "Campo de Ourique",
+        "count": 0
+      },
+      {
+        "freguesia": "Campolide",
+        "count": 0
+      },
+      {
+        "freguesia": "Carnide",
+        "count": 0
+      },
+      {
+        "freguesia": "Estrela",
+        "count": 0
+      },
+      {
+        "freguesia": "Lumiar",
+        "count": 0
+      },
+      {
+        "freguesia": "Marvila",
+        "count": 0
+      },
+      {
+        "freguesia": "Misericórdia",
+        "count": 0
+      },
+      {
+        "freguesia": "Olivais",
+        "count": 0
+      },
+      {
+        "freguesia": "Parque das Nações",
+        "count": 0
+      },
+      {
+        "freguesia": "Penha de França",
+        "count": 0
+      },
+      {
+        "freguesia": "Santa Clara",
+        "count": 0
+      },
+      {
+        "freguesia": "Santa Maria Maior",
+        "count": 0
+      },
+      {
+        "freguesia": "Santo António",
+        "count": 0
+      },
+      {
+        "freguesia": "São Domingos de Benfica",
+        "count": 0
+      },
+      {
+        "freguesia": "São Vicente",
+        "count": 0
+      },
+      {
+        "freguesia": null,
+        "count": 0
       }
     ]
   },
-  "licence_group_aggregates": [
-    {
-      "classification": "geografia oficial não identificada",
-      "official_municipality": "não identificado",
-      "official_type": "apartamento",
-      "licence_groups": 6,
-      "announcements": 6,
-      "spatial_locations": 6,
-      "estimated_establishments": 6
+  "listings": {
+    "lisbon": {
+      "count": 11
     },
-    {
-      "classification": "licença oficial fora de Lisboa",
-      "official_municipality": "outro município",
-      "official_type": "apartamento",
-      "licence_groups": 2,
-      "announcements": 3,
-      "spatial_locations": 3,
-      "estimated_establishments": 3
-    },
-    {
-      "classification": "licença repetida em várias localizações",
-      "official_municipality": "Lisboa",
-      "official_type": "apartamento",
-      "licence_groups": 1,
-      "announcements": 4,
-      "spatial_locations": 2,
-      "estimated_establishments": 4
-    },
-    {
-      "classification": "licença repetida na mesma localização",
-      "official_municipality": "Lisboa",
-      "official_type": "apartamento",
-      "licence_groups": 2,
-      "announcements": 5,
-      "spatial_locations": 2,
-      "estimated_establishments": 2
-    },
-    {
-      "classification": "licença única em Lisboa",
-      "official_municipality": "Lisboa",
-      "official_type": "apartamento",
-      "licence_groups": 4,
-      "announcements": 4,
-      "spatial_locations": 4,
-      "estimated_establishments": 4
-    },
-    {
-      "classification": "localização observada não identificada",
-      "official_municipality": "Lisboa",
-      "official_type": "apartamento",
-      "licence_groups": 1,
-      "announcements": 2,
-      "spatial_locations": 2,
-      "estimated_establishments": 2
-    },
-    {
-      "classification": "número sem correspondência no RNAL",
-      "official_municipality": "não identificado",
-      "official_type": "não identificado",
-      "licence_groups": 1,
-      "announcements": 2,
-      "spatial_locations": 1,
-      "estimated_establishments": 2
-    },
-    {
-      "classification": "provável estabelecimento com anúncios múltiplos",
-      "official_municipality": "Lisboa",
-      "official_type": "hospedagem",
-      "licence_groups": 1,
-      "announcements": 4,
-      "spatial_locations": 1,
-      "estimated_establishments": 1
-    },
-    {
-      "classification": "sem licença",
-      "official_municipality": "não identificado",
-      "official_type": "não identificado",
-      "licence_groups": 0,
-      "announcements": 2,
-      "spatial_locations": 0,
-      "estimated_establishments": 2
-    },
-    {
-      "classification": "sem licença identificável",
-      "official_municipality": "não identificado",
-      "official_type": "não identificado",
-      "licence_groups": 0,
-      "announcements": 2,
-      "spatial_locations": 0,
-      "estimated_establishments": 2
-    }
-  ],
-  "announcements_by_parish_and_classification": [
-    {
-      "freguesia": "Ajuda",
-      "classification": "geografia oficial não identificada",
-      "announcements": 1,
-      "announcements_with_identifiable_number": 1,
-      "estimated_establishments": 1
-    },
-    {
-      "freguesia": "Arroios",
-      "classification": "geografia oficial não identificada",
-      "announcements": 4,
-      "announcements_with_identifiable_number": 4,
-      "estimated_establishments": 4
-    },
-    {
-      "freguesia": "Arroios",
-      "classification": "licença oficial fora de Lisboa",
-      "announcements": 3,
-      "announcements_with_identifiable_number": 3,
-      "estimated_establishments": 3
-    },
-    {
-      "freguesia": "Arroios",
-      "classification": "licença repetida em várias localizações",
-      "announcements": 4,
-      "announcements_with_identifiable_number": 4,
-      "estimated_establishments": 4
-    },
-    {
-      "freguesia": "Arroios",
-      "classification": "licença repetida na mesma localização",
-      "announcements": 5,
-      "announcements_with_identifiable_number": 5,
-      "estimated_establishments": 2
-    },
-    {
-      "freguesia": "Arroios",
-      "classification": "licença única em Lisboa",
-      "announcements": 3,
-      "announcements_with_identifiable_number": 3,
-      "estimated_establishments": 3
-    },
-    {
-      "freguesia": "Arroios",
-      "classification": "localização observada não identificada",
-      "announcements": 2,
-      "announcements_with_identifiable_number": 2,
-      "estimated_establishments": 2
-    },
-    {
-      "freguesia": "Arroios",
-      "classification": "número sem correspondência no RNAL",
-      "announcements": 2,
-      "announcements_with_identifiable_number": 2,
-      "estimated_establishments": 2
-    },
-    {
-      "freguesia": "Arroios",
-      "classification": "provável estabelecimento com anúncios múltiplos",
-      "announcements": 3,
-      "announcements_with_identifiable_number": 3,
-      "estimated_establishments": 1
-    },
-    {
-      "freguesia": "Arroios",
-      "classification": "sem licença",
-      "announcements": 2,
-      "announcements_with_identifiable_number": 0,
-      "estimated_establishments": 2
-    },
-    {
-      "freguesia": "Arroios",
-      "classification": "sem licença identificável",
-      "announcements": 2,
-      "announcements_with_identifiable_number": 0,
-      "estimated_establishments": 2
-    },
-    {
-      "freguesia": "Belém",
-      "classification": "geografia oficial não identificada",
-      "announcements": 1,
-      "announcements_with_identifiable_number": 1,
-      "estimated_establishments": 1
-    },
-    {
-      "freguesia": "Belém",
-      "classification": "provável estabelecimento com anúncios múltiplos",
-      "announcements": 1,
-      "announcements_with_identifiable_number": 1,
-      "estimated_establishments": 1
-    },
-    {
-      "freguesia": "Geografia não identificada",
-      "classification": "licença única em Lisboa",
-      "announcements": 1,
-      "announcements_with_identifiable_number": 1,
-      "estimated_establishments": 1
-    }
-  ],
-  "parish_totals": [
-    {
-      "freguesia": "Ajuda",
-      "announcements": 1,
-      "announcements_with_identifiable_number": 1,
-      "estimated_establishments": 1
-    },
-    {
-      "freguesia": "Alcântara",
-      "announcements": 0,
-      "announcements_with_identifiable_number": 0,
-      "estimated_establishments": 0
-    },
-    {
-      "freguesia": "Alvalade",
-      "announcements": 0,
-      "announcements_with_identifiable_number": 0,
-      "estimated_establishments": 0
-    },
-    {
-      "freguesia": "Areeiro",
-      "announcements": 0,
-      "announcements_with_identifiable_number": 0,
-      "estimated_establishments": 0
-    },
-    {
-      "freguesia": "Arroios",
-      "announcements": 30,
-      "announcements_with_identifiable_number": 26,
-      "estimated_establishments": 25
-    },
-    {
-      "freguesia": "Avenidas Novas",
-      "announcements": 0,
-      "announcements_with_identifiable_number": 0,
-      "estimated_establishments": 0
-    },
-    {
-      "freguesia": "Beato",
-      "announcements": 0,
-      "announcements_with_identifiable_number": 0,
-      "estimated_establishments": 0
-    },
-    {
-      "freguesia": "Belém",
-      "announcements": 2,
-      "announcements_with_identifiable_number": 2,
-      "estimated_establishments": 2
-    },
-    {
-      "freguesia": "Benfica",
-      "announcements": 0,
-      "announcements_with_identifiable_number": 0,
-      "estimated_establishments": 0
-    },
-    {
-      "freguesia": "Campo de Ourique",
-      "announcements": 0,
-      "announcements_with_identifiable_number": 0,
-      "estimated_establishments": 0
-    },
-    {
-      "freguesia": "Campolide",
-      "announcements": 0,
-      "announcements_with_identifiable_number": 0,
-      "estimated_establishments": 0
-    },
-    {
-      "freguesia": "Carnide",
-      "announcements": 0,
-      "announcements_with_identifiable_number": 0,
-      "estimated_establishments": 0
-    },
-    {
-      "freguesia": "Estrela",
-      "announcements": 0,
-      "announcements_with_identifiable_number": 0,
-      "estimated_establishments": 0
-    },
-    {
-      "freguesia": "Geografia não identificada",
-      "announcements": 1,
-      "announcements_with_identifiable_number": 1,
-      "estimated_establishments": 1
-    },
-    {
-      "freguesia": "Lumiar",
-      "announcements": 0,
-      "announcements_with_identifiable_number": 0,
-      "estimated_establishments": 0
-    },
-    {
-      "freguesia": "Marvila",
-      "announcements": 0,
-      "announcements_with_identifiable_number": 0,
-      "estimated_establishments": 0
-    },
-    {
-      "freguesia": "Misericórdia",
-      "announcements": 0,
-      "announcements_with_identifiable_number": 0,
-      "estimated_establishments": 0
-    },
-    {
-      "freguesia": "Olivais",
-      "announcements": 0,
-      "announcements_with_identifiable_number": 0,
-      "estimated_establishments": 0
-    },
-    {
-      "freguesia": "Parque das Nações",
-      "announcements": 0,
-      "announcements_with_identifiable_number": 0,
-      "estimated_establishments": 0
-    },
-    {
-      "freguesia": "Penha de França",
-      "announcements": 0,
-      "announcements_with_identifiable_number": 0,
-      "estimated_establishments": 0
-    },
-    {
-      "freguesia": "Santa Clara",
-      "announcements": 0,
-      "announcements_with_identifiable_number": 0,
-      "estimated_establishments": 0
-    },
-    {
-      "freguesia": "Santa Maria Maior",
-      "announcements": 0,
-      "announcements_with_identifiable_number": 0,
-      "estimated_establishments": 0
-    },
-    {
-      "freguesia": "Santo António",
-      "announcements": 0,
-      "announcements_with_identifiable_number": 0,
-      "estimated_establishments": 0
-    },
-    {
-      "freguesia": "São Domingos de Benfica",
-      "announcements": 0,
-      "announcements_with_identifiable_number": 0,
-      "estimated_establishments": 0
-    },
-    {
-      "freguesia": "São Vicente",
-      "announcements": 0,
-      "announcements_with_identifiable_number": 0,
-      "estimated_establishments": 0
-    }
-  ],
-  "registration_metrics": {
-    "metric_version": "1.0.0",
-    "definitions": {
-      "sets": "Distinct normalized AL numbers. RNAL: official Concelho=Lisboa and official Freguesia. Airbnb: observed municipality=Lisboa and observed parish. City sets are computed independently, never summed from parishes.",
-      "differences": "RNAL-only means absent from Airbnb in the same geography, not absent elsewhere. Airbnb-only does not imply absence from national RNAL.",
-      "difference_priority": "Among Airbnb-only numbers: no national record; unresolved if any matching official record has missing/unknown municipality, unknown Lisbon parish (district scope), or conflicting municipality/parish; otherwise another Lisbon parish or another municipality. Multiple identical entries count once in sets.",
-      "announcements": "Empty (nil or whitespace), filled unrecognised, identifiable are disjoint and sum to all observed Lisbon announcements. Confirmed match is a subset of identifiable: number present in dated national RNAL, without asserting validity, activity or geography.",
-      "entries": "Official CSV rows with declared Concelho=Lisboa; duplicates retained in entry counts, deduplicated in number sets. Unparseable official numbers excluded from sets and diagnosed.",
-      "geography": "Trim, case and accent normalization; explicit aliases for Inside Airbnb's missing accented letters; 24 Lisbon parishes. Missing/unrecognized parishes pooled in Geografia não identificada and excluded from known parish sets; included in city totals. Nonempty nonsentinel national municipality names are accepted as declared, not independently validated.",
-      "denominators": "Set differences use distinct numbers in the local Airbnb or RNAL set. Announcement counts use observed Lisbon rows. No implicit percentages. Parish totals and establishment estimates are not additive across the city.",
-      "classification": "Priority: empty/unrecognized; known outside municipality; unresolved observed coordinates; multiple spatial clusters; no national match; unresolved official municipality; single Lisbon match; probable multiple units; repeated same location. Metadados de anfitrião nunca agrupam anúncios. Clusters are connected components of edges <=500m, so chain endpoints may exceed 500m; missing coordinates remain singleton clusters.",
-      "estimate": "One per matched Lisbon number in either lower-risk same-location category, plus every announcement in all other categories. Calculated independently in each geography; no collapsing unmatched, outside or unresolved cases. Indicator, not legal finding."
-    },
-    "rows": [
+    "parishes": [
       {
-        "geography": "Lisboa",
-        "rnal": 15,
-        "airbnb": 18,
-        "intersection": 13,
-        "rnal_only": 2,
-        "airbnb_only": 5,
-        "another_lisbon_parish": 0,
-        "another_municipality": 2,
-        "no_national_match": 1,
-        "unresolved_official_geography": 2,
-        "announcements": 34,
-        "empty_licence": 2,
-        "unrecognised_licence": 2,
-        "identifiable_number": 30,
-        "confirmed_rnal_match": 28,
-        "official_entries": 19
+        "freguesia": "Ajuda",
+        "count": 0
       },
       {
-        "geography": "Ajuda",
-        "rnal": 1,
-        "airbnb": 1,
-        "intersection": 0,
-        "rnal_only": 1,
-        "airbnb_only": 1,
-        "another_lisbon_parish": 0,
-        "another_municipality": 0,
-        "no_national_match": 0,
-        "unresolved_official_geography": 1,
-        "announcements": 1,
-        "empty_licence": 0,
-        "unrecognised_licence": 0,
-        "identifiable_number": 1,
-        "confirmed_rnal_match": 1,
-        "official_entries": 1
+        "freguesia": "Alcântara",
+        "count": 0
       },
       {
-        "geography": "Alcântara",
-        "rnal": 0,
-        "airbnb": 0,
-        "intersection": 0,
-        "rnal_only": 0,
-        "airbnb_only": 0,
-        "another_lisbon_parish": 0,
-        "another_municipality": 0,
-        "no_national_match": 0,
-        "unresolved_official_geography": 0,
-        "announcements": 0,
-        "empty_licence": 0,
-        "unrecognised_licence": 0,
-        "identifiable_number": 0,
-        "confirmed_rnal_match": 0,
-        "official_entries": 0
+        "freguesia": "Alvalade",
+        "count": 0
       },
       {
-        "geography": "Alvalade",
-        "rnal": 0,
-        "airbnb": 0,
-        "intersection": 0,
-        "rnal_only": 0,
-        "airbnb_only": 0,
-        "another_lisbon_parish": 0,
-        "another_municipality": 0,
-        "no_national_match": 0,
-        "unresolved_official_geography": 0,
-        "announcements": 0,
-        "empty_licence": 0,
-        "unrecognised_licence": 0,
-        "identifiable_number": 0,
-        "confirmed_rnal_match": 0,
-        "official_entries": 0
+        "freguesia": "Areeiro",
+        "count": 0
       },
       {
-        "geography": "Areeiro",
-        "rnal": 0,
-        "airbnb": 0,
-        "intersection": 0,
-        "rnal_only": 0,
-        "airbnb_only": 0,
-        "another_lisbon_parish": 0,
-        "another_municipality": 0,
-        "no_national_match": 0,
-        "unresolved_official_geography": 0,
-        "announcements": 0,
-        "empty_licence": 0,
-        "unrecognised_licence": 0,
-        "identifiable_number": 0,
-        "confirmed_rnal_match": 0,
-        "official_entries": 0
+        "freguesia": "Arroios",
+        "count": 10
       },
       {
-        "geography": "Arroios",
-        "rnal": 12,
-        "airbnb": 15,
-        "intersection": 8,
-        "rnal_only": 4,
-        "airbnb_only": 7,
-        "another_lisbon_parish": 1,
-        "another_municipality": 2,
-        "no_national_match": 1,
-        "unresolved_official_geography": 3,
-        "announcements": 30,
-        "empty_licence": 2,
-        "unrecognised_licence": 2,
-        "identifiable_number": 26,
-        "confirmed_rnal_match": 24,
-        "official_entries": 14
+        "freguesia": "Avenidas Novas",
+        "count": 0
       },
       {
-        "geography": "Avenidas Novas",
-        "rnal": 0,
-        "airbnb": 0,
-        "intersection": 0,
-        "rnal_only": 0,
-        "airbnb_only": 0,
-        "another_lisbon_parish": 0,
-        "another_municipality": 0,
-        "no_national_match": 0,
-        "unresolved_official_geography": 0,
-        "announcements": 0,
-        "empty_licence": 0,
-        "unrecognised_licence": 0,
-        "identifiable_number": 0,
-        "confirmed_rnal_match": 0,
-        "official_entries": 0
+        "freguesia": "Beato",
+        "count": 0
       },
       {
-        "geography": "Beato",
-        "rnal": 0,
-        "airbnb": 0,
-        "intersection": 0,
-        "rnal_only": 0,
-        "airbnb_only": 0,
-        "another_lisbon_parish": 0,
-        "another_municipality": 0,
-        "no_national_match": 0,
-        "unresolved_official_geography": 0,
-        "announcements": 0,
-        "empty_licence": 0,
-        "unrecognised_licence": 0,
-        "identifiable_number": 0,
-        "confirmed_rnal_match": 0,
-        "official_entries": 0
+        "freguesia": "Belém",
+        "count": 0
       },
       {
-        "geography": "Belém",
-        "rnal": 2,
-        "airbnb": 2,
-        "intersection": 0,
-        "rnal_only": 2,
-        "airbnb_only": 2,
-        "another_lisbon_parish": 1,
-        "another_municipality": 0,
-        "no_national_match": 0,
-        "unresolved_official_geography": 1,
-        "announcements": 2,
-        "empty_licence": 0,
-        "unrecognised_licence": 0,
-        "identifiable_number": 2,
-        "confirmed_rnal_match": 2,
-        "official_entries": 2
+        "freguesia": "Benfica",
+        "count": 0
       },
       {
-        "geography": "Benfica",
-        "rnal": 0,
-        "airbnb": 0,
-        "intersection": 0,
-        "rnal_only": 0,
-        "airbnb_only": 0,
-        "another_lisbon_parish": 0,
-        "another_municipality": 0,
-        "no_national_match": 0,
-        "unresolved_official_geography": 0,
-        "announcements": 0,
-        "empty_licence": 0,
-        "unrecognised_licence": 0,
-        "identifiable_number": 0,
-        "confirmed_rnal_match": 0,
-        "official_entries": 0
+        "freguesia": "Campo de Ourique",
+        "count": 0
       },
       {
-        "geography": "Campo de Ourique",
-        "rnal": 0,
-        "airbnb": 0,
-        "intersection": 0,
-        "rnal_only": 0,
-        "airbnb_only": 0,
-        "another_lisbon_parish": 0,
-        "another_municipality": 0,
-        "no_national_match": 0,
-        "unresolved_official_geography": 0,
-        "announcements": 0,
-        "empty_licence": 0,
-        "unrecognised_licence": 0,
-        "identifiable_number": 0,
-        "confirmed_rnal_match": 0,
-        "official_entries": 0
+        "freguesia": "Campolide",
+        "count": 0
       },
       {
-        "geography": "Campolide",
-        "rnal": 0,
-        "airbnb": 0,
-        "intersection": 0,
-        "rnal_only": 0,
-        "airbnb_only": 0,
-        "another_lisbon_parish": 0,
-        "another_municipality": 0,
-        "no_national_match": 0,
-        "unresolved_official_geography": 0,
-        "announcements": 0,
-        "empty_licence": 0,
-        "unrecognised_licence": 0,
-        "identifiable_number": 0,
-        "confirmed_rnal_match": 0,
-        "official_entries": 0
+        "freguesia": "Carnide",
+        "count": 0
       },
       {
-        "geography": "Carnide",
-        "rnal": 0,
-        "airbnb": 0,
-        "intersection": 0,
-        "rnal_only": 0,
-        "airbnb_only": 0,
-        "another_lisbon_parish": 0,
-        "another_municipality": 0,
-        "no_national_match": 0,
-        "unresolved_official_geography": 0,
-        "announcements": 0,
-        "empty_licence": 0,
-        "unrecognised_licence": 0,
-        "identifiable_number": 0,
-        "confirmed_rnal_match": 0,
-        "official_entries": 0
+        "freguesia": "Estrela",
+        "count": 0
       },
       {
-        "geography": "Estrela",
-        "rnal": 0,
-        "airbnb": 0,
-        "intersection": 0,
-        "rnal_only": 0,
-        "airbnb_only": 0,
-        "another_lisbon_parish": 0,
-        "another_municipality": 0,
-        "no_national_match": 0,
-        "unresolved_official_geography": 0,
-        "announcements": 0,
-        "empty_licence": 0,
-        "unrecognised_licence": 0,
-        "identifiable_number": 0,
-        "confirmed_rnal_match": 0,
-        "official_entries": 0
+        "freguesia": "Lumiar",
+        "count": 0
       },
       {
-        "geography": "Lumiar",
-        "rnal": 0,
-        "airbnb": 0,
-        "intersection": 0,
-        "rnal_only": 0,
-        "airbnb_only": 0,
-        "another_lisbon_parish": 0,
-        "another_municipality": 0,
-        "no_national_match": 0,
-        "unresolved_official_geography": 0,
-        "announcements": 0,
-        "empty_licence": 0,
-        "unrecognised_licence": 0,
-        "identifiable_number": 0,
-        "confirmed_rnal_match": 0,
-        "official_entries": 0
+        "freguesia": "Marvila",
+        "count": 0
       },
       {
-        "geography": "Marvila",
-        "rnal": 0,
-        "airbnb": 0,
-        "intersection": 0,
-        "rnal_only": 0,
-        "airbnb_only": 0,
-        "another_lisbon_parish": 0,
-        "another_municipality": 0,
-        "no_national_match": 0,
-        "unresolved_official_geography": 0,
-        "announcements": 0,
-        "empty_licence": 0,
-        "unrecognised_licence": 0,
-        "identifiable_number": 0,
-        "confirmed_rnal_match": 0,
-        "official_entries": 0
+        "freguesia": "Misericórdia",
+        "count": 0
       },
       {
-        "geography": "Misericórdia",
-        "rnal": 0,
-        "airbnb": 0,
-        "intersection": 0,
-        "rnal_only": 0,
-        "airbnb_only": 0,
-        "another_lisbon_parish": 0,
-        "another_municipality": 0,
-        "no_national_match": 0,
-        "unresolved_official_geography": 0,
-        "announcements": 0,
-        "empty_licence": 0,
-        "unrecognised_licence": 0,
-        "identifiable_number": 0,
-        "confirmed_rnal_match": 0,
-        "official_entries": 0
+        "freguesia": "Olivais",
+        "count": 0
       },
       {
-        "geography": "Olivais",
-        "rnal": 0,
-        "airbnb": 0,
-        "intersection": 0,
-        "rnal_only": 0,
-        "airbnb_only": 0,
-        "another_lisbon_parish": 0,
-        "another_municipality": 0,
-        "no_national_match": 0,
-        "unresolved_official_geography": 0,
-        "announcements": 0,
-        "empty_licence": 0,
-        "unrecognised_licence": 0,
-        "identifiable_number": 0,
-        "confirmed_rnal_match": 0,
-        "official_entries": 0
+        "freguesia": "Parque das Nações",
+        "count": 0
       },
       {
-        "geography": "Parque das Nações",
-        "rnal": 0,
-        "airbnb": 0,
-        "intersection": 0,
-        "rnal_only": 0,
-        "airbnb_only": 0,
-        "another_lisbon_parish": 0,
-        "another_municipality": 0,
-        "no_national_match": 0,
-        "unresolved_official_geography": 0,
-        "announcements": 0,
-        "empty_licence": 0,
-        "unrecognised_licence": 0,
-        "identifiable_number": 0,
-        "confirmed_rnal_match": 0,
-        "official_entries": 0
+        "freguesia": "Penha de França",
+        "count": 0
       },
       {
-        "geography": "Penha de França",
-        "rnal": 0,
-        "airbnb": 0,
-        "intersection": 0,
-        "rnal_only": 0,
-        "airbnb_only": 0,
-        "another_lisbon_parish": 0,
-        "another_municipality": 0,
-        "no_national_match": 0,
-        "unresolved_official_geography": 0,
-        "announcements": 0,
-        "empty_licence": 0,
-        "unrecognised_licence": 0,
-        "identifiable_number": 0,
-        "confirmed_rnal_match": 0,
-        "official_entries": 0
+        "freguesia": "Santa Clara",
+        "count": 0
       },
       {
-        "geography": "Santa Clara",
-        "rnal": 0,
-        "airbnb": 0,
-        "intersection": 0,
-        "rnal_only": 0,
-        "airbnb_only": 0,
-        "another_lisbon_parish": 0,
-        "another_municipality": 0,
-        "no_national_match": 0,
-        "unresolved_official_geography": 0,
-        "announcements": 0,
-        "empty_licence": 0,
-        "unrecognised_licence": 0,
-        "identifiable_number": 0,
-        "confirmed_rnal_match": 0,
-        "official_entries": 0
+        "freguesia": "Santa Maria Maior",
+        "count": 0
       },
       {
-        "geography": "Santa Maria Maior",
-        "rnal": 0,
-        "airbnb": 0,
-        "intersection": 0,
-        "rnal_only": 0,
-        "airbnb_only": 0,
-        "another_lisbon_parish": 0,
-        "another_municipality": 0,
-        "no_national_match": 0,
-        "unresolved_official_geography": 0,
-        "announcements": 0,
-        "empty_licence": 0,
-        "unrecognised_licence": 0,
-        "identifiable_number": 0,
-        "confirmed_rnal_match": 0,
-        "official_entries": 0
+        "freguesia": "Santo António",
+        "count": 0
       },
       {
-        "geography": "Santo António",
-        "rnal": 0,
-        "airbnb": 0,
-        "intersection": 0,
-        "rnal_only": 0,
-        "airbnb_only": 0,
-        "another_lisbon_parish": 0,
-        "another_municipality": 0,
-        "no_national_match": 0,
-        "unresolved_official_geography": 0,
-        "announcements": 0,
-        "empty_licence": 0,
-        "unrecognised_licence": 0,
-        "identifiable_number": 0,
-        "confirmed_rnal_match": 0,
-        "official_entries": 0
+        "freguesia": "São Domingos de Benfica",
+        "count": 0
       },
       {
-        "geography": "São Domingos de Benfica",
-        "rnal": 0,
-        "airbnb": 0,
-        "intersection": 0,
-        "rnal_only": 0,
-        "airbnb_only": 0,
-        "another_lisbon_parish": 0,
-        "another_municipality": 0,
-        "no_national_match": 0,
-        "unresolved_official_geography": 0,
-        "announcements": 0,
-        "empty_licence": 0,
-        "unrecognised_licence": 0,
-        "identifiable_number": 0,
-        "confirmed_rnal_match": 0,
-        "official_entries": 0
+        "freguesia": "São Vicente",
+        "count": 0
       },
       {
-        "geography": "São Vicente",
-        "rnal": 0,
-        "airbnb": 0,
-        "intersection": 0,
-        "rnal_only": 0,
-        "airbnb_only": 0,
-        "another_lisbon_parish": 0,
-        "another_municipality": 0,
-        "no_national_match": 0,
-        "unresolved_official_geography": 0,
-        "announcements": 0,
-        "empty_licence": 0,
-        "unrecognised_licence": 0,
-        "identifiable_number": 0,
-        "confirmed_rnal_match": 0,
-        "official_entries": 0
-      },
-      {
-        "geography": "Geografia não identificada",
-        "rnal": 1,
-        "airbnb": 1,
-        "intersection": 0,
-        "rnal_only": 1,
-        "airbnb_only": 1,
-        "another_lisbon_parish": 0,
-        "another_municipality": 0,
-        "no_national_match": 0,
-        "unresolved_official_geography": 1,
-        "announcements": 1,
-        "empty_licence": 0,
-        "unrecognised_licence": 0,
-        "identifiable_number": 1,
-        "confirmed_rnal_match": 1,
-        "official_entries": 2
+        "freguesia": null,
+        "count": 1
       }
-    ],
-    "diagnostics": {
-      "national_entries": 25,
-      "unparseable_official_numbers": 1,
-      "duplicate_number_extra_entries": 5,
-      "official_entries_unresolved_municipality": 3,
-      "lisbon_entries_unresolved_parish": 2
-    },
-    "run_id": "2024-06-01__2024-07-01",
-    "source_files": {
-      "airbnb": {
-        "sha256": "2d7e61df283d0e1b42049682117dbf401d64d56e6c06ac9dc64702eac5819279"
+    ]
+  },
+  "candidates": [
+    {
+      "id": "candidate-07bd64b4d9832776806665d5",
+      "al_number": "400",
+      "listing_ids": [
+        "11"
+      ],
+      "listing_count": 1,
+      "raw_licences": {
+        "11": "400/AL"
       },
-      "official": {
-        "sha256": "2bb9c11d6f9c3c19f717387e1d43100c231dfcd831ab6d8413de9b4c8dcca13b"
+      "freguesia": null,
+      "geography": {
+        "coordinate_freguesia": "Arroios",
+        "airbnb_freguesias": []
+      },
+      "registration_status": "found",
+      "grouping_reason": "single_listing",
+      "signals": [
+        "official_municipality_mismatch",
+        "official_location_far_from_listings"
+      ],
+      "official_match": {
+        "municipality": "Faro",
+        "freguesia": "Sé",
+        "type": "Apartamento",
+        "district": null,
+        "distance_km": 221.0230650053717
       }
     },
-    "methodology_version": "2.3.0",
-    "source_dates": {
-      "airbnb_snapshot_date": "2024-06-01",
-      "official_register_date": "2020-01-01",
-      "official_register_download_date": "2024-07-01"
+    {
+      "id": "candidate-1ddea096e947d0dcc52bd87c",
+      "al_number": null,
+      "listing_ids": [
+        "8"
+      ],
+      "listing_count": 1,
+      "raw_licences": {
+        "8": "406/UT/2017"
+      },
+      "freguesia": "Arroios",
+      "geography": {
+        "coordinate_freguesia": "Arroios",
+        "airbnb_freguesias": [
+          "Arroios"
+        ]
+      },
+      "registration_status": "unrecognised",
+      "grouping_reason": "single_listing",
+      "signals": [],
+      "official_match": null
+    },
+    {
+      "id": "candidate-2dcfd0ad317f1c16d5c755e5",
+      "al_number": null,
+      "listing_ids": [
+        "6"
+      ],
+      "listing_count": 1,
+      "raw_licences": {
+        "6": "Exempt"
+      },
+      "freguesia": "Arroios",
+      "geography": {
+        "coordinate_freguesia": "Arroios",
+        "airbnb_freguesias": [
+          "Arroios"
+        ]
+      },
+      "registration_status": "exempt",
+      "grouping_reason": "single_listing",
+      "signals": [],
+      "official_match": null
+    },
+    {
+      "id": "candidate-3b148f84e6ec4fb9a058a20b",
+      "al_number": null,
+      "listing_ids": [
+        "7"
+      ],
+      "listing_count": 1,
+      "raw_licences": {
+        "7": null
+      },
+      "freguesia": "Arroios",
+      "geography": {
+        "coordinate_freguesia": "Arroios",
+        "airbnb_freguesias": [
+          "Arroios"
+        ]
+      },
+      "registration_status": "absent",
+      "grouping_reason": "single_listing",
+      "signals": [],
+      "official_match": null
+    },
+    {
+      "id": "candidate-4519d680f0cd79c87c9f6fe9",
+      "al_number": "200",
+      "listing_ids": [
+        "4"
+      ],
+      "listing_count": 1,
+      "raw_licences": {
+        "4": "100/AL;200/AL; unsupported 77"
+      },
+      "freguesia": "Arroios",
+      "geography": {
+        "coordinate_freguesia": "Areeiro",
+        "airbnb_freguesias": [
+          "Arroios"
+        ]
+      },
+      "registration_status": "found",
+      "grouping_reason": "single_listing",
+      "signals": [
+        "partial_licence_extraction",
+        "grouping_review",
+        "observed_parish_disagreement",
+        "shared_number"
+      ],
+      "official_match": {
+        "municipality": null,
+        "freguesia": null,
+        "type": "Apartamento",
+        "district": null,
+        "distance_km": null
+      }
+    },
+    {
+      "id": "candidate-5cbab935a14bffe3370a3679",
+      "al_number": "100",
+      "listing_ids": [
+        "1",
+        "2"
+      ],
+      "listing_count": 2,
+      "raw_licences": {
+        "1": "00100/AL",
+        "2": "100"
+      },
+      "freguesia": "Arroios",
+      "geography": {
+        "coordinate_freguesia": "Arroios",
+        "airbnb_freguesias": [
+          "Arroios"
+        ]
+      },
+      "registration_status": "found",
+      "grouping_reason": "scored_merge",
+      "signals": [
+        "shared_number"
+      ],
+      "official_match": {
+        "municipality": "Lisboa",
+        "freguesia": null,
+        "type": "Apartamento",
+        "district": "Área Metropolitana de Lisboa",
+        "distance_km": 0.0
+      }
+    },
+    {
+      "id": "candidate-88bdd89f72c50fcc023f6503",
+      "al_number": null,
+      "listing_ids": [
+        "5"
+      ],
+      "listing_count": 1,
+      "raw_licences": {
+        "5": "Exempt"
+      },
+      "freguesia": "Arroios",
+      "geography": {
+        "coordinate_freguesia": "Arroios",
+        "airbnb_freguesias": [
+          "Arroios"
+        ]
+      },
+      "registration_status": "exempt",
+      "grouping_reason": "single_listing",
+      "signals": [],
+      "official_match": null
+    },
+    {
+      "id": "candidate-8c4d4e2f238397ccb1ed663c",
+      "al_number": "100",
+      "listing_ids": [
+        "3"
+      ],
+      "listing_count": 1,
+      "raw_licences": {
+        "3": "100/AL"
+      },
+      "freguesia": "Arroios",
+      "geography": {
+        "coordinate_freguesia": "Arroios",
+        "airbnb_freguesias": [
+          "Arroios"
+        ]
+      },
+      "registration_status": "found",
+      "grouping_reason": "single_listing",
+      "signals": [
+        "official_location_far_from_listings",
+        "shared_number"
+      ],
+      "official_match": {
+        "municipality": "Lisboa",
+        "freguesia": null,
+        "type": "Apartamento",
+        "district": "Área Metropolitana de Lisboa",
+        "distance_km": 0.5559746332230782
+      }
+    },
+    {
+      "id": "candidate-a2bdd3b3213d3ac0d2fdb6a5",
+      "al_number": "100",
+      "listing_ids": [
+        "4"
+      ],
+      "listing_count": 1,
+      "raw_licences": {
+        "4": "100/AL;200/AL; unsupported 77"
+      },
+      "freguesia": "Arroios",
+      "geography": {
+        "coordinate_freguesia": "Areeiro",
+        "airbnb_freguesias": [
+          "Arroios"
+        ]
+      },
+      "registration_status": "found",
+      "grouping_reason": "single_listing",
+      "signals": [
+        "partial_licence_extraction",
+        "observed_parish_disagreement",
+        "official_location_far_from_listings",
+        "shared_number"
+      ],
+      "official_match": {
+        "municipality": "Lisboa",
+        "freguesia": null,
+        "type": "Apartamento",
+        "district": "Área Metropolitana de Lisboa",
+        "distance_km": 1.1119492664461563
+      }
+    },
+    {
+      "id": "candidate-a4cef4c35ad3dfad73e5cfbb",
+      "al_number": "200",
+      "listing_ids": [
+        "10"
+      ],
+      "listing_count": 1,
+      "raw_licences": {
+        "10": "200/AL"
+      },
+      "freguesia": "Arroios",
+      "geography": {
+        "coordinate_freguesia": "Areeiro",
+        "airbnb_freguesias": [
+          "Arroios"
+        ]
+      },
+      "registration_status": "found",
+      "grouping_reason": "single_listing",
+      "signals": [
+        "grouping_review",
+        "observed_parish_disagreement",
+        "shared_number"
+      ],
+      "official_match": {
+        "municipality": null,
+        "freguesia": null,
+        "type": "Apartamento",
+        "district": null,
+        "distance_km": null
+      }
+    },
+    {
+      "id": "candidate-b454c6637478f4cbc9a26c37",
+      "al_number": "300",
+      "listing_ids": [
+        "9"
+      ],
+      "listing_count": 1,
+      "raw_licences": {
+        "9": "300/AL"
+      },
+      "freguesia": "Arroios",
+      "geography": {
+        "coordinate_freguesia": null,
+        "airbnb_freguesias": [
+          "Arroios"
+        ]
+      },
+      "registration_status": "found",
+      "grouping_reason": "single_listing",
+      "signals": [],
+      "official_match": {
+        "municipality": "Lisboa",
+        "freguesia": "Arroios",
+        "type": "Quartos",
+        "district": "Área Metropolitana de Lisboa",
+        "distance_km": null
+      }
     }
-  }
+  ],
+  "grouping_assessments": [
+    {
+      "al_number": "100",
+      "listing_ids": [
+        "1",
+        "2"
+      ],
+      "score": 9,
+      "outcome": "merge",
+      "reasons": [
+        "distance_le_50m",
+        "same_host",
+        "similar_title",
+        "strong_description",
+        "merge_threshold"
+      ]
+    },
+    {
+      "al_number": "100",
+      "listing_ids": [
+        "1",
+        "3"
+      ],
+      "score": 6,
+      "outcome": "separate",
+      "reasons": [
+        "distance_over_100m",
+        "same_host",
+        "similar_title",
+        "strong_description"
+      ]
+    },
+    {
+      "al_number": "100",
+      "listing_ids": [
+        "1",
+        "4"
+      ],
+      "score": 3,
+      "outcome": "separate",
+      "reasons": [
+        "distance_over_100m",
+        "same_host",
+        "similar_title",
+        "insufficient_score"
+      ]
+    },
+    {
+      "al_number": "100",
+      "listing_ids": [
+        "2",
+        "3"
+      ],
+      "score": 6,
+      "outcome": "separate",
+      "reasons": [
+        "distance_over_100m",
+        "same_host",
+        "similar_title",
+        "strong_description"
+      ]
+    },
+    {
+      "al_number": "100",
+      "listing_ids": [
+        "2",
+        "4"
+      ],
+      "score": 3,
+      "outcome": "separate",
+      "reasons": [
+        "distance_over_100m",
+        "same_host",
+        "similar_title",
+        "insufficient_score"
+      ]
+    },
+    {
+      "al_number": "100",
+      "listing_ids": [
+        "3",
+        "4"
+      ],
+      "score": 3,
+      "outcome": "separate",
+      "reasons": [
+        "distance_over_100m",
+        "same_host",
+        "similar_title",
+        "insufficient_score"
+      ]
+    },
+    {
+      "al_number": "200",
+      "listing_ids": [
+        "10",
+        "4"
+      ],
+      "score": 6,
+      "outcome": "review",
+      "reasons": [
+        "distance_le_50m",
+        "same_host",
+        "similar_title",
+        "review_score"
+      ]
+    }
+  ]
 }
