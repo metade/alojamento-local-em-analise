@@ -12,7 +12,9 @@ Porto and is excluded. Thus there are **11 original listings**: ten in Arroios a
 one with unknown Airbnb parish (ID 11).
 
 - IDs 1 and 2 declare number 100 and merge. They are room listings with different
-  bedroom counts; this does not establish separate apartments. Their medoid tie
+  bedroom counts; this does not establish separate apartments. Their same host, AL
+  and strong descriptions also qualify for `same_host_room_group`: the pair has
+  10 points and relationship `separate_rooms`, with unchanged members/counts. Their medoid tie
   selects ID 1, at the official location.
 - ID 3 declares 100 at a separate location.
 - ID 4 declares 100 and 200 plus unsupported residual text. It creates two

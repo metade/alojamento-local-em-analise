@@ -130,25 +130,28 @@ signals: separation does not identify which candidate corresponds to the RNAL.
 
 Scores summarize evidence, not probabilities: nearby coordinates 1, same nonempty
 host 1, similar title 2, strong description 3, shared apartment reference 3, shared
-usable declared number 2, supported containing-apartment description 4. Merge requires at least 8, coordinates within 500 m,
+usable declared number 2, compatible same-host room grouping 1. Merge requires at least 8, coordinates within 500 m,
 no contradiction and either explicit shared unit plus text similarity or shared
 AL number plus both title and description similarity, or the restricted private-room
-rule below. Cross-category and
-apartment/room relationships additionally require a shared apartment reference.
+rule below. Other cross-category and apartment/room relationships additionally
+require a shared apartment reference.
 Known conflicting apartment attributes and different unit references prevent
 merging. Missing/malformed attributes remain unknown. RNAL adds no points.
 Different hosts do not block merging; room attribute differences do not establish
 separate apartments. Building, floor and generic host text do not identify a unit.
 
-`same_containing_apartment` requires two Private room adverts, the same nonempty
-host, one identical fully parsed declared AL number, coordinates within 500 m and
-description Jaccard >=0.7 with 30 distinct tokens per text. Match explicit English
-containing-flat sentences giving the same positive area in m² and total room/suite
-count (at least two), normalizing "other" counts. Ambiguous descriptions and
-conflicting unit references block this evidence. It is not an apartment identifier.
-The composite evidence earns 4 points; general text thresholds remain unchanged.
-Label `separate_rooms`, or `duplicate_adverts` for an explicit shared room reference.
-Entire-home, shared-room, hotel and unknown categories cannot use this rule.
+`same_host_room_group` requires at least one Private room advert, and the other
+must be a Private room or Entire home/apt with recognized apartment property type.
+Require the same nonempty host, one identical fully parsed declared AL number,
+coordinates within 500 m, description Jaccard >=0.8 and 30 distinct tokens per text.
+Conflicting unit references/numbers block the rule. It earns 1 point, bringing the
+required nearby/host/AL/strong-description combination to 8 without title similarity.
+Do not parse containing-flat phrases or use area/room counts as identity evidence.
+Label room/apartment pairs `apartment_and_rooms`; room pairs `separate_rooms`, or
+`duplicate_adverts` for an explicit shared room reference. Two entire homes retain
+the existing duplicate and attribute-contradiction rules. Missing/malformed
+metadata stays unknown. Private-room versus whole-apartment attribute differences
+are expected, and observing all advertised bedrooms is not required. Keep complete-link.
 
 Retain deterministic complete-link groups: every internal pair must qualify.
 Choose eligible unions by highest minimum cross-pair score, then sorted listing

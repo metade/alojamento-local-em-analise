@@ -158,33 +158,37 @@ title: Metodologia e proveniência
         Procuramos pares até 500 m, com número AL partilhado ou referência explícita de apartamento
         partilhada, independentemente do anfitrião. A distância até 500 m vale 1 ponto; o mesmo
         anfitrião vale 1, títulos semelhantes valem 2, descrições fortemente semelhantes valem 3, a
-        mesma referência de apartamento vale 3 e o mesmo número AL vale 2. A descrição específica do
-        apartamento que contém quartos privados, com os apoios abaixo, vale 4. RNAL não dá pontos.
+        mesma referência de apartamento vale 3 e o mesmo número AL vale 2. A compatibilidade de
+        quartos/apartamento com o mesmo anfitrião, AL e descrição forte vale 1. RNAL não dá pontos.
         Comparamos conjuntos de palavras e números: títulos exigem três termos comuns e Jaccard de
         0,5; descrições exigem 30 termos distintos por texto e Jaccard de 0,8.
       </p>
       <p>
         Agrupar exige pelo menos 8 pontos, coordenadas até 500 m, ausência de contradições e uma
         referência explícita comum com texto semelhante, ou número AL comum com títulos e descrições
-        semelhantes. Reconhecemos apartment, flat, apartamento, apt e unidade seguidos de
-        identificador numérico, alfanumérico ou letra única; referências ambíguas não dão pontos.
-        Referências de quarto/cama são distintas das de apartamento. Apartamentos com quartos e
-        categorias de quarto diferentes exigem referência de apartamento comum. Referências
-        distintas de apartamento ou atributos conhecidos contraditórios entre apartamentos inteiros
-        impedem fusão: tipo de propriedade, quartos, camas, casas de banho ou capacidade. Diferenças
-        entre quartos e anfitriões diferentes não impedem por si só o agrupamento. Partilhar
-        isenção, edifício, piso, anfitrião ou texto genérico não basta.
+        semelhantes, ou a via de quartos do mesmo anfitrião abaixo. Reconhecemos apartment, flat,
+        apartamento, apt e unidade seguidos de identificador numérico, alfanumérico ou letra única;
+        referências ambíguas não dão pontos. Referências de quarto/cama são distintas das de
+        apartamento. Apartamentos com quartos e outras categorias de quarto diferentes exigem
+        referência de apartamento comum, salvo a via abaixo. Referências distintas de apartamento ou
+        atributos conhecidos contraditórios entre apartamentos inteiros impedem fusão: tipo de
+        propriedade, quartos, camas, casas de banho ou capacidade. Diferenças entre quartos e
+        anfitriões diferentes não impedem por si só o agrupamento. Partilhar isenção, edifício,
+        piso, anfitrião ou texto genérico não basta.
       </p>
       <p>
-        Uma via restrita a dois anúncios de quartos privados exige o mesmo anfitrião, um único
-        número AL comum integralmente declarado, coordenadas até 500 m e descrições com pelo menos
-        30 termos distintos por texto e Jaccard de 0,7. Reconhecemos inicialmente frases inglesas
-        explícitas que situam o quarto num apartamento com a mesma área em m² e o mesmo total de
-        quartos ou suites; contagens de «outros quartos» incluem o quarto anunciado. Referências de
-        apartamento contraditórias e áreas/contagens ambíguas bloqueiam esta via. Mantém-se o mínimo
-        de 8 pontos e a exigência de todos os pares do grupo qualificarem. Esta regra não se aplica
-        a anúncios de apartamentos inteiros e não altera os limiares gerais de semelhança. Texto
-        genérico sobre espaços partilhados não basta.
+        Uma via para quartos do mesmo anfitrião exige um único número AL comum integralmente
+        declarado, coordenadas até 500 m e descrições com pelo menos 30 termos distintos por texto e
+        Jaccard de 0,8. Pelo menos um anúncio tem de ser um quarto privado; o outro pode ser outro
+        quarto privado ou um apartamento inteiro com tipo de propriedade reconhecido. Esta
+        compatibilidade vale 1 ponto, somando 8 com proximidade, anfitrião, AL e descrição. Não
+        exige títulos semelhantes nem frases específicas. Referências de apartamentos diferentes e
+        números contraditórios ou múltiplos bloqueiam fusão. Diferenças de quartos ou capacidade
+        entre um quarto e o apartamento inteiro são esperadas. Não é necessário observar todos os
+        quartos: todos os pares do grupo têm de qualificar. Dois anúncios de apartamentos inteiros
+        mantêm as regras de duplicados e de atributos contraditórios. Partilhar anfitrião/AL não
+        identifica por si só um apartamento; texto-modelo pode causar falsos positivos e requer
+        revisão.
       </p>
       <p>
         Todos os pares de um grupo têm de cumprir a regra. Escolhemos a união com maior pontuação

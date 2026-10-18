@@ -2,6 +2,15 @@
 
 ## Pipeline de candidatos
 
+- [x] Fazer uma primeira classificação descritiva dos 5 827 anfitriões do snapshot
+  de setembro por composição dos anúncios: apartamentos inteiros, quartos privados,
+  mistos ou outras categorias. Rever um portefólio misto em profundidade.
+- [ ] Usar perfis de anfitrião para orientar revisão de grupos anfitrião–AL–unidade,
+  sem exceção global de confiança. O exemplo revisto anuncia várias unidades sob
+  o mesmo AL, incluindo quartos de apartamentos com áreas e contagens semelhantes.
+  Avaliar referências explícitas e convenções de nomes por unidade antes de autorizar
+  novas fusões; tipo de portefólio e ausência de contradições não provam identidade.
+
 - [x] Substituir o pipeline antigo no mesmo ponto de entrada, com snapshots em
   pastas de pares datados, manifests locais, validação de cobertura e substituição segura.
 - [x] Extrair vários números explícitos, conservar declarações originais, resolver
@@ -22,11 +31,11 @@
   verificada; ampliar vocabulário apenas com regressões. Rever ambiguidades,
   anúncios de várias unidades e texto de anfitrião repetido, sem objetivo de redução
   do número de candidatos. Partilhar `Exempt` nunca estabelece identidade.
-- [x] Reconhecer quartos privados no mesmo apartamento por descrições explícitas
-  de área e total de quartos, com o mesmo anfitrião/AL e texto semelhante.
-  Manter complete-link e excluir anúncios de apartamentos inteiros desta via.
-- [ ] Ampliar frases de apartamento partilhado para português e outras variantes
-  apenas com exemplos revistos e regressões; áreas/contagens não identificam unidades sozinhas.
+- [x] Substituir frases específicas por uma via de quartos privados e apartamento
+  inteiro com o mesmo anfitrião/AL, descrição forte e proximidade. Manter conflitos
+  de unidade, complete-link e contagens independentes das fontes.
+- [ ] Avaliar falsos positivos da via anfitrião/AL/descrição em portefólios com
+  texto-modelo e várias unidades; rever perdas de fusões apoiadas por frases.
 - [x] Resolver separações de anúncios inteiros com o mesmo AL e diferenças
   simultâneas de quartos, camas e capacidade, sem referência explícita comum de
   apartamento. Diferenças isoladas mantêm revisão; o sinal de número partilhado permanece.

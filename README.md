@@ -153,7 +153,7 @@ apartamentos com registos distintos e localmente consistentes, como descrito aba
 | Descrições fortemente semelhantes | 3 |
 | Mesma referência explícita de apartamento/unidade | 3 |
 | Mesmo número AL declarado não-placeholder | 2 |
-| Mesma descrição específica do apartamento que contém quartos privados, com todos os apoios abaixo | 4 |
+| Compatibilidade de quartos/apartamento com o mesmo anfitrião, AL e descrição forte | 1 |
 
 Textos são descodificados de HTML, normalizados por Unicode/case e comparados
 como conjuntos de tokens alfanuméricos, preservando números. Títulos exigem
@@ -167,28 +167,35 @@ intervalos de capacidade e tipologias T1/T2/T3 não identificam unidades.
 
 Agrupar exige ≥8 pontos, coordenadas válidas até 500 m, ausência de contradição e:
 referência de apartamento partilhada mais semelhança de texto, ou número AL
-partilhado mais títulos e descrições semelhantes nos limiares acima. Apartamento
-com quartos e categorias de quarto diferentes exigem referência explícita comum.
+partilhado mais títulos e descrições semelhantes nos limiares acima, ou a via
+de quartos do mesmo anfitrião abaixo. Outras relações entre categorias diferentes
+continuam a exigir referência explícita comum.
 Referências de apartamento diferentes e atributos conhecidos contraditórios entre
 apartamentos inteiros (tipo de propriedade, quartos, camas, casas de banho e
 capacidade) impedem fusão automática. Diferenças entre quartos não estabelecem
 apartamentos distintos. Anfitriões diferentes não impedem automaticamente a fusão.
 Partilhar edifício, piso, anfitrião ou texto genérico não basta.
 
-Uma via adicional, restrita a dois anúncios `Private room`, reconhece descrições
-explícitas do apartamento que os contém (`same_containing_apartment`, 4 pontos).
-Exige o mesmo anfitrião não vazio, um único AL comum integralmente declarado,
-coordenadas até 500 m e descrições com pelo menos 30 termos distintos e Jaccard
-≥0,7. A área e o total de quartos/suites têm de coincidir. Inicialmente reconhece
-frases inglesas como «The suite is in a 180m² flat with 3 other suites» e
-«This room is part of a 180 m² apartment with 4 rooms». «Other» soma o quarto
-anunciado; áreas/contagens ambíguas ou ausentes não dão evidência. Não confundir
-estas medidas com identificadores de apartamento. Referências de apartamento
-contraditórias bloqueiam fusão. Esta via mantém o mínimo de 8 pontos e o
-complete-link; não baixa os limiares gerais de títulos/descrições nem se aplica a
-apartamentos inteiros, quartos partilhados, hotéis ou categorias desconhecidas.
-A relação é `separate_rooms`, salvo referência explícita ao mesmo quarto/cama,
-que permite `duplicate_adverts`. Texto genérico sobre espaços partilhados não basta.
+A via `same_host_room_group` exige o mesmo anfitrião não vazio, um único AL comum
+integralmente declarado, coordenadas até 500 m e descrições com pelo menos 30
+termos distintos por texto e Jaccard ≥0,8. Pelo menos um anúncio tem de ser
+`Private room`; o outro pode ser outro quarto privado ou um apartamento inteiro
+com tipo de propriedade reconhecido como apartamento. Essa compatibilidade vale
+1 ponto, somado aos 7 de proximidade, anfitrião, AL e descrição forte, mantendo o
+mínimo de 8. Não exige títulos semelhantes nem frases ou medidas específicas.
+Referências explícitas de apartamentos diferentes, números AL contraditórios ou
+múltiplos impedem fusão. Quartos partilhados, hotéis e categorias desconhecidas
+não entram nesta via. Dois anúncios inteiros continuam sujeitos às regras de
+duplicados e aos conflitos de atributos; diferenças de quartos/capacidade entre
+um quarto e o apartamento inteiro são esperadas e não contradizem a fusão.
+
+Pares de quarto/apartamento ficam `apartment_and_rooms`; quartos privados ficam
+`separate_rooms`, salvo referência explícita ao mesmo quarto/cama, que permite
+`duplicate_adverts`. Todos os pares têm de qualificar, incluindo os pares de
+quartos entre si: quatro quartos e um apartamento exigem dez pares elegíveis.
+A contagem de quartos é apenas apoio de revisão, não uma condição que exige
+observar todos os quartos do apartamento. Texto-modelo pode dar falsos positivos;
+partilhar anfitrião/AL não estabelece identidade sem a restante evidência.
 
 Pares plausíveis sem cumprir todos os requisitos ficam separados, em revisão.
 Conflitos de números AL e anúncios com múltiplos números nunca autorizam fusão.
@@ -372,20 +379,62 @@ uma variação temporal nem de um objetivo de redução.
 
 ### Revisão do snapshot de setembro
 
-O par local `2026-09-19__2026-09-26` contém **17 153 anúncios**, **16 288 candidatos**,
+O par local `2026-09-19__2026-09-26` contém **17 153 anúncios**, **15 920 candidatos**,
 **8 784 números AL declarados**, **11 869 números RNAL** e **7 247 números comuns**
 em Lisboa. Todos os IDs e declarações originais foram novamente confrontados com
-o CSV de setembro, independentemente da validação do builder.
+os CSVs, independentemente da validação do builder. A fixture de apresentação
+conserva os seus totais.
 
-A via de quartos privados com descrição do apartamento funde os três anúncios
-`1001265559722983156`, `1001268286809894172` e `996128642401673810`, que declaram
-35505/AL e descrevem o mesmo apartamento de 220 m² com cinco suites. Todos os três
-pares qualificam; o par revisto tem 8 pontos e `separate_rooms`. O anúncio
-`1370956532727112515`, com descrição semelhante mas outro AL, permanece separado.
-Um grupo já existente de quatro suites com 115214/AL recebe a nova evidência sem
-alterar membros. Assim, apenas três pares passam de revisão a fusão e o total de
-candidatos passa de 16 290 a 16 288; números distintos e cobertura não mudam.
-Os limiares gerais mantêm-se, e a fixture de apresentação conserva os seus totais.
+A substituição das frases específicas pela via anfitrião/AL/descrição reduz os
+candidatos de 16 288 para 15 920. Passam a aceites 1 053 pares `separate_rooms`,
+84 `apartment_and_rooms` e 4 `duplicate_adverts`; 15 pares anteriormente aceites
+ficam em revisão, dois pela remoção da via de frases e 13 por conflitos complete-link
+após a alteração da prioridade das uniões. Existem 24 candidatos que combinam
+anúncios de quartos e apartamento inteiro. São contagens de pares/candidatos,
+não confirmação de identidade. Texto-modelo continua a requerer revisão.
+
+No portefólio revisto, os anúncios `23051174`, `23072681`, `23072930` e `23073155`
+(quartos 201–204, com 35505/AL) formam um candidato. Os anúncios de apartamentos
+2E (`23482919`) e 3E (`15174813`) permanecem separados. O par
+`1001265559722983156` / `1001268286809894172` volta a revisão: a semelhança de
+74% das descrições fica abaixo dos 80% exigidos. Não se baixou o limiar para
+preservar um exemplo previamente aceite.
+
+Foi também revisto um grupo com o anúncio inteiro `1031336398040002282` e quartos
+como `1075984734133615455` e `1460291600840328268`, todos com 87507/AL:
+as descrições distinguem apartamento inteiro e quarto privado partilhando o
+restante texto. O par `1386202580695011904` / `1386204287560026943`, de anúncios
+inteiros, fica em revisão por conflito complete-link. Esta via não autoriza
+fundir dois anúncios inteiros sem a evidência exigida pelas regras anteriores.
+
+### Primeira classificação de portefólios de anfitriões
+
+Uma leitura local do snapshot de setembro distingue **5 827 anfitriões**, cobrindo
+os mesmos 17 153 anúncios, sem IDs de anfitrião ausentes. Estas classes descrevem
+apenas os anúncios observados, não conformidade ou confiança:
+
+| Categorias observadas no portefólio | Anfitriões | Anúncios |
+| --- | ---: | ---: |
+| Apenas alojamentos inteiros (`Entire home/apt`) | 4 805 | 11 295 |
+| Apenas quartos privados (`Private room`) | 735 | 2 080 |
+| Mistura dessas duas categorias | 236 | 3 319 |
+| Outras combinações ou categorias desconhecidas | 51 | 459 |
+
+Entre grupos de um mesmo anfitrião com um único AL integralmente declarado por
+anúncio, 481 grupos de 321 anfitriões têm pelo menos dois quartos privados.
+Destes, 30 grupos de 26 anfitriões também têm vários anúncios de alojamentos
+inteiros; 19 grupos de 12 anfitriões têm quartos separados por mais de 500 m.
+São indicadores sobrepostos para revisão, não decisões de fusão/separação.
+
+O portefólio revisto de 51 anúncios tem 40 quartos privados e 11 alojamentos
+inteiros. Sob 35505/AL aparecem os anúncios `15174813` e `23482919`, relativos a
+unidades designadas 3E e 2E, além de quartos e lofts; sob 115214/AL aparecem
+`1711102860867040462` e `49121344`, descrevendo apartamentos com seis e cinco
+suites. Áreas e contagens semelhantes também se repetem entre unidades anunciadas.
+Assim, não se introduziu uma exceção que funda automaticamente quartos apenas
+por partilharem anfitrião e AL. Os perfis podem orientar a revisão, mas ainda é
+necessária evidência da unidade dentro de cada portefólio. A classificação descritiva não fornece exceções de confiança nem altera por si
+só os grupos; a via de fusão anfitrião/AL/descrição acima é uma regra por par.
 
 ## Verificar
 

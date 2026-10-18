@@ -10,7 +10,7 @@ module AlojamentoLocal
       attr_reader :assessments, :groups
       POINTS = {"distance_le_500m" => 1, "same_host" => 1, "similar_title" => 2,
                 "strong_description" => 3, "same_apartment_reference" => 3, "same_al_number" => 2,
-                "same_containing_apartment" => 4}.freeze
+                "same_host_room_group" => 1}.freeze
       OFFSETS = [-1, 0, 1].repeated_permutation(3).to_a.freeze
 
       def initialize(entries, official_records: {})
@@ -76,14 +76,6 @@ module AlojamentoLocal
         number if number&.finite? && number >= 0
       end
 
-      # A description of the containing flat, not a unit identifier or a room's area.
-      # Start with explicit English sentences; ambiguous/multiple flats stay unknown.
-      def containing_apartment(description)
-        matches = description.scan(/\b(?:the|this) (?:suite|room) is (?:in|part of) an? ([0-9]+(?:\.[0-9]+)?)\s*m2 (?:flat|apartment) with ([0-9]+) (other )?(?:suites|rooms|bedrooms)\b/i)
-        values = matches.map { |area, count, other| [area.to_f, count.to_i + (other ? 1 : 0)] }.uniq
-        values.first if values.one? && values.first[0] > 0 && values.first[1] >= 2
-      end
-
       def prepare(entry)
         text = %w[name description].map { |key| normalize(entry.raw[key]) }
         category = {"Entire home/apt" => "entire", "Private room" => "private", "Shared room" => "shared", "Hotel room" => "hotel"}[entry.raw["room_type"]]
@@ -94,7 +86,6 @@ module AlojamentoLocal
          apartment: reference(text, "apartment|flat|apartamento|apt\\.?|unidade"),
          room: reference(text, "room|quarto|bed|cama"),
          category: category, property: property.empty? ? nil : property,
-         containing_apartment: (category == "private") ? containing_apartment(text[1].downcase.gsub(/\s+/, " ")) : nil,
          single_declaration: entry.declaration.numbers.one? && !entry.declaration.partial?,
          attributes: %w[bedrooms beds bathrooms accommodates].to_h { |key| [key, numeric(entry.raw[key])] },
          host: entry.raw["host_id"].to_s.strip, numbers: entry.declaration.numbers,
@@ -185,16 +176,17 @@ module AlojamentoLocal
         reasons << "room_category_ambiguity" if categories.any?(&:nil?)
         reasons << "different_room_categories" if categories.none?(&:nil?) && categories.uniq.size > 1
         reasons.concat(apartment_contradictions(first, second))
-        reasons << "same_containing_apartment" if same_containing_apartment?(first, second, reasons)
+        reasons << "same_host_room_group" if same_host_room_group?(first, second, reasons)
         reasons
       end
 
-      def same_containing_apartment?(first, second, reasons)
-        (%w[distance_le_500m same_host same_al_number] - reasons).empty? &&
-          (reasons & %w[different_apartment_reference conflicting_al_numbers multiple_al_numbers]).empty? &&
-          [first, second].all? { |data| data[:category] == "private" && data[:single_declaration] && data[:containing_apartment] } &&
-          first[:containing_apartment] == second[:containing_apartment] &&
-          similar?(first[:tokens][1], second[:tokens][1], minimum: 30, threshold: 0.7)
+      def same_host_room_group?(first, second, reasons)
+        (%w[distance_le_500m same_host same_al_number strong_description] - reasons).empty? &&
+          !contradictory_evidence?(reasons) &&
+          [first, second].any? { |data| data[:category] == "private" } &&
+          [first, second].all? do |data|
+            data[:single_declaration] && (data[:category] == "private" || (data[:category] == "entire" && data[:property] == "apartment"))
+          end
       end
 
       def apartment_contradictions(first, second)
@@ -219,13 +211,13 @@ module AlojamentoLocal
       def merge_eligible?(reasons, score)
         score >= 8 && reasons.include?("distance_le_500m") &&
           !contradictory_evidence?(reasons) && identity_evidence?(reasons) &&
-          (!reasons.include?("different_room_categories") || reasons.include?("same_apartment_reference"))
+          (!reasons.include?("different_room_categories") || (reasons & %w[same_apartment_reference same_host_room_group]).any?)
       end
 
       def identity_evidence?(reasons)
         explicit_unit_with_text = reasons.include?("same_apartment_reference") && (reasons & %w[similar_title strong_description]).any?
         shared_number_with_text = (%w[same_al_number similar_title strong_description] - reasons).empty?
-        explicit_unit_with_text || shared_number_with_text || reasons.include?("same_containing_apartment")
+        explicit_unit_with_text || shared_number_with_text || reasons.include?("same_host_room_group")
       end
 
       def contradictory_evidence?(reasons)
@@ -257,7 +249,7 @@ module AlojamentoLocal
           return "apartment_and_rooms"
         end
         return "separate_rooms" if (reasons & %w[different_room_references different_room_categories]).any?
-        return "separate_rooms" if reasons.include?("same_containing_apartment") && !reasons.include?("same_room_reference")
+        return "separate_rooms" if reasons.include?("same_host_room_group") && !reasons.include?("same_room_reference")
         if outcome == "merge" && categories.none?(&:nil?) && (categories == %w[entire entire] || reasons.include?("same_room_reference"))
           return "duplicate_adverts"
         end
