@@ -4,9 +4,8 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
 ---
 {% assign d = site.data.site -%}
 {%- assign s = d.summary %}
-{% assign missing = d.signals.empty_licence_listings %}
-{% assign unrecognised = d.signals.unrecognised_licence_listings %}
-{% assign unresolved = d.signals.unidentified_licence_listings %}
+{% assign declarations = d.declarations_without_number %}
+{% assign unresolved = declarations.total %}
 {% assign repeated = d.signals.repeated_listings %}
 {% assign outside = d.signals.outside_listings %}
 
@@ -211,7 +210,7 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
       O que encontrámos?
     </h2>
     <p class="mt-6 max-w-[75ch] text-lg text-[var(--color-paper)]/85">
-      Ao cruzar as fontes, encontrámos anúncios sem número identificável, números partilhados por
+      Ao cruzar as fontes, encontrámos anúncios sem número AL declarado, números partilhados por
       potenciais AL separados e licenças registadas fora de Lisboa.
     </p>
     <div class="mt-12 grid gap-5 xl:grid-cols-3">
@@ -227,48 +226,39 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
             {{- unresolved | pt_number -}}
           </span>
           {% if unresolved == 1 %}
-            anúncio sem licença identificável
+            anúncio sem número AL declarado
           {% else -%}
-            anúncios sem licença identificável
+            anúncios sem número AL declarado
           {% endif %}
         </h3>
         <p class="mt-4 text-sm text-[var(--color-paper)]/85">
-          O campo da licença está vazio ou contém um valor que o método não reconhece como registo
-          AL.
+          O campo da licença está vazio, contém um valor não reconhecido como número AL ou declara
+          uma isenção.
         </p>
         <figure class="mt-8 mb-6">
           <figcaption class="mb-4 text-xs font-bold uppercase tracking-wider text-[var(--color-paper)]/85">
-            Composição deste sinal · anúncios
+            Declarações sem número AL · anúncios
           </figcaption>
           <ul class="space-y-4 text-sm">
-            <li>
-              <div class="flex justify-between gap-3">
-                <span>Campo vazio</span>
-                <strong>{{ missing | pt_number }}</strong>
-              </div>
-              <div class="mt-1 h-3 bg-white/15">
-                <div
-                  class="h-3 bg-[var(--color-yellow)]"
-                  style="width:{% if unresolved > 0 %}{{ missing | times: 100.0 | divided_by: unresolved | round: 1 }}{% else %}0{% endif %}%"
-                ></div>
-              </div>
-            </li>
-            <li>
-              <div class="flex justify-between gap-3">
-                <span>Valor não reconhecido</span>
-                <strong>{{ unrecognised | pt_number }}</strong>
-              </div>
-              <div class="mt-1 h-3 bg-white/15">
-                <div
-                  class="h-3 bg-[var(--color-yellow)]"
-                  style="width:{% if unresolved > 0 %}{{ unrecognised | times: 100.0 | divided_by: unresolved | round: 1 }}{% else %}0{% endif %}%"
-                ></div>
-              </div>
-            </li>
+            {% for row in declarations.rows %}
+              <li>
+                <div class="flex justify-between gap-3">
+                  <span>{{ row.label | escape }}</span>
+                  <strong>{{ row.count | pt_number }}</strong>
+                </div>
+                <div class="mt-1 h-3 bg-white/15">
+                  <div
+                    class="h-3 bg-[var(--color-yellow)]"
+                    style="width:{{ row.width | round: 1 }}%"
+                  ></div>
+                </div>
+              </li>
+            {% endfor %}
           </ul>
         </figure>
         <p class="mt-auto text-sm text-[var(--color-paper)]/85">
-          Não identificar um número no anúncio não demonstra ausência de licença ou ilegalidade.
+          Não declarar um número AL não demonstra ausência de licença ou ilegalidade. As isenções
+          declaradas aguardam verificação.
         </p>
         <a
           class="mt-5 font-semibold text-[var(--color-yellow)] underline underline-offset-4"

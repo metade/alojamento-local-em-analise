@@ -309,6 +309,12 @@ linhas que declaram Lisboa, antes da resolução nacional.
 
 As métricas usam as seguintes unidades:
 
+- A tabela de sinais por freguesia conta candidatos atribuídos à freguesia, uma vez
+  por sinal. As linhas podem sobrepor-se e não somam necessariamente o total.
+  Campos vazios, valores não reconhecidos e isenções são obtidos das declarações
+  originais dos membros, mesmo dentro de candidatos numerados. O total de anúncios
+  observados continua independente e usa a freguesia da fonte Airbnb.
+
 - O diagrama em forma de Venn dimensiona os círculos pelo total de registos RNAL e
   pelo total de candidatos Airbnb. A sobreposição conta cada número comum uma vez,
   mesmo quando vários candidatos o declaram (`matched_al_numbers_count`). As áreas
@@ -331,6 +337,10 @@ As métricas usam as seguintes unidades:
   não os sinais de anúncios distintos.
 - O sinal sem número identificável conta IDs distintos `absent`/`unrecognised`,
   excluindo isenções declaradas.
+  O cartão inicial «anúncios sem número AL declarado» apresenta um conjunto mais
+  amplo: campos vazios, valores não reconhecidos e isenções declaradas por verificar.
+  Conta as declarações originais por ID, incluindo membros de candidatos numerados,
+  sem duplicar anúncios com vários números. Não altera o sinal nos downloads.
 - O sinal de reutilização conta IDs distintos em números associados a vários
   candidatos. O gráfico conta cada número uma vez, usando a maior distância ao
   RNAL entre os candidatos. Correspondências ou distâncias em falta ficam por resolver.

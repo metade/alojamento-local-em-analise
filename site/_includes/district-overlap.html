@@ -97,6 +97,7 @@
     {% endif %}
     <ul class="candidate-breakdown-legend">
       {% for category in m.candidate_breakdown %}
+        {% if category.key == 'mixed' and category.count == 0 %}{% continue %}{% endif %}
         <li
           class="candidate-breakdown--{{ category.key }}"
           data-breakdown-category="{{ category.key }}"

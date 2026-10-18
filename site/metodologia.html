@@ -349,17 +349,27 @@ title: Metodologia e proveniência
     >
       <h2 id="signals-title">Definições dos sinais</h2>
       <p>
-        Os sinais contam IDs de anúncio distintos no âmbito apresentado. São independentes: um
-        anúncio pode apresentar mais de um sinal. O sinal de licença não identificável distingue
-        campos vazios de valores não reconhecidos e exclui declarações de isenção. A distribuição
-        por região usa a NUTS II do registo RNAL fora de Lisboa e conta cada anúncio uma vez.
-        Regiões em falta ou contraditórias ficam por resolver. A distribuição de distâncias conta
-        números AL distintos, usando a maior distância de um potencial alojamento local ao registo
-        RNAL. Declarar isenção não equivale a uma validação legal.
+        Na página inicial, os sinais contam IDs de anúncio distintos. São independentes: um anúncio
+        pode apresentar mais de um sinal. O sinal de licença não identificável distingue campos
+        vazios de valores não reconhecidos e exclui declarações de isenção. O cartão da página
+        inicial apresenta o conjunto mais amplo de anúncios sem número AL declarado, incluindo as
+        isenções numa categoria separada, por verificar. Conta cada declaração original uma vez por
+        anúncio, mesmo quando há agrupamento. A distribuição por região usa a NUTS II do registo
+        RNAL fora de Lisboa e conta cada anúncio uma vez. Regiões em falta ou contraditórias ficam
+        por resolver. A distribuição de distâncias conta números AL distintos, usando a maior
+        distância de um potencial alojamento local ao registo RNAL. Declarar isenção não equivale a
+        uma validação legal.
+      </p>
+      <p>
+        Nas páginas de freguesia, a tabela conta potenciais AL atribuídos à freguesia, uma vez por
+        sinal ou declaração. Um potencial AL pode aparecer em várias linhas; estas não formam uma
+        repartição do total. As declarações são verificadas nos valores originais dos anúncios de
+        cada grupo, incluindo grupos associados a um número AL.
       </p>
       <ul class="my-6 grid gap-3 text-sm text-[var(--color-blue)] sm:grid-cols-2 [&_a]:underline [&_a]:underline-offset-4">
         <li><a href="#campo-vazio">Campo da licença vazio</a></li>
         <li><a href="#valor-nao-reconhecido">Valor não reconhecido</a></li>
+        <li><a href="#isencao-declarada">Isenção declarada</a></li>
         <li><a href="#localizacoes-diferentes">Localizações diferentes</a></li>
         <li><a href="#fora-de-lisboa">Registo fora de Lisboa</a></li>
       </ul>
@@ -371,8 +381,9 @@ title: Metodologia e proveniência
           <h3 id="empty-title">Campo da licença vazio</h3>
           <p>
             O valor original está ausente ou contém apenas espaços. A categoria interna «sem
-            licença» descreve esse campo; não demonstra ausência de licença. Na apresentação, «sem
-            número identificável» reúne este sinal e o seguinte.
+            licença» descreve esse campo; não demonstra ausência de licença. O sinal de número não
+            identificável reúne este caso e o seguinte; o cartão da página inicial acrescenta as
+            declarações de isenção, apresentadas separadamente.
           </p>
         </section>
         <section
@@ -384,6 +395,18 @@ title: Metodologia e proveniência
             O campo tem um valor, mas o método não o reconhece como número AL. A categoria interna é
             «sem licença identificável». Um número normalizado sem correspondência no RNAL não entra
             neste sinal.
+          </p>
+        </section>
+        <section
+          id="isencao-declarada"
+          aria-labelledby="exempt-title"
+        >
+          <h3 id="exempt-title">Isenção declarada — por verificar</h3>
+          <p>
+            O campo contém uma declaração completa de isenção reconhecida pelo método, como
+            «Exempt». Estes anúncios aparecem separadamente no cartão sem número AL declarado. Não
+            entram no sinal de campo vazio ou valor não reconhecido. A declaração é conservada sem
+            avaliar se a isenção se aplica ao alojamento.
           </p>
         </section>
         <section

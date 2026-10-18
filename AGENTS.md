@@ -240,7 +240,14 @@ candidate records cannot reconstruct it exactly. Parish number/reuse counts need
 be additive. Matching numbers do not verify establishment identity or legality.
 
 The unidentified-licence signal counts distinct listing IDs with absent or
-unrecognised values, excluding declared exemptions. Reuse groups non-null numbers
+unrecognised values, excluding declared exemptions. The homepage declaration card
+also includes declared exemptions as a separate category awaiting assessment.
+Derive that listing breakdown from original raw declarations, deduplicated by ID,
+including members of numbered candidates; do not use candidate category counts.
+Parish signal tables count assigned candidates once per signal, with overlapping
+rows. Declaration rows inspect original member declarations, including numbered
+groups. Do not present them as a partition of original source listings.
+Reuse groups non-null numbers
 across candidates. Its headline counts distinct listings; its chart counts each
 number once using the largest `official_match.distance_km`, with any missing
 match/distance explicitly unresolved. Regional charts count distinct IDs for

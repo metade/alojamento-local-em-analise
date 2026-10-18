@@ -89,10 +89,12 @@ class ReportBuildTest < Minitest::Test
       assert_includes homepage, 'id="signal-unresolved"'
       unresolved_card = homepage.match(/<article[^>]*aria-labelledby="signal-unresolved".*?<\/article>/m)[0]
       refute_includes unresolved_card, "???"
-      assert_match(/>2<\/span>\s*anúncios sem licença identificável/, unresolved_card)
+      assert_match(/>4<\/span>\s*anúncios sem número AL declarado/, unresolved_card)
       assert_match(/Campo vazio<\/span>\s*<strong>1<\/strong>/, unresolved_card)
       assert_match(/Valor não reconhecido<\/span>\s*<strong>1<\/strong>/, unresolved_card)
-      assert_equal 2, unresolved_card.scan("width:50.0%").size
+      assert_match(/Isenção declarada — por verificar<\/span>\s*<strong>2<\/strong>/, unresolved_card)
+      assert_equal 2, unresolved_card.scan("width:25.0%").size
+      assert_equal 1, unresolved_card.scan("width:50.0%").size
       assert_includes homepage, 'id="signal-repeated"'
       repeated_card = homepage.match(/<article[^>]*aria-labelledby="signal-repeated".*?<\/article>/m)[0]
       refute_includes repeated_card, "???"
@@ -133,7 +135,7 @@ class ReportBuildTest < Minitest::Test
       assert_equal 1, homepage.gsub(/\s+/, " ").scan(note).size
       assert_includes homepage, 'aria-label="Distribuição de 100% dos potenciais AL"'
       %w[matched repeated outside unrecognised mixed exempt absent].each do |key|
-        assert_equal((key == "mixed") ? 1 : 2, homepage.scan(%(data-breakdown-category="#{key}")).size)
+        assert_equal((key == "mixed") ? 0 : 2, homepage.scan(%(data-breakdown-category="#{key}")).size)
       end
       assert_match(/<li[^>]*data-breakdown-category="exempt"[^>]*tabindex="0"/, homepage)
       assert_includes homepage, 'aria-label="Número no RNAL (uma vez): 5 potenciais AL"'
@@ -145,10 +147,16 @@ class ReportBuildTest < Minitest::Test
       assert_includes homepage, 'aria-label="Correspondência encontrada: 5 números AL"'
       assert_includes homepage, 'aria-label="Outros potenciais AL: 7 potenciais AL"'
       assert_includes homepage, 'class="overlap-base overlap-base--airbnb"'
-      refute_includes homepage, 'comparison-segment'
+      refute_includes homepage, "comparison-segment"
       arroios = File.read(File.join(full, "freguesias", "arroios", "index.html"))
       assert_includes arroios, "5 potenciais AL</tspan>"
       assert_includes arroios, 'aria-label="Número no RNAL (uma vez): 3 potenciais AL"'
+      refute_includes arroios, "???"
+      refute_includes arroios, "por calcular"
+      assert_includes arroios.gsub(/\s+/, " "), "Sinais e declarações dos 5 potenciais AL de Arroios"
+      assert_match(/Registo RNAL fora de Lisboa\s*<\/th>\s*<td[^>]*>\s*1\s*<\/td>/, arroios)
+      assert_match(/Isenção declarada — por verificar\s*<\/th>\s*<td[^>]*>\s*1\s*<\/td>/, arroios)
+      assert_includes arroios, "os sinais e as declarações sobrepõem-se"
       refute_includes homepage, "overlap-unresolved-bubble"
       refute_includes homepage, "overlap-label--unresolved"
       refute_match(/<circle[^>]*r=""/, homepage)
@@ -176,7 +184,6 @@ class ReportBuildTest < Minitest::Test
 
   def test_report_skips_unflagged_matches_but_preserves_totals_and_download
     with_data do |root, path|
-      file = File.join(path, "summary.json")
       document = CandidateFixture.documents(AlojamentoLocal::CandidateDataset.new(path))
       document["candidates"].first["official_match"]["distance_km"] = 0
       CandidateFixture.from_documents(document, refresh: true).write_files(path)

@@ -23,10 +23,36 @@ class CandidateDatasetTest < Minitest::Test
     assert_equal 2, site["candidates"].count { |c| c["listing_ids"].include?("demo-105") }
     assert_equal "belm", site["districts"].find { |d| d["name"] == "Belém" }["slug"]
     assert_equal [2, 1, 1], site["signals"].values_at("unidentified_licence_listings", "empty_licence_listings", "unrecognised_licence_listings")
+    assert_equal 4, site.dig("declarations_without_number", "total")
+    assert_equal [1, 1, 2], site.dig("declarations_without_number", "rows").map { |row| row["count"] }
     assert_equal 2, site["signals"]["repeated_listings"]
     assert_equal 1, site["distance_total"]
     assert_equal [0, 0, 0, 0, 1], site["distance_ranges"].map { |r| r["count"] }
     assert_equal [{"name" => "Algarve", "count" => 1, "unresolved" => false, "width" => 100.0}], site.dig("outside_regions", "rows")
+  end
+
+  def test_declaration_card_counts_members_of_numbered_groups_and_deduplicates_contributions
+    dataset = CandidateFixture.dataset
+    candidates = document.fetch("candidates")
+    merged = candidates.find { |candidate| candidate["listing_ids"].size == 3 }
+    merged["raw_licences"].transform_values!.with_index { |_, index| ["Exempt", nil, "unsupported"][index] }
+    # A multi-number listing appears in two candidates but is still one declaration.
+    candidates.each do |candidate|
+      candidate["raw_licences"]["demo-105"] = "Exempt" if candidate["raw_licences"].key?("demo-105")
+    end
+    dataset.stub(:candidates, candidates) do
+      site = AlojamentoLocal::SiteData.new(dataset: dataset).site_data
+      assert_equal 8, site.dig("declarations_without_number", "total")
+      assert_equal [2, 2, 4], site.dig("declarations_without_number", "rows").map { |row| row["count"] }
+      assert_in_delta 100, site.dig("declarations_without_number", "rows").sum { |row| row["width"] }, 1e-10
+    end
+    dataset.stub(:candidates, []) do
+      dataset.stub(:grouping_assessments, []) do
+        card = AlojamentoLocal::SiteData.new(dataset: dataset).site_data.fetch("declarations_without_number")
+        assert_equal 0, card["total"]
+        assert card["rows"].all? { |row| row["width"].zero? }
+      end
+    end
   end
 
   def test_reused_numbers_count_once_and_other_geographies_are_outside_the_intersection
@@ -54,6 +80,22 @@ class CandidateDatasetTest < Minitest::Test
     assert_equal 1, rows.find { |row| row["key"] == "repeated" }["count"]
     assert_match(/por verificar/, rows.find { |row| row["key"] == "exempt" }["label"])
     refute rows.any? { |row| %w[exempt_correct exempt_incorrect].include?(row["key"]) }
+  end
+
+  def test_parish_signals_count_candidates_with_overlapping_signals_and_original_declarations
+    site = data
+    arroios = site["districts"].find { |district| district["name"] == "Arroios" }
+    counts = arroios.fetch("signal_breakdown").to_h { |row| [row["key"], row["count"]] }
+    assert_equal 4, arroios["numbered_candidate_count"]
+    assert_equal 1, counts["exempt"]
+    assert_equal 1, counts["shared_number"]
+    assert_equal 1, counts["official_municipality_mismatch"]
+    assert_equal 1, counts["official_location_far_from_listings"]
+    estrela = site["districts"].find { |district| district["name"] == "Estrela" }
+    assert_equal 1, estrela["candidate_count"]
+    assert_equal 2, estrela["signal_breakdown"].sum { |row| row["count"] }
+    assert_equal 1, site["unknown"]["signal_breakdown"].find { |row| row["key"] == "absent" }["count"]
+    assert site["districts"].find { |district| district["name"] == "Ajuda" }["signal_breakdown"].all? { |row| row["count"].zero? }
   end
 
   def test_report_only_omits_resolved_unflagged_matches

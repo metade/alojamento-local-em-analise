@@ -2,6 +2,14 @@
 
 ## Pipeline de candidatos
 
+A implementação v2 está concluída. Os itens abertos abaixo são investigação e
+calibração futura; não impedem a publicação do método atual documentado.
+
+- [x] Apresentar campos vazios, valores não reconhecidos e isenções declaradas
+  separadamente no cartão sem número AL declarado, contando anúncios originais.
+- [x] Substituir placeholders nas freguesias por sinais e declarações de candidatos
+  atribuídos, explicitando a sobreposição e a unidade de contagem.
+
 - [x] Tornar assessments revistos legíveis com distância, semelhanças/contagens de
   termos, tipos, atributos e pontos por evidência. Separar `decision_reason` e
   substituir `review_score`, sem alterar candidatos, decisões ou pontuações.

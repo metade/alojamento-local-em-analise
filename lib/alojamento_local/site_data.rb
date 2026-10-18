@@ -37,6 +37,7 @@ module AlojamentoLocal
           "source_urls" => {"airbnb" => Analysis::Data::AIRBNB_DATA_PAGE, "official" => Analysis::Data::OFFICIAL_URL}
         },
         "signals" => @dataset.summary_document.fetch("signals"),
+        "declarations_without_number" => declarations_without_number,
         "distance_ranges" => distances.fetch("rows"),
         "distance_total" => @dataset.summary_document.fetch("repeated_number_distances").sum { |row| row["count"] },
         "outside_regions" => regions
@@ -44,6 +45,38 @@ module AlojamentoLocal
     end
 
     private
+
+    def declarations_without_number
+      declarations = @dataset.candidates.flat_map { |candidate| candidate.fetch("raw_licences").to_a }.to_h
+      counts = declarations.values.map { |raw| Analysis::Declaration.new(raw).status }.tally
+      labels = {"absent" => "Campo vazio", "unrecognised" => "Valor não reconhecido", "exempt" => "Isenção declarada — por verificar"}
+      total = labels.keys.sum { |status| counts.fetch(status, 0) }
+      rows = labels.map do |status, label|
+        count = counts.fetch(status, 0)
+        {"label" => label, "count" => count, "width" => total.zero? ? 0 : count * 100.0 / total}
+      end
+      {"total" => total, "rows" => rows}
+    end
+
+    def candidate_signals(candidates)
+      declarations = candidates.map { |candidate| candidate.fetch("raw_licences").values.map { |raw| Analysis::Declaration.new(raw).status }.uniq }
+      rows = {"absent" => "Campo da licença vazio", "unrecognised" => "Declaração não reconhecida", "exempt" => "Isenção declarada — por verificar"}.map do |status, label|
+        {"key" => status, "label" => label, "count" => declarations.count { |statuses| statuses.include?(status) }}
+      end
+      rows << {"key" => "not_found", "label" => "Número não encontrado no RNAL nacional", "count" => candidates.count { |candidate| candidate["registration_status"] == "not_found" }}
+      labels = {
+        "shared_number" => "Mesmo número em potenciais AL separados",
+        "official_municipality_mismatch" => "Registo RNAL fora de Lisboa",
+        "official_parish_mismatch" => "Registo RNAL noutra freguesia de Lisboa",
+        "official_location_far_from_listings" => "Localização a mais de 500 m do RNAL",
+        "observed_parish_disagreement" => "Freguesia declarada diferente da indicada pelas coordenadas",
+        "partial_licence_extraction" => "Declaração parcialmente reconhecida",
+        "grouping_review" => "Agrupamento por rever"
+      }
+      rows + labels.map do |key, label|
+        {"key" => key, "label" => label, "count" => candidates.count { |candidate| candidate.fetch("signals").include?(key) }}
+      end
+    end
 
     def report_candidates
       candidates = @dataset.candidates.map do |candidate|
@@ -148,9 +181,9 @@ module AlojamentoLocal
         "listing_count" => scope.fetch("listings_count"),
         "distinct_al_numbers" => scope.fetch("distinct_al_numbers_count"),
         "official_numbers" => rnal_count,
-        "identifiable_listings" => nil,
+        "numbered_candidate_count" => numbered,
         "metrics" => metrics,
-        "categories" => nil
+        "signal_breakdown" => candidate_signals(@dataset.candidates.select { |candidate| parish == "Lisboa" || candidate["freguesia"] == parish })
       }
     end
   end
