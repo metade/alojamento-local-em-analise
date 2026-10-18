@@ -72,26 +72,27 @@ title: Metodologia e proveniência
           </dd>
         </div>
         <div>
-          <dt class="font-semibold">Candidatos AL</dt>
+          <dt class="font-semibold">Potenciais AL</dt>
           <dd class="mt-1">
-            Unidades AL estimadas, com zero ou um número AL e referências a um ou vários anúncios.
-            Um anúncio pode contribuir para vários candidatos. Não é uma contagem oficial de AL
-            ativos.
+            Registos resultantes do tratamento e agrupamento de anúncios do Airbnb, com zero ou um
+            número AL e referências a um ou vários anúncios. Não correspondem necessariamente a
+            alojamentos distintos ou a registos oficiais.
           </dd>
         </div>
       </dl>
       <p class="mt-6 text-sm text-[var(--color-ink)]/75">
         No diagrama em forma de Venn, as áreas dos círculos são proporcionais aos totais de registos
-        RNAL e candidatos Airbnb. A sobreposição conta cada número AL comum uma única vez, mesmo
-        quando reutilizado. A área restante Airbnb é o total de candidatos menos os números comuns;
-        pode incluir reutilizações de números existentes no RNAL. Esta convenção não escolhe um
-        candidato correto por número. A barra horizontal de 100% reparte todos os candidatos: uma
-        ocorrência por número comum, reutilizações adicionais, números fora do RNAL deste âmbito,
-        declarações não reconhecidas, isenções declaradas por verificar e ausência de declaração.
-        Ainda não se avalia a validade das isenções. As correspondências usam as linhas originais
-        RNAL de Lisboa e da mesma freguesia oficial, antes da resolução nacional. Números e
-        reutilizações por freguesia não são necessariamente aditivos. Encontrar um número não
-        confirma a identidade nem a legalidade do alojamento.
+        RNAL e potenciais alojamentos locais do Airbnb. A sobreposição conta cada número AL comum
+        uma única vez, mesmo quando reutilizado. A área restante Airbnb é o total de potenciais
+        alojamentos locais menos os números comuns; pode incluir reutilizações de números existentes
+        no RNAL. Esta convenção não escolhe um potencial alojamento local correto por número. A
+        barra horizontal de 100% reparte todos os potenciais alojamentos locais: uma ocorrência por
+        número comum, reutilizações adicionais, números fora do RNAL deste âmbito, declarações não
+        reconhecidas, isenções declaradas por verificar e ausência de declaração. Ainda não se
+        avalia a validade das isenções. As correspondências usam as linhas originais RNAL de Lisboa
+        e da mesma freguesia oficial, antes da resolução nacional. Números e reutilizações por
+        freguesia não são necessariamente aditivos. Encontrar um número não confirma a identidade
+        nem a legalidade do alojamento.
       </p>
     </section>
 
@@ -139,16 +140,17 @@ title: Metodologia e proveniência
       </p>
       <p>
         A estimativa de
-        <strong>{{ s.candidate_count | pt_count: 'candidato AL', 'candidatos AL' }}</strong>
+        <strong>{{ s.candidate_count | pt_count: 'potencial AL', 'potenciais AL' }}</strong>
         parte destes anúncios. O RNAL é uma fonte separada: ajuda a classificar os números, mas a
         sua contagem não é o ponto de partida da estimativa.
       </p>
-      <h3 class="mt-6">Como se relacionam anúncios e candidatos?</h3>
+      <h3 class="mt-6">Como se relacionam anúncios e potenciais AL?</h3>
       <p>
-        Um candidato tem um ID próprio, zero ou um número AL e um ou vários IDs de anúncio. Anúncios
-        próximos com o mesmo número podem formar um candidato. Um anúncio que declara vários números
-        contribui uma vez por número; o mesmo número pode aparecer em candidatos separados. Anúncios
-        sem número, incluindo isenções declaradas, permanecem candidatos individuais.
+        Um potencial alojamento local tem um ID próprio, zero ou um número AL e um ou vários IDs de
+        anúncio. Anúncios próximos com o mesmo número podem formar um potencial alojamento local. Um
+        anúncio que declara vários números contribui uma vez por número; o mesmo número pode
+        aparecer em potenciais alojamentos locais separados. Anúncios sem número, incluindo isenções
+        declaradas, permanecem registos separados de potenciais AL.
       </p>
       <p>
         Para cada par com o mesmo número, a distância até 50 m vale 3 pontos e de 50 a 100 m vale 2;
@@ -161,11 +163,12 @@ title: Metodologia e proveniência
         Casos de revisão ficam separados; a pontuação resume evidência e não é uma probabilidade.
       </p>
       <p>
-        Cada candidato conta uma vez na freguesia atribuída ou em localização desconhecida. Esses
-        totais somam o total de Lisboa. Os totais originais de anúncios usam a freguesia declarada
-        na fonte Airbnb e também somam Lisboa, incluindo localização desconhecida. A freguesia
-        atribuída aos candidatos pode diferir da original. Números distintos podem aparecer em
-        várias freguesias. Capacidade fica para uma etapa posterior.
+        Cada potencial alojamento local conta uma vez na freguesia atribuída ou em localização
+        desconhecida. Esses totais somam o total de Lisboa. Os totais originais de anúncios usam a
+        freguesia declarada na fonte Airbnb e também somam Lisboa, incluindo localização
+        desconhecida. A freguesia atribuída aos potenciais alojamentos locais pode diferir da
+        original. Números distintos podem aparecer em várias freguesias. Capacidade fica para uma
+        etapa posterior.
       </p>
       <h3 class="mt-6">Localização e correspondência</h3>
       <p>
@@ -197,8 +200,9 @@ title: Metodologia e proveniência
         espaços exteriores e zeros iniciais, reconhecemos números simples e variantes com AL antes
         ou depois do número. Também aceitamos formatos antigos com ano entre 2010 e 2029. Extraímos
         todos os tokens AL explícitos e conservamos a declaração original no ficheiro de dados.
-        Extrações parciais recebem um sinal; o texto restante não cria um candidato adicional. Uma
-        isenção só é reconhecida como declaração completa, nunca pela presença da palavra em prosa.
+        Extrações parciais recebem um sinal; o texto restante não cria um potencial alojamento local
+        adicional. Uma isenção só é reconhecida como declaração completa, nunca pela presença da
+        palavra em prosa.
       </p>
       <table class="my-6 w-full table-fixed border-collapse text-sm [&_th]:normal-case! [&_th]:tracking-normal! [&_th]:text-[length:inherit]! [&_th]:text-[var(--color-ink)]! [&_th]:px-0! [&_td]:px-0! [&_td]:text-left! [&_td:first-child]:pr-4! [&_td]:break-words">
         <caption class="mb-4 text-left text-sm text-[var(--color-ink)]/75">
@@ -289,8 +293,8 @@ title: Metodologia e proveniência
         campos vazios de valores não reconhecidos e exclui declarações de isenção. A distribuição
         por região usa a NUTS II do registo RNAL fora de Lisboa e conta cada anúncio uma vez.
         Regiões em falta ou contraditórias ficam por resolver. A distribuição de distâncias conta
-        números AL distintos, usando a maior distância de um candidato ao registo RNAL. Declarar
-        isenção não equivale a uma validação legal.
+        números AL distintos, usando a maior distância de um potencial alojamento local ao registo
+        RNAL. Declarar isenção não equivale a uma validação legal.
       </p>
       <ul class="my-6 grid gap-3 text-sm text-[var(--color-blue)] sm:grid-cols-2 [&_a]:underline [&_a]:underline-offset-4">
         <li><a href="#campo-vazio">Campo da licença vazio</a></li>
@@ -325,19 +329,20 @@ title: Metodologia e proveniência
           id="localizacoes-diferentes"
           aria-labelledby="locations-title"
         >
-          <h3 id="locations-title">Mesmo número, candidatos separados</h3>
+          <h3 id="locations-title">Mesmo número, potenciais AL separados</h3>
           <p>
-            O mesmo número aparece em candidatos separados. Contamos os IDs de anúncio associados
-            uma vez neste sinal, mantendo os candidatos separados. A distância de cada candidato ao
-            seu registo RNAL fica registada no snapshot.
+            O mesmo número aparece em potenciais alojamentos locais separados. Contamos os IDs de
+            anúncio associados uma vez neste sinal, mantendo os potenciais alojamentos locais
+            separados. A distância de cada potencial alojamento local ao seu registo RNAL fica
+            registada no snapshot.
           </p>
           <p>
             O gráfico conta cada número AL repetido uma vez, segundo a maior distância de um dos
-            seus candidatos ao respetivo registo RNAL. Com três ou mais candidatos, usamos o maior
-            desses valores, sem calcular uma média. Os intervalos são até 500 m, 500 m–1 km, 1–2 km,
-            2–5 km e mais de 5 km; o limite superior pertence ao intervalo. Correspondências ou
-            distâncias em falta ficam por resolver. As posições são aproximadas e os sinais exigem
-            verificação individual.
+            seus potenciais alojamentos locais ao respetivo registo RNAL. Com três ou mais
+            potenciais alojamentos locais, usamos o maior desses valores, sem calcular uma média. Os
+            intervalos são até 500 m, 500 m–1 km, 1–2 km, 2–5 km e mais de 5 km; o limite superior
+            pertence ao intervalo. Correspondências ou distâncias em falta ficam por resolver. As
+            posições são aproximadas e os sinais exigem verificação individual.
           </p>
         </section>
         <section
@@ -369,10 +374,11 @@ title: Metodologia e proveniência
       <h2 id="limits-title">Limitações</h2>
       <p>
         A precisão geográfica pode afetar a freguesia atribuída, sobretudo junto aos seus limites.
-        Cada candidato é atribuído a uma freguesia ou a localização desconhecida; esses totais somam
-        Lisboa. Os totais originais de anúncios são independentes e usam a freguesia declarada na
-        fonte Airbnb; também somam Lisboa, incluindo localização desconhecida. Números distintos
-        podem aparecer em várias freguesias e não são necessariamente aditivos.
+        Cada potencial alojamento local é atribuído a uma freguesia ou a localização desconhecida;
+        esses totais somam Lisboa. Os totais originais de anúncios são independentes e usam a
+        freguesia declarada na fonte Airbnb; também somam Lisboa, incluindo localização
+        desconhecida. Números distintos podem aparecer em várias freguesias e não são
+        necessariamente aditivos.
       </p>
       <p>
         As fontes têm datas e finalidades diferentes. A presença de um anúncio no snapshot não
@@ -437,8 +443,8 @@ title: Metodologia e proveniência
         </div>
       </dl>
       <p>
-        O snapshot reúne o resumo RNAL, os totais originais de anúncios e os candidatos Airbnb. Pode
-        ser consultado nos links abaixo, juntamente com o relatório técnico.
+        O snapshot reúne o resumo RNAL, os totais originais de anúncios e os potenciais alojamentos
+        locais do Airbnb. Pode ser consultado nos links abaixo, juntamente com o relatório técnico.
       </p>
       <p>
         Os ficheiros públicos contêm IDs de anúncio, números normalizados, geografia por freguesia e
@@ -447,7 +453,9 @@ title: Metodologia e proveniência
       </p>
       <div class="mt-6 flex flex-wrap gap-x-6 gap-y-4 text-sm text-[var(--color-blue)] [&_a]:underline [&_a]:underline-offset-4">
         <a href="{{ site.data.site.summary_download | relative_url }}">Resumo JSON →</a>
-        <a href="{{ site.data.site.candidates_download | relative_url }}">Candidatos JSON.gz →</a>
+        <a href="{{ site.data.site.candidates_download | relative_url }}">
+          Potenciais AL JSON.gz →
+        </a>
         <a href="{{ '/report.html' | relative_url }}">Relatório técnico ↗</a>
         {% unless site.skip_report_pdfs %}
           ·

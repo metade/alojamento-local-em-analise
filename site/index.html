@@ -99,7 +99,7 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
         </h3>
         <div
           class="mt-10 grid gap-5 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1.15fr)] sm:items-start"
-          aria-label="Dos anúncios observados aos candidatos AL"
+          aria-label="Dos anúncios observados aos potenciais AL"
         >
           <div class="min-w-0">
             <strong class="block whitespace-nowrap font-[family-name:var(--font-serif)] text-[clamp(4rem,7vw,7rem)] font-normal leading-none tracking-tight">
@@ -118,14 +118,14 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
             <strong class="block whitespace-nowrap font-[family-name:var(--font-serif)] text-[clamp(4rem,7vw,7rem)] font-normal leading-none tracking-tight text-[var(--color-blue)]">
               {{- s.candidate_count | pt_number -}}
             </strong>
-            <p class="mt-2 text-xl font-semibold">candidatos AL</p>
+            <p class="mt-2 text-xl font-semibold">potenciais AL</p>
           </div>
         </div>
         <p class="mt-7 text-[var(--color-ink)]/75">
-          Vários anúncios podem pertencer ao mesmo candidato; um anúncio com vários números AL pode
-          contribuir para vários candidatos. Os casos de possível reutilização em localizações
-          diferentes permanecem separados. Esta é uma estimativa, não uma contagem oficial de AL
-          ativos.
+          Vários anúncios podem pertencer ao mesmo potencial alojamento local; um anúncio com vários
+          números AL pode contribuir para vários potenciais AL. Os casos de possível reutilização em
+          localizações diferentes permanecem separados. Esta é uma estimativa, não uma contagem
+          oficial de AL ativos.
         </p>
         <p class="mt-auto pt-8 text-sm text-[var(--color-ink)]/75">
           <a
@@ -146,7 +146,7 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
             class="underline underline-offset-4"
             href="{{ site.data.site.candidates_download | relative_url }}"
           >
-            Candidatos JSON.gz ↗
+            Potenciais AL JSON.gz ↗
           </a>
           <br>
           Anúncios de
@@ -184,9 +184,8 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
         <em>as duas fontes?</em>
       </h2>
       <p class="mt-7 max-w-[58ch] text-lg">
-        Comparamos o total de registos RNAL com os candidatos estimados a partir dos anúncios
-        Airbnb. A sobreposição conta cada número AL presente nas duas fontes uma única vez, mesmo
-        quando vários candidatos o declaram.
+        Os potenciais alojamentos locais resultam do tratamento e agrupamento de anúncios do Airbnb.
+        Não correspondem necessariamente a alojamentos distintos ou a registos oficiais.
       </p>
       <aside class="mt-7 max-w-[58ch] border-l-2 border-[var(--color-blue)] bg-white/40 p-5 text-sm">
         <strong class="text-[var(--color-blue)]">O que é o número de registo AL?</strong>
@@ -213,7 +212,7 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
     </h2>
     <p class="mt-6 max-w-[75ch] text-lg text-[var(--color-paper)]/85">
       Ao cruzar as fontes, encontrámos anúncios sem número identificável, números partilhados por
-      candidatos separados e licenças registadas fora de Lisboa.
+      potenciais AL separados e licenças registadas fora de Lisboa.
     </p>
     <div class="mt-12 grid gap-5 xl:grid-cols-3">
       <article
@@ -288,13 +287,14 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
         >
           <span class="block text-5xl text-[var(--color-yellow)]">{{ repeated | pt_number }}</span>
           {% if repeated == 1 %}
-            anúncio com o mesmo número em candidatos separados
+            anúncio com o mesmo número em potenciais AL separados
           {% else -%}
-            anúncios com o mesmo número em candidatos separados
+            anúncios com o mesmo número em potenciais AL separados
           {% endif %}
         </h3>
         <p class="mt-4 text-sm text-[var(--color-paper)]/85">
-          Um número normalizado surge em candidatos separados. O sinal exige verificação individual.
+          Um número normalizado surge em potenciais AL separados. O sinal exige verificação
+          individual.
         </p>
         <figure class="mt-8 mb-6">
           <figcaption class="mb-2 text-xs font-bold uppercase tracking-wider text-[var(--color-paper)]/85">
@@ -304,8 +304,8 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
             <p class="mb-4 text-xs text-[var(--color-paper)]/75">
               {{ d.distance_total | pt_count: 'número AL', 'números AL' }},
               {% if d.distance_total == 1 %}associado{% else %}associados{% endif %}
-              a {{ repeated | pt_count: 'anúncio', 'anúncios' }} · maior distância de um candidato
-              ao respetivo registo RNAL
+              a {{ repeated | pt_count: 'anúncio', 'anúncios' }} · maior distância de um potencial
+              alojamento local ao respetivo registo RNAL
             </p>
             <ul class="space-y-3 text-sm">
               {% for range in d.distance_ranges %}
@@ -324,7 +324,7 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
               {% endfor %}
             </ul>
           {% else %}
-            <p class="text-sm">Nenhum número AL partilhado por candidatos separados.</p>
+            <p class="text-sm">Nenhum número AL partilhado por potenciais AL separados.</p>
           {% endif %}
         </figure>
         <p class="mt-auto text-sm text-[var(--color-paper)]/85">
@@ -412,8 +412,8 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
         Onde estão?
       </h2>
       <p class="mt-7 max-w-[55ch] text-lg">
-        Os candidatos AL a partir dos anúncios Airbnb concentram-se em algumas freguesias, com maior
-        peso no centro histórico.
+        Os potenciais alojamentos locais estimados a partir dos anúncios Airbnb concentram-se em
+        algumas freguesias, com maior peso no centro histórico.
       </p>
       <a
         class="mt-3 inline-block font-semibold text-[var(--color-blue)] underline underline-offset-4"
@@ -427,7 +427,7 @@ title: Quantos alojamentos locais existem realmente em Lisboa?
     <div class="min-w-0">
       <table class="w-full border-collapse text-sm">
         <caption class="mb-5 text-left font-[family-name:var(--font-serif)] text-2xl leading-tight">
-          Freguesias com mais candidatos AL
+          Freguesias com mais potenciais AL
         </caption>
         <thead>
           <tr class="border-b border-[var(--color-line)] text-xs text-[var(--color-ink)]/75">

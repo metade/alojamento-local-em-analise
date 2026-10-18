@@ -10,7 +10,7 @@ layout: null
       name="viewport"
       content="width=device-width,initial-scale=1"
     >
-    <title>Candidatos AL · Relatório</title>
+    <title>Potenciais AL · Relatório</title>
     <style>
       * {
         box-sizing: border-box;
@@ -179,7 +179,7 @@ layout: null
   <body>
     <header>
       <h1>Alojamento Local em Lisboa</h1>
-      <p>Candidatos AL · Indicadores para verificação oficial</p>
+      <p>Potenciais AL · Indicadores para verificação oficial</p>
     </header>
     <p>
       Indicadores para verificação oficial. Encontrar um número no RNAL não confirma a
@@ -187,7 +187,7 @@ layout: null
     </p>
     <p>
       <a href="{{ d.summary_download | remove_first: '/' }}">Resumo JSON ↓</a>
-      <a href="{{ d.candidates_download | remove_first: '/' }}">Candidatos JSON.gz ↓</a>
+      <a href="{{ d.candidates_download | remove_first: '/' }}">Potenciais AL JSON.gz ↓</a>
     </p>
     <p>
       RNAL descarregado em {{ d.source_dates.rnal_fetched_on | default: '???' }} · Anúncios de
@@ -197,7 +197,7 @@ layout: null
     <div class="cards">
       <div class="card">
         <b>{{ d.summary.candidate_count | pt_number }}</b>
-        Candidatos
+        Potenciais AL
       </div>
       <div class="card">
         <b>{{ d.summary.listing_count | pt_number }}</b>
@@ -213,8 +213,9 @@ layout: null
       </div>
     </div>
     <p>
-      Um candidato pode ter vários anúncios; um anúncio pode contribuir para vários candidatos. Cada
-      candidato tem no máximo um número AL. Capacidade não é calculada nesta etapa.
+      Um potencial alojamento local pode ter vários anúncios; um anúncio pode contribuir para vários
+      potenciais alojamentos locais. Cada potencial alojamento local tem no máximo um número AL.
+      Capacidade não é calculada nesta etapa.
     </p>
     <h2>Por freguesia</h2>
     <div class="table-container">
@@ -224,7 +225,7 @@ layout: null
             <th>Freguesia</th>
             <th>RNAL: números</th>
             <th>Anúncios originais</th>
-            <th>Candidatos</th>
+            <th>Potenciais AL</th>
             <th>Números declarados</th>
           </tr>
         </thead>
@@ -249,23 +250,24 @@ layout: null
       </table>
     </div>
     <p>
-      Os candidatos das freguesias, incluindo localização desconhecida, somam o total de Lisboa. Os
-      totais de anúncios originais usam a freguesia declarada na fonte Airbnb. Os candidatos usam a
-      freguesia atribuída; números distintos não são necessariamente aditivos.
+      Os potenciais alojamentos locais das freguesias, incluindo localização desconhecida, somam o
+      total de Lisboa. Os totais de anúncios originais usam a freguesia declarada na fonte Airbnb.
+      Os potenciais alojamentos locais usam a freguesia atribuída; números distintos não são
+      necessariamente aditivos.
     </p>
-    <h2>Candidatos</h2>
+    <h2>Potenciais AL</h2>
     <p>
-      A tabela mostra {{ d.report_candidates.size | pt_count: 'candidato', 'candidatos' }} com
+      A tabela mostra {{ d.report_candidates.size | pt_count: 'potencial AL', 'potenciais AL' }} com
       sinais ou informação por resolver. Omite os casos sem sinais, com número encontrado no RNAL,
       freguesias concordantes e distância até 500 m. Os totais e o download incluem todos os
-      candidatos. Esta seleção não certifica a legalidade dos casos omitidos nem das isenções
-      declaradas.
+      potenciais alojamentos locais. Esta seleção não certifica a legalidade dos casos omitidos nem
+      das isenções declaradas.
     </p>
     <div class="table-container">
       <table class="diagnostics-table">
         <thead>
           <tr>
-            <th>Candidato / AL</th>
+            <th>Potencial AL / número</th>
             <th>Anúncios</th>
             <th>Localização observada</th>
             <th>RNAL</th>
@@ -354,13 +356,14 @@ layout: null
       {{ d.distance_total | pt_count: 'número AL repetido', 'números AL repetidos' }},
       {% if d.distance_total == 1 %}associado{% else %}associados{% endif %}
       a {{ d.signals.repeated_listings | pt_count: 'anúncio distinto', 'anúncios distintos' }}. Cada
-      número conta uma vez, segundo a maior distância de um candidato ao respetivo registo RNAL.
+      número conta uma vez, segundo a maior distância de um potencial alojamento local ao respetivo
+      registo RNAL.
     </p>
     <ul>
       {% for range in d.distance_ranges %}
         <li>{{ range.label }}: {{ range.count | pt_number }}</li>
       {% else %}
-        <li>Nenhum número AL partilhado por candidatos separados.</li>
+        <li>Nenhum número AL partilhado por potenciais alojamentos locais separados.</li>
       {% endfor %}
     </ul>
   </body>

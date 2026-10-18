@@ -19,9 +19,9 @@ module AlojamentoLocal
         common_left = [g.fetch("x") - g.fetch("r"), g.fetch("y") - g.fetch("s")].max
         common_right = [g.fetch("x") + g.fetch("r"), g.fetch("y") + g.fetch("s")].min
         regions = [
-          ["rnal", "Só RNAL", rnal_only, left, [common_left, g.fetch("x") + g.fetch("r")].min, 85, 330],
-          ["common", "Nas duas fontes", intersection, common_left, common_right, 320, 385],
-          ["airbnb", "Restantes candidatos", airbnb_only, [common_right, g.fetch("y") - g.fetch("s")].max, right, 520, 330]
+          ["rnal", "Apenas no RNAL", rnal_only, left, [common_left, g.fetch("x") + g.fetch("r")].min, 85, 330],
+          ["common", "Correspondência encontrada", intersection, common_left, common_right, 320, 385],
+          ["airbnb", "Outros potenciais AL", airbnb_only, [common_right, g.fetch("y") - g.fetch("s")].max, right, 520, 330]
         ]
         regions.map do |key, title, count, start, finish, fallback_x, fallback_y|
           target = (start + finish) / 2.0

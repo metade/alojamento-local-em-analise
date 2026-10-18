@@ -113,7 +113,7 @@ module AlojamentoLocal
       rnal_count = scope.fetch("official_count")
       geometry = Overlap.geometry(rnal_count, candidate_count, matched)
       labels = Overlap.labels(geometry, rnal_count - matched, matched, candidate_count - matched)
-      titles = {"rnal" => "Só RNAL", "common" => "Nas duas fontes", "airbnb" => "Restantes candidatos"}
+      titles = {"rnal" => "Apenas no RNAL", "common" => "Correspondência encontrada", "airbnb" => "Outros potenciais AL"}
       labels.each { |label| label["title"] = titles.fetch(label.fetch("key")) }
       counts = {"matched" => matched, "repeated" => numbered - declared,
                 "outside" => declared - matched, "unrecognised" => scope.fetch("unrecognised_licence_candidates_count"),

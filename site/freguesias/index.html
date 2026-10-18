@@ -15,7 +15,7 @@ title: Freguesias de Lisboa
       Onde estão?
     </h1>
     <p class="mt-7 max-w-[68ch] text-lg">
-      Veja como os anúncios Airbnb e os candidatos AL se distribuem pelas
+      Veja como os anúncios Airbnb e os potenciais AL se distribuem pelas
       {{ districts.size }} freguesias de Lisboa. Escolha uma freguesia no mapa ou na lista para
       explorar os seus dados.
     </p>
@@ -87,11 +87,11 @@ title: Freguesias de Lisboa
                   type="button"
                   disabled
                   data-sort-key="estimate"
-                  data-sort-label="candidatos AL"
+                  data-sort-label="potenciais AL"
                   data-initial-direction="descending"
                   class="inline-flex min-h-11 cursor-pointer items-center justify-end gap-2 text-right hover:text-[var(--color-blue)] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-blue)] disabled:cursor-default"
                 >
-                  <span>Candidatos AL</span>
+                  <span>Potenciais AL</span>
                   <span
                     data-sort-indicator
                     aria-hidden="true"
@@ -139,13 +139,14 @@ title: Freguesias de Lisboa
           aria-live="polite"
           aria-atomic="true"
         >
-          Ordenado por candidatos AL, por ordem decrescente.
+          Ordenado por potenciais AL, por ordem decrescente.
         </p>
         <p class="mt-6 text-sm text-[var(--color-ink)]/75">
-          Os candidatos contam uma vez na freguesia atribuída. Freguesia por identificar:
-          {{ site.data.site.unknown.candidate_count | pt_count: 'candidato', 'candidatos' }}. Os
-          anúncios originais usam a freguesia declarada na fonte Airbnb, que pode diferir da
-          atribuída aos candidatos.
+          Os potenciais alojamentos locais contam uma vez na freguesia atribuída. Freguesia por
+          identificar:
+          {{ site.data.site.unknown.candidate_count | pt_count: 'potencial AL', 'potenciais AL' }}.
+          Os anúncios originais usam a freguesia declarada na fonte Airbnb, que pode diferir da
+          atribuída aos potenciais alojamentos locais.
           <a
             class="text-[var(--color-blue)] underline underline-offset-4"
             href="{{ '/metodologia.html#listagens-airbnb' | relative_url }}"

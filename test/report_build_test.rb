@@ -75,6 +75,7 @@ class ReportBuildTest < Minitest::Test
         html = File.read(File.join(full, file))
         refute_match(/NaN|Infinity/, html)
         refute_includes html, "/runs/"
+        refute_match(/\bcandidatos?\b/i, html)
         if file != "freguesias/index.html"
           assert_includes html, "/preview/snapshots/candidate/summary.json"
           assert_includes html, "/preview/snapshots/candidate/candidates.json.gz"
@@ -108,7 +109,7 @@ class ReportBuildTest < Minitest::Test
       assert_includes outside_card, "width:100.0%"
       assert_includes outside_card, "anúncio com licença registada fora de Lisboa"
       assert_match(/Distribuição por NUTS II\s*do\s*1 anúncio/, outside_card)
-      assert_includes homepage, "Freguesias com mais candidatos AL"
+      assert_includes homepage, "Freguesias com mais potenciais AL"
       assert_includes homepage, "Não há possibilidade de saber a realidade"
       refute_includes homepage, "Dados sintéticos de demonstração"
       assert_includes homepage, "/preview/snapshots/candidate/summary.json"
@@ -119,26 +120,35 @@ class ReportBuildTest < Minitest::Test
       assert_includes methodology, %(href="#{AlojamentoLocal::Analysis::Data::AIRBNB_DATA_PAGE}")
       refute_includes methodology, "A distribuição regional apresenta ???"
       refute_match(/\blistings?\b/i, report.gsub(/<[^>]*>/, " "))
+      refute_match(/\bcandidatos?\b/i, report)
       normalized = homepage.gsub(/\s+/, " ")
       assert_includes normalized, "Descarregado em 2024-07-01"
       assert_match(/Anúncios de <time[^>]*>2024-06-01<\/time>/, normalized)
       refute_includes normalized, "· descarregados em"
       assert_match(/<strong[^>]*>\s*17\s*<\/strong>\s*<p[^>]*>registos no concelho de Lisboa/, homepage)
-      assert_includes homepage, "12 candidatos</tspan>"
-      assert_includes homepage, 'aria-label="Distribuição de 100% dos candidatos Airbnb"'
-      assert_includes homepage, 'aria-label="Número no RNAL (uma vez): 5 candidatos"'
-      assert_includes homepage, 'aria-label="Ocorrências adicionais de números reutilizados: 1 candidato"'
-      assert_includes homepage, 'aria-label="Número fora do RNAL desta geografia: 2 candidatos"'
-      assert_includes homepage, 'aria-label="Isenção declarada — por verificar: 2 candidatos"'
-      assert_includes homepage, 'aria-label="Sem número declarado: 1 candidato"'
-      assert_includes homepage, 'aria-label="Declaração não reconhecida: 1 candidato"'
-      assert_includes homepage, 'aria-label="Nas duas fontes: 5 números AL"'
-      assert_includes homepage, 'aria-label="Restantes candidatos: 7 candidatos"'
+      assert_includes homepage, "12 potenciais AL</tspan>"
+      assert_includes homepage, "17 registos</tspan>"
+      assert_includes homepage.gsub(/\s+/, " "), "Como se distribuem os 12 potenciais AL"
+      note = "Os potenciais alojamentos locais resultam do tratamento e agrupamento de anúncios do Airbnb. Não correspondem necessariamente a alojamentos distintos ou a registos oficiais."
+      assert_equal 1, homepage.gsub(/\s+/, " ").scan(note).size
+      assert_includes homepage, 'aria-label="Distribuição de 100% dos potenciais AL"'
+      %w[matched repeated outside unrecognised exempt absent].each do |key|
+        assert_equal 2, homepage.scan(%(data-breakdown-category="#{key}")).size
+      end
+      assert_match(/<li[^>]*data-breakdown-category="exempt"[^>]*tabindex="0"/, homepage)
+      assert_includes homepage, 'aria-label="Número no RNAL (uma vez): 5 potenciais AL"'
+      assert_includes homepage, 'aria-label="Ocorrências adicionais de números reutilizados: 1 potencial AL"'
+      assert_includes homepage, 'aria-label="Número fora do RNAL desta geografia: 2 potenciais AL"'
+      assert_includes homepage, 'aria-label="Isenção declarada — por verificar: 2 potenciais AL"'
+      assert_includes homepage, 'aria-label="Sem número declarado: 1 potencial AL"'
+      assert_includes homepage, 'aria-label="Declaração não reconhecida: 1 potencial AL"'
+      assert_includes homepage, 'aria-label="Correspondência encontrada: 5 números AL"'
+      assert_includes homepage, 'aria-label="Outros potenciais AL: 7 potenciais AL"'
       assert_includes homepage, 'class="overlap-base overlap-base--airbnb"'
       refute_includes homepage, 'comparison-segment'
       arroios = File.read(File.join(full, "freguesias", "arroios", "index.html"))
-      assert_includes arroios, "5 candidatos</tspan>"
-      assert_includes arroios, 'aria-label="Número no RNAL (uma vez): 3 candidatos"'
+      assert_includes arroios, "5 potenciais AL</tspan>"
+      assert_includes arroios, 'aria-label="Número no RNAL (uma vez): 3 potenciais AL"'
       refute_includes homepage, "overlap-unresolved-bubble"
       refute_includes homepage, "overlap-label--unresolved"
       refute_match(/<circle[^>]*r=""/, homepage)
