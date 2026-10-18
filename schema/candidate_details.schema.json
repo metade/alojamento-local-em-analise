@@ -12,10 +12,6 @@
       "items": {
         "type": "object",
         "properties": {
-          "al_number": {
-            "type": "string",
-            "pattern": "^[1-9][0-9]*$"
-          },
           "listing_ids": {
             "type": "array",
             "minItems": 2,
@@ -29,7 +25,7 @@
           "score": {
             "type": "integer",
             "minimum": 0,
-            "maximum": 9
+            "maximum": 12
           },
           "outcome": {
             "enum": [
@@ -44,30 +40,50 @@
             "uniqueItems": true,
             "items": {
               "enum": [
-                "distance_le_50m",
-                "distance_le_100m",
-                "distance_over_100m",
+                "distance_le_500m",
+                "distance_over_500m",
                 "missing_coordinates",
                 "same_host",
                 "similar_title",
                 "strong_description",
+                "same_apartment_reference",
+                "different_apartment_reference",
+                "different_room_references",
+                "same_al_number",
+                "conflicting_al_numbers",
+                "multiple_al_numbers",
                 "room_category_ambiguity",
-                "incompatible_room_categories",
                 "different_apartment_bedrooms",
-                "insufficient_score",
+                "different_apartment_beds",
+                "different_apartment_bathrooms",
+                "different_apartment_accommodates",
+                "different_apartment_property",
                 "merge_threshold",
                 "review_score",
-                "complete_link_conflict"
+                "insufficient_identity",
+                "complete_link_conflict",
+                "different_room_categories",
+                "same_room_reference",
+                "distinct_registered_apartments"
               ]
             }
+          },
+          "relationship": {
+            "enum": [
+              "duplicate_adverts",
+              "separate_rooms",
+              "apartment_and_rooms",
+              "undetermined",
+              "separate_apartments"
+            ]
           }
         },
         "required": [
-          "al_number",
           "listing_ids",
           "score",
           "outcome",
-          "reasons"
+          "reasons",
+          "relationship"
         ],
         "additionalProperties": false
       }
@@ -87,13 +103,13 @@
     "parish": {
       "enum": [
         "Ajuda",
-        "Alcântara",
+        "Alc\u00e2ntara",
         "Alvalade",
         "Areeiro",
         "Arroios",
         "Avenidas Novas",
         "Beato",
-        "Belém",
+        "Bel\u00e9m",
         "Benfica",
         "Campo de Ourique",
         "Campolide",
@@ -101,15 +117,15 @@
         "Estrela",
         "Lumiar",
         "Marvila",
-        "Misericórdia",
+        "Miseric\u00f3rdia",
         "Olivais",
-        "Parque das Nações",
-        "Penha de França",
+        "Parque das Na\u00e7\u00f5es",
+        "Penha de Fran\u00e7a",
         "Santa Clara",
         "Santa Maria Maior",
-        "Santo António",
-        "São Domingos de Benfica",
-        "São Vicente",
+        "Santo Ant\u00f3nio",
+        "S\u00e3o Domingos de Benfica",
+        "S\u00e3o Vicente",
         null
       ]
     },
@@ -161,13 +177,13 @@
               "items": {
                 "enum": [
                   "Ajuda",
-                  "Alcântara",
+                  "Alc\u00e2ntara",
                   "Alvalade",
                   "Areeiro",
                   "Arroios",
                   "Avenidas Novas",
                   "Beato",
-                  "Belém",
+                  "Bel\u00e9m",
                   "Benfica",
                   "Campo de Ourique",
                   "Campolide",
@@ -175,15 +191,15 @@
                   "Estrela",
                   "Lumiar",
                   "Marvila",
-                  "Misericórdia",
+                  "Miseric\u00f3rdia",
                   "Olivais",
-                  "Parque das Nações",
-                  "Penha de França",
+                  "Parque das Na\u00e7\u00f5es",
+                  "Penha de Fran\u00e7a",
                   "Santa Clara",
                   "Santa Maria Maior",
-                  "Santo António",
-                  "São Domingos de Benfica",
-                  "São Vicente"
+                  "Santo Ant\u00f3nio",
+                  "S\u00e3o Domingos de Benfica",
+                  "S\u00e3o Vicente"
                 ]
               }
             }
@@ -200,7 +216,8 @@
             "unrecognised",
             "found",
             "not_found",
-            "exempt"
+            "exempt",
+            "mixed"
           ]
         },
         "grouping_reason": {
@@ -219,7 +236,9 @@
               "official_municipality_mismatch",
               "official_parish_mismatch",
               "official_location_far_from_listings",
-              "observed_parish_disagreement"
+              "observed_parish_disagreement",
+              "missing_licence_declaration",
+              "unrecognised_licence_declaration"
             ]
           },
           "uniqueItems": true

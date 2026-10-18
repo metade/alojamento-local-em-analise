@@ -63,8 +63,9 @@ The summary has `source_dates`, `lisbon`, `parishes`, `signals`,
 `numbered_candidates_count`, `distinct_al_numbers_count` and source-derived
 `matched_al_numbers_count`; include all parishes
 and unknown last. The decoded details contain `candidates` and `grouping_assessments`.
-Use compact UTF-8 JSON with a trailing newline, Zlib level 9, mtime zero and no
-filename/comment. No synthetic flags or test/production formats.
+Use pretty-printed UTF-8 JSON with a trailing newline for `summary.json`, for readable
+Git diffs. Details use compact UTF-8 JSON with a trailing newline, Zlib level 9,
+mtime zero and no filename/comment. No synthetic flags or test/production formats.
 `CandidateDataset` exposes `summary_document`, `details_document`, `candidates`
 and `grouping_assessments`; `summary` preserves the four-value Ruby analysis summary.
 Share candidate aggregate construction and validation in `candidate_aggregates`.
@@ -78,7 +79,7 @@ artifacts preserve manifests. `sources:register` registers dated cached files
 offline with unknown fetch dates null.
 
 Each candidate has zero or one normalized AL number and references one or more
-listing IDs. Each listing–number contribution appears exactly once and all
+listing IDs. Each declared listing–number contribution appears exactly once and all
 distinct referenced IDs equal the original listing population. Each candidate
 has one parish or unknown, so totals are additive. Original listing totals are
 computed independently before expansion/grouping, overall and by Airbnb source
@@ -95,16 +96,50 @@ IDs get live listing links; `demo-` IDs do not.
 Full original declarations stay in `raw_licences`. Partial extraction receives a
 signal but does not create an additional unnumbered contribution. Exemptions
 require whole-value declarations. `Exempt` is never an AL number, never enters
-number reuse and never groups listings. All unnumbered contributions remain
-singleton candidates, including exemptions. Track future investigation in TODO.md.
+number reuse and supplies no positive unit-identity evidence. Unnumbered listings
+may merge when independent unit identity evidence qualifies. Uniform unnumbered groups retain their
+declaration category, otherwise use `mixed`. Track future investigation in TODO.md.
 
-Pair assessments cover only the same non-null AL number, uniquely, and agree
-with final groups. Scores summarize evidence, not probabilities. Use the rules
-and thresholds documented in README; every pair in a merged group must qualify.
+One pool of listings feeds one matcher. Discover unordered pairs through a spatial
+500 m search, shared usable AL numbers or shared explicit apartment/unit references.
+Prepare normalized text and optional numeric metadata once. 500 m is a search
+radius, not building identity. Pair assessments are unique by listing-ID pair,
+independent of number, and include outcome, score, relationship and evidence codes.
+Use `undetermined` as the relationship fallback. `duplicate_adverts` requires an
+individually merge-eligible pair with the same known room category: two entire-home
+adverts, or room/bed adverts sharing an explicit room/bed reference. Accommodation
+merging alone does not establish duplicate adverts. Labels never affect grouping.
+Nearby unrelated pairs are evaluated but need no public review record. Plausible
+conflicting-number pairs and multiple-number listings remain for review, except
+supported registered-apartment separations. A plausible nearby pair of entire
+apartment adverts with distinct single, fully parsed AL declarations is classified
+`separate_apartments` / `separate` when both national consensus records declare
+Apartamento in Lisboa and each resolved RNAL location is within 500 m of its own
+listing. Require a recognized Airbnb apartment property type. A shared explicit
+apartment reference keeps the conflict in review. Record
+`distinct_registered_apartments` as zero-point separation evidence. Retain these
+assessments. This does not establish shared building identity or legal correctness;
+RNAL still never awards matching points or authorizes a merge.
+
+Scores summarize evidence, not probabilities: nearby coordinates 1, same nonempty
+host 1, similar title 2, strong description 3, shared apartment reference 3, shared
+usable declared number 2. Merge requires at least 8, coordinates within 500 m,
+no contradiction and either explicit shared unit plus text similarity or shared
+AL number plus both title and description similarity. Cross-category and
+apartment/room relationships additionally require a shared apartment reference.
+Known conflicting apartment attributes and different unit references prevent
+merging. Missing/malformed attributes remain unknown. RNAL adds no points.
+Different hosts do not block merging; room attribute differences do not establish
+separate apartments. Building, floor and generic host text do not identify a unit.
+
+Retain deterministic complete-link groups: every internal pair must qualify.
 Choose eligible unions by highest minimum cross-pair score, then sorted listing
-IDs. Qualifying pairs left apart by conflicts become review. RNAL never affects
-grouping. Different hosts do not automatically block merging; bedroom differences
-only contradict two entire-apartment listings, not room listings.
+IDs. Qualifying pairs left apart by conflicts become review. A group may combine
+numbered, absent, exempt and unrecognised declarations. Associate the candidate
+with the single distinct usable number declared by its members, preserving all
+raw declarations. Multiple-number listings remain singleton contributions per
+number. Associations do not create new source declarations. Missing/unrecognised
+signals come from individual declarations, including members of numbered groups.
 
 Use member medoids for coordinate parish and RNAL distances, breaking ties by
 listing ID. Assign candidate parish only when all members report the same
@@ -152,13 +187,15 @@ this area can include reuse of registered numbers. Do not restore a separate yel
 Below it, a 100% horizontal stacked bar partitions all candidates exclusively:
 one occurrence per shared number, additional occurrences of reused numbers, one occurrence
 per declared number outside the scope's RNAL, unrecognised declarations, declared exemptions
-awaiting assessment, and absent declarations. Reuse is numbered candidates minus distinct
-numbers within the scope. Do not arbitrarily choose a rightful candidate. Never classify
+awaiting assessment, absent declarations, and mixed unnumbered declarations. Reuse
+is numbered candidates minus distinct numbers within the scope. Do not arbitrarily choose a rightful candidate. Never classify
 exemptions as valid/invalid without criteria and evidence; keep that work in TODO.md.
 Per-scope summary counts `numbered_candidates_count`, `exempt_candidates_count`,
-`empty_licence_candidates_count` and `unrecognised_licence_candidates_count` are recomputed
+`empty_licence_candidates_count`, `unrecognised_licence_candidates_count` and
+`mixed_licence_candidates_count` are recomputed
 from details during validation. Never substitute distinct-listing signal counts.
-Shared numbers come from candidate numbers and RNAL source rows declaring Lisboa and,
+Shared numbers come from original numbers declared within candidate groups and
+RNAL source rows declaring Lisboa and,
 for parishes, the same official parish (including unknown), before national consensus.
 Source assertions and loaded count bounds validate this source-derived measure; resolved
 candidate records cannot reconstruct it exactly. Parish number/reuse counts need not

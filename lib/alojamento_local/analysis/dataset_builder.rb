@@ -1,3 +1,4 @@
+require "set" # standard:disable Lint/RedundantRequireStatement
 require "json"
 require "digest"
 
@@ -10,21 +11,14 @@ module AlojamentoLocal
       end
 
       def build
-        assessments = []
-        numbered = Hash.new { |hash, number| hash[number] = [] }
-        unnumbered = []
-        sources.airbnb.entries.each do |entry|
-          if entry.declaration.numbers.empty?
-            unnumbered << candidate(nil, [entry], [])
-          else
-            entry.declaration.numbers.each { |number| numbered[number] << entry }
-          end
+        grouping = Grouping.new(sources.airbnb.entries, official_records: sources.official.records)
+        assessments = grouping.assessments
+        @review_ids = assessments.select { |pair| pair["outcome"] == "review" }.flat_map { |pair| pair["listing_ids"] }.to_set
+        candidates = grouping.groups.flat_map do |group|
+          numbers = group.flat_map { |entry| entry.declaration.numbers }.uniq
+          numbers = [nil] if numbers.empty?
+          numbers.map { |number| candidate(number, group) }
         end
-        candidates = numbered.keys.sort_by(&:to_i).flat_map do |number|
-          grouping = Grouping.new(number, numbered.fetch(number))
-          assessments.concat(grouping.assessments)
-          grouping.groups.map { |group| candidate(number, group, grouping.assessments) }
-        end + unnumbered
         candidates.group_by { |row| row["al_number"] }.each do |number, group|
           group.each { |row| row["signals"] << "shared_number" } if number && group.size > 1
         end
@@ -34,11 +28,11 @@ module AlojamentoLocal
         summary = CandidateDataset.candidate_aggregates(candidates)
         summary["source_dates"] = sources.source_dates
         summary["lisbon"].merge!("official_count" => rnal.dig("lisbon", "count"), "listings_count" => listings.dig("lisbon", "count"),
-                                  "matched_al_numbers_count" => matched_count(candidates, sources.official.lisbon_entries))
+          "matched_al_numbers_count" => matched_count(candidates, sources.official.lisbon_entries))
         summary["parishes"].each_with_index do |row, index|
           parish = row.fetch("freguesia")
           row.merge!("matched_al_numbers_count" => matched_count(candidates.select { |c| c["freguesia"] == parish }, sources.official.lisbon_entries.select { |entry| entry.parish == parish }),
-                     "official_count" => rnal["parishes"][index]["count"], "listings_count" => listings["parishes"][index]["count"])
+            "official_count" => rnal["parishes"][index]["count"], "listings_count" => listings["parishes"][index]["count"])
         end
         assert_sources!({"candidates" => candidates, "rnal" => rnal, "listings" => listings, "summary" => summary})
         CandidateDataset.new(summary_document: summary, details_document: {"candidates" => candidates, "grouping_assessments" => assessments})
@@ -57,12 +51,12 @@ module AlojamentoLocal
       end
 
       def matched_count(candidates, entries)
-        declared = candidates.filter_map { |row| row["al_number"] }.to_set
+        declared = candidates.flat_map { |row| row["raw_licences"].values.flat_map { |raw| Declaration.new(raw).numbers } }.to_set
         official = entries.filter_map(&:number).reject { |number| number == "0" }.to_set
         (declared & official).size
       end
 
-      def candidate(number, entries, assessments)
+      def candidate(number, entries)
         ids = entries.map { |entry| entry.raw.fetch("id") }.sort
         coordinate = Grouping.medoid(entries)
         coordinate_parish = @boundaries.parish(coordinate)
@@ -71,8 +65,10 @@ module AlojamentoLocal
         record = sources.official.records[number] if number
         match = record&.except("coordinates")&.merge("distance_km" => Grouping.distance(coordinate, record["coordinates"]))
         signals = []
+        signals << "missing_licence_declaration" if entries.any? { |entry| entry.declaration.status == "absent" }
+        signals << "unrecognised_licence_declaration" if entries.any? { |entry| entry.declaration.status == "unrecognised" }
         signals << "partial_licence_extraction" if entries.any? { |entry| entry.declaration.partial? }
-        signals << "grouping_review" if assessments.any? { |pair| pair["outcome"] == "review" && (pair["listing_ids"] & ids).any? }
+        signals << "grouping_review" if ids.any? { |id| @review_ids.include?(id) }
         signals << "observed_parish_disagreement" if coordinate_parish && parishes.compact.any? { |p| p != coordinate_parish }
         if match
           signals << "official_municipality_mismatch" if match["municipality"] && match["municipality"] != "Lisboa"
@@ -86,7 +82,7 @@ module AlojamentoLocal
          "registration_status" => if number
                                     record ? "found" : "not_found"
                                   else
-                                    entries.first.declaration.status
+                                    ((statuses = entries.map { |entry| entry.declaration.status }.uniq).size == 1) ? statuses.first : "mixed"
                                   end,
          "grouping_reason" => (ids.size > 1) ? "scored_merge" : "single_listing", "signals" => signals,
          "official_match" => match}
@@ -100,8 +96,17 @@ module AlojamentoLocal
           numbers = entry.declaration.numbers.empty? ? [nil] : entry.declaration.numbers
           numbers.map { |number| [entry.raw["id"], number] }
         end.to_set
-        actual = document["candidates"].flat_map { |c| c["listing_ids"].map { |id| [id, c["al_number"]] } }
+        actual = document["candidates"].flat_map do |c|
+          c["raw_licences"].flat_map do |id, raw|
+            numbers = Declaration.new(raw).numbers
+            [[id, numbers.empty? ? nil : c["al_number"]]]
+          end
+        end
         raise "Builder changed contributions" unless actual.to_set == expected && actual.size == expected.size
+        expected_raw = sources.airbnb.entries.to_h { |entry| [entry.raw["id"], entry.declaration.raw] }
+        raise "Builder changed original declarations" unless document["candidates"].all? do |candidate|
+          candidate["raw_licences"].all? { |id, raw| expected_raw.fetch(id) == raw }
+        end
         raise "Builder changed listing summary" unless document["listings"] == counts(sources.airbnb.entries)
         raise "Builder changed RNAL summary" unless document["rnal"] == counts(sources.official.lisbon_entries, distinct: true)
         summary = document.fetch("summary")

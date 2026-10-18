@@ -1,7 +1,7 @@
+require "set" # standard:disable Lint/RedundantRequireStatement
 require "json"
 require "json_schemer"
 require "date"
-require "set"
 require "zlib"
 require "stringio"
 require "digest"
@@ -32,7 +32,7 @@ module AlojamentoLocal
         lock.flock(mode)
         yield
       ensure
-        lock.flock(File::LOCK_UN) if lock
+        lock&.flock(File::LOCK_UN)
       end
     end
 
@@ -100,6 +100,7 @@ module AlojamentoLocal
     end
 
     def candidates = details_document.fetch("candidates")
+
     def grouping_assessments = details_document.fetch("grouping_assessments")
 
     def summary
@@ -115,10 +116,12 @@ module AlojamentoLocal
         {"candidates_count" => rows.size, "numbered_candidates_count" => numbers.size, "distinct_al_numbers_count" => numbers.uniq.size,
          "exempt_candidates_count" => rows.count { |c| c["registration_status"] == "exempt" },
          "empty_licence_candidates_count" => rows.count { |c| c["registration_status"] == "absent" },
-         "unrecognised_licence_candidates_count" => rows.count { |c| c["registration_status"] == "unrecognised" }}
+         "unrecognised_licence_candidates_count" => rows.count { |c| c["registration_status"] == "unrecognised" },
+         "mixed_licence_candidates_count" => rows.count { |c| c["registration_status"] == "mixed" }}
       }
-      empty = ids.call(candidates.select { |c| c["registration_status"] == "absent" })
-      unrecognised = ids.call(candidates.select { |c| c["registration_status"] == "unrecognised" })
+      declarations = candidates.flat_map { |c| c.fetch("raw_licences").to_a }.uniq.to_h
+      empty = declarations.select { |_, raw| Analysis::Declaration.new(raw).status == "absent" }.keys
+      unrecognised = declarations.select { |_, raw| Analysis::Declaration.new(raw).status == "unrecognised" }.keys
       repeated = candidates.select { |c| c["al_number"] }.group_by { |c| c["al_number"] }.values.select { |group| group.size > 1 }
       distances = Array.new(6, 0)
       repeated.each do |group|
@@ -137,7 +140,7 @@ module AlojamentoLocal
         candidate["listing_ids"].each { |id| regions_by_listing[id] << region }
       end
       regions = Hash.new(0)
-      regions_by_listing.each_value { |values| regions[values.uniq.size == 1 ? values.first : nil] += 1 }
+      regions_by_listing.each_value { |values| regions[(values.uniq.size == 1) ? values.first : nil] += 1 }
       {"lisbon" => scope.call(candidates),
        "parishes" => (Geography::PARISHES + [nil]).map { |parish| {"freguesia" => parish}.merge(scope.call(candidates.select { |c| c["freguesia"] == parish })) },
        "signals" => {"empty_licence_listings" => empty.size, "unrecognised_licence_listings" => unrecognised.size,
@@ -185,7 +188,17 @@ module AlojamentoLocal
         number = candidate["al_number"]
         check(candidate["listing_count"] == ids.size, "listing count differs")
         check(candidate["raw_licences"].keys.sort == ids.sort, "raw licence mapping differs")
-        check(number || ids.size == 1, "unnumbered contributions must be singletons")
+        declared = candidate["raw_licences"].values.map { |raw| Analysis::Declaration.new(raw) }
+        numbers = declared.flat_map(&:numbers).uniq
+        check(number ? numbers.include?(number) : numbers.empty?, "candidate number lacks declaration")
+        if ids.size > 1
+          check(numbers.size <= 1, "merged group has multiple declared numbers")
+          check(declared.none? { |declaration| declaration.numbers.size > 1 }, "multiple-number listing merged")
+        end
+        unless number
+          statuses = declared.map(&:status).uniq
+          check(candidate["registration_status"] == ((statuses.size == 1) ? statuses.first : "mixed"), "unnumbered status differs")
+        end
         check(candidate["grouping_reason"] == ((ids.size > 1) ? "scored_merge" : "single_listing"), "grouping reason differs")
         ids.each do |id|
           key = [number, id]
@@ -198,34 +211,66 @@ module AlojamentoLocal
       end
       check(raw_values.size == city["listings_count"], "candidate listing coverage differs")
       by_listing = contributions.keys.group_by(&:last)
-      by_id = candidates.to_h { |candidate| [candidate["id"], candidate] }
       raw_values.each do |id, raw|
         declaration = Analysis::Declaration.new(raw)
         expected = declaration.numbers.empty? ? [nil] : declaration.numbers
         actual = by_listing.fetch(id).map(&:first)
-        check(expected.to_set == actual.to_set, "listing–number coverage differs for #{id}")
         if expected == [nil]
-          candidate = by_id.fetch(contributions[[nil, id]])
-          check(candidate["registration_status"] == declaration.status, "unnumbered status differs")
+          check(actual.size == 1, "unnumbered listing repeated")
+        else
+          check(expected.to_set == actual.to_set, "listing–number coverage differs for #{id}")
         end
       end
       assessments = {}
+      memberships = Hash.new { |hash, id| hash[id] = [] }
+      candidates.each { |candidate| candidate["listing_ids"].each { |id| memberships[id] << candidate["id"] } }
+      candidates_by_id = candidates.to_h { |candidate| [candidate["id"], candidate] }
       grouping_assessments.each do |pair|
         ids = pair["listing_ids"].sort
-        number = pair["al_number"]
-        key = [number, *ids]
-        check(!assessments.key?(key), "duplicate pair assessment")
-        groups = ids.map { |id| contributions[[number, id]] }
-        check(groups.none?(&:nil?), "invalid pair contributions")
-        merged = groups.uniq.size == 1
+        check(!assessments.key?(ids), "duplicate pair assessment")
+        check(ids.all? { |id| memberships.key?(id) }, "invalid pair contributions")
+        reasons = pair["reasons"]
+        check(pair["score"] == reasons.sum { |reason| Analysis::Grouping::POINTS.fetch(reason, 0) }, "pair score differs")
+        if reasons.include?("same_al_number")
+          numbers = ids.map { |id| Analysis::Declaration.new(raw_values.fetch(id)).numbers }
+          check((numbers[0] & numbers[1]).any?, "pair claims an undeclared shared number")
+        end
+        merged = (memberships[ids[0]] & memberships[ids[1]]).any?
         check(merged == (pair["outcome"] == "merge"), "assessment disagrees with final groups")
-        check(!merged || pair["score"] >= 7, "merged pair below threshold")
-        assessments[key] = pair
+        separation = reasons.include?("distinct_registered_apartments")
+        check(separation == (pair["relationship"] == "separate_apartments"), "registered separation relationship differs")
+        if separation
+          check(pair["outcome"] == "separate", "registered apartments must remain separate")
+          check((%w[distance_le_500m conflicting_al_numbers] - reasons).empty?, "registered separation lacks evidence")
+          check((reasons & %w[same_apartment_reference multiple_al_numbers room_category_ambiguity different_room_categories]).empty?, "registered separation has conflicting unit evidence")
+          declarations = ids.map { |id| Analysis::Declaration.new(raw_values.fetch(id)) }
+          check(declarations.all? { |declaration| declaration.numbers.one? && !declaration.partial? } && declarations.map(&:numbers).uniq.size == 2, "registered separation requires distinct single declarations")
+          ids.each do |id|
+            memberships.fetch(id).each do |candidate_id|
+              candidate = candidates_by_id.fetch(candidate_id)
+              record = candidate["official_match"]
+              check(candidate["registration_status"] == "found" && record && record["municipality"] == "Lisboa" && Geography.key(record["type"]) == "apartamento", "registered separation lacks official apartments")
+            end
+          end
+        end
+        if pair["relationship"] == "duplicate_adverts"
+          check(reasons.include?("merge_threshold"), "duplicate relationship lacks qualifying identity evidence")
+          check((reasons & %w[room_category_ambiguity different_room_categories different_room_references]).empty?, "duplicate relationship has ambiguous or different rooms")
+        end
+        if merged || pair["relationship"] == "duplicate_adverts"
+          check(pair["score"] >= 8, "merged pair below threshold")
+          check(reasons.include?("distance_le_500m"), "merge lacks nearby coordinates")
+          explicit = reasons.include?("same_apartment_reference")
+          text = (reasons & %w[similar_title strong_description]).any?
+          check((explicit && text) || (%w[same_al_number similar_title strong_description] - reasons).empty?, "merge lacks identity evidence")
+          check(explicit || (pair["relationship"] != "apartment_and_rooms" && !reasons.include?("different_room_categories")), "room relationship lacks unit reference")
+          check(reasons.none? { |reason| reason.start_with?("different_apartment_") } && (reasons & %w[conflicting_al_numbers multiple_al_numbers]).empty?, "contradictory merge")
+        end
+        assessments[ids] = pair
       end
-      contributions.keys.group_by(&:first).each do |number, keys|
-        next unless number
-        keys.map(&:last).sort.combination(2) do |a, b|
-          check(assessments.key?([number, a, b]), "missing pair assessment")
+      candidates.each do |candidate|
+        candidate["listing_ids"].sort.combination(2) do |ids|
+          check(assessments[ids] && assessments[ids]["outcome"] == "merge", "missing internal merge assessment")
         end
       end
     end

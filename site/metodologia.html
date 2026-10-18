@@ -88,11 +88,11 @@ title: Metodologia e proveniência
         no RNAL. Esta convenção não escolhe um potencial alojamento local correto por número. A
         barra horizontal de 100% reparte todos os potenciais alojamentos locais: uma ocorrência por
         número comum, reutilizações adicionais, números fora do RNAL deste âmbito, declarações não
-        reconhecidas, isenções declaradas por verificar e ausência de declaração. Ainda não se
-        avalia a validade das isenções. As correspondências usam as linhas originais RNAL de Lisboa
-        e da mesma freguesia oficial, antes da resolução nacional. Números e reutilizações por
-        freguesia não são necessariamente aditivos. Encontrar um número não confirma a identidade
-        nem a legalidade do alojamento.
+        reconhecidas, declarações mistas sem número, isenções declaradas por verificar e ausência de
+        declaração. Ainda não se avalia a validade das isenções. As correspondências usam as linhas
+        originais RNAL de Lisboa e da mesma freguesia oficial, antes da resolução nacional. Números
+        e reutilizações por freguesia não são necessariamente aditivos. Encontrar um número não
+        confirma a identidade nem a legalidade do alojamento.
       </p>
     </section>
 
@@ -147,28 +147,52 @@ title: Metodologia e proveniência
       <h3 class="mt-6">Como se relacionam anúncios e potenciais AL?</h3>
       <p>
         Um potencial alojamento local tem um ID próprio, zero ou um número AL e um ou vários IDs de
-        anúncio. Anúncios próximos com o mesmo número podem formar um potencial alojamento local. Um
-        anúncio que declara vários números contribui uma vez por número; o mesmo número pode
-        aparecer em potenciais alojamentos locais separados. Anúncios sem número, incluindo isenções
-        declaradas, permanecem registos separados de potenciais AL.
+        anúncio. Agrupamos duplicados da mesma unidade e quartos ou camas do mesmo apartamento
+        quando há evidência suficiente. Apartamentos autónomos ficam separados. O número associado
+        ao potencial alojamento local é o único número utilizável declarado pelo conjunto dos
+        membros; não significa que todos o tenham declarado. Conservamos cada declaração original.
+        Sem número, a categoria é a comum aos membros ou mista. Anúncios com vários números mantêm
+        contribuições separadas e ficam fora das fusões automáticas.
       </p>
       <p>
-        Para cada par com o mesmo número, a distância até 50 m vale 3 pontos e de 50 a 100 m vale 2;
-        o mesmo anfitrião vale 1, títulos semelhantes valem 2 e descrições fortemente semelhantes
-        valem 3. Comparamos conjuntos de palavras e números: os títulos exigem pelo menos três
-        termos comuns e similaridade Jaccard de 0,5; as descrições exigem 30 termos distintos em
-        cada texto e 0,8. O agrupamento exige pelo menos 7 pontos, coordenadas até 100 m e
-        categorias de quarto compatíveis. Dois apartamentos inteiros com números de quartos
-        conhecidos diferentes ficam separados. Todos os pares de um grupo têm de cumprir a regra.
-        Casos de revisão ficam separados; a pontuação resume evidência e não é uma probabilidade.
+        Procuramos pares até 500 m, com número AL partilhado ou referência explícita de apartamento
+        partilhada, independentemente do anfitrião. A distância até 500 m vale 1 ponto; o mesmo
+        anfitrião vale 1, títulos semelhantes valem 2, descrições fortemente semelhantes valem 3, a
+        mesma referência de apartamento vale 3 e o mesmo número AL vale 2. RNAL não dá pontos.
+        Comparamos conjuntos de palavras e números: títulos exigem três termos comuns e Jaccard de
+        0,5; descrições exigem 30 termos distintos por texto e Jaccard de 0,8.
+      </p>
+      <p>
+        Agrupar exige pelo menos 8 pontos, coordenadas até 500 m, ausência de contradições e uma
+        referência explícita comum com texto semelhante, ou número AL comum com títulos e descrições
+        semelhantes. Reconhecemos apartment, flat, apartamento, apt e unidade seguidos de
+        identificador numérico, alfanumérico ou letra única; referências ambíguas não dão pontos.
+        Referências de quarto/cama são distintas das de apartamento. Apartamentos com quartos e
+        categorias de quarto diferentes exigem referência de apartamento comum. Referências
+        distintas de apartamento ou atributos conhecidos contraditórios entre apartamentos inteiros
+        impedem fusão: tipo de propriedade, quartos, camas, casas de banho ou capacidade. Diferenças
+        entre quartos e anfitriões diferentes não impedem por si só o agrupamento. Partilhar
+        isenção, edifício, piso, anfitrião ou texto genérico não basta.
+      </p>
+      <p>
+        Todos os pares de um grupo têm de cumprir a regra. Escolhemos a união com maior pontuação
+        mínima e desempatamos por IDs ordenados. Pares plausíveis sem evidência suficiente,
+        conflitos de números e fusões impedidas por conflitos de grupo ficam separados para revisão.
+        Uma exceção permite resolver a separação de apartamentos inteiros com declarações claras de
+        números AL distintos: ambos os registos RNAL têm de indicar Apartamento em Lisboa e
+        coordenadas até 500 m do respetivo anúncio, e os anúncios têm de estar até 500 m entre si.
+        Uma referência explícita de apartamento partilhada mantém o conflito para revisão.
+        Declarações parciais ou múltiplas, quartos e campos oficiais por resolver não bastam. Esta
+        evidência não dá pontos nem autoriza fusões. Não prova que seja o mesmo edifício. A
+        pontuação resume evidência e não é uma probabilidade. A proximidade não prova identidade.
       </p>
       <p>
         Cada potencial alojamento local conta uma vez na freguesia atribuída ou em localização
         desconhecida. Esses totais somam o total de Lisboa. Os totais originais de anúncios usam a
         freguesia declarada na fonte Airbnb e também somam Lisboa, incluindo localização
         desconhecida. A freguesia atribuída aos potenciais alojamentos locais pode diferir da
-        original. Números distintos podem aparecer em várias freguesias. Capacidade fica para uma
-        etapa posterior.
+        original. Números distintos podem aparecer em várias freguesias. A avaliação da capacidade
+        autorizada fica para uma etapa posterior.
       </p>
       <h3 class="mt-6">Localização e correspondência</h3>
       <p>

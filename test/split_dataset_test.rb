@@ -24,6 +24,7 @@ class SplitDatasetTest < Minitest::Test
       output = File.join(root, "again")
       loaded.write_files(output)
       assert_equal bytes(path), bytes(output)
+      assert_equal JSON.pretty_generate(loaded.summary_document) + "\n", File.read(File.join(path, "summary.json"))
       assert_equal CandidateFixture.dataset.summary, loaded.summary
       assert_equal CandidateFixture.dataset.details_document, loaded.details_document
       Zlib::GzipReader.open(File.join(path, "candidates.json.gz")) do |gzip|
@@ -42,7 +43,10 @@ class SplitDatasetTest < Minitest::Test
       ->(path) { File.delete(File.join(path, "candidates.json.gz")) },
       ->(path) { File.write(File.join(path, "summary.json"), "{") },
       ->(path) { File.binwrite(File.join(path, "candidates.json.gz"), "bad gzip") },
-      ->(path) { file = File.join(path, "candidates.json.gz"); File.truncate(file, File.size(file) - 5) },
+      ->(path) {
+        file = File.join(path, "candidates.json.gz")
+        File.truncate(file, File.size(file) - 5)
+      },
       ->(path) { File.binwrite(File.join(path, "candidates.json.gz"), AlojamentoLocal::CandidateDataset.compress({"invalid" => []})) },
       ->(path) { File.open(File.join(path, "candidates.json.gz"), "ab") { |io| io.write("trailing") } }
     ].each do |mutation|

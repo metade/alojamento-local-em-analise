@@ -87,11 +87,12 @@ Os manifestos de proveniência permanecem junto dos CSVs em `data_sources/`.
 validam as duas estruturas estritas; `CandidateDataset` valida as relações entre elas.
 
 - `summary.json` contém `source_dates`, `lisbon`, as 24 `parishes` e uma linha
-  desconhecida no fim. Cada âmbito tem `official_count`, `listings_count`,
+  desconhecida no fim. Usa JSON indentado para facilitar os diffs Git.
+  Cada âmbito tem `official_count`, `listings_count`,
   `candidates_count`, `numbered_candidates_count`, `distinct_al_numbers_count` e
   `matched_al_numbers_count` (números distintos comuns às duas fontes no mesmo âmbito).
   `exempt_candidates_count`, `empty_licence_candidates_count` e
-  `unrecognised_licence_candidates_count` completam a divisão exclusiva dos candidatos
+  `unrecognised_licence_candidates_count` e `mixed_licence_candidates_count` completam a divisão exclusiva dos candidatos
   juntamente com `numbered_candidates_count`.
   As contagens RNAL e dos anúncios originais vêm independentemente das fontes.
   Os totais de anúncios e candidatos são aditivos; números distintos podem sobrepor-se.
@@ -110,8 +111,8 @@ Os agregados derivados de candidatos são partilhados pelo builder e pela valida
 através de `CandidateDataset.candidate_aggregates`.
 
 Os IDs distintos referenciados têm de cobrir exatamente a população original.
-Cada contribuição anúncio–número aparece uma única vez. Candidatos sem número
-são individuais. `raw_licences` mapeia os IDs contribuintes para o texto original
+Cada contribuição declarada anúncio–número aparece uma única vez. Candidatos sem número
+podem ter vários membros quando a evidência de unidade o permite. `raw_licences` mapeia os IDs contribuintes para o texto original
 ou `null`, sem normalizar o original. Esta publicação é uma exceção deliberada:
 os restantes campos excluem anfitriões, descrições, nomes, endereços e coordenadas
 exatas dos anúncios. Strings originais devem ser escapadas quando apresentadas.
@@ -129,43 +130,92 @@ Fragmentos, números com separadores de milhares e outros regimes não são repa
 O texto original integral fica em `raw_licences` e extrações parciais recebem um sinal;
 não criam um candidato adicional sem número.
 
-Sem número extraído, cada anúncio produz um candidato `absent`, `exempt` ou
+Sem número extraído, a declaração individual é `absent`, `exempt` ou
 `unrecognised`. Isenção exige uma declaração explícita de valor completo, como
 `Exempt` ou `Isento`. Uma palavra incidental em prosa não basta. Isenções nunca
-são números AL e não entram no agrupamento ou reutilização de números.
+são números AL nem evidência de identidade.
 
 ### Agrupamento
 
-Apenas pares com o mesmo número AL não nulo são avaliados. RNAL não influencia
-as decisões de agrupamento.
+Um único conjunto de anúncios alimenta o matcher. Descobrimos pares pela união
+de vizinhos até 500 m (grelha espacial), números AL não-placeholder partilhados e
+referências explícitas de apartamento/unidade partilhadas. Cada par é avaliado uma
+vez, independentemente do anfitrião ou declaração. 500 m é raio de procura, não
+prova de identidade; números e referências permitem avaliar pares mais distantes.
+RNAL não acrescenta pontos nem autoriza fusões; pode resolver a separação de
+apartamentos com registos distintos e localmente consistentes, como descrito abaixo.
 
 | Evidência | Pontos |
 | --- | ---: |
-| Distância até 50 m | 3 |
-| Distância acima de 50 m até 100 m | 2 |
+| Coordenadas até 500 m | 1 |
 | Mesmo anfitrião não vazio | 1 |
 | Títulos semelhantes | 2 |
 | Descrições fortemente semelhantes | 3 |
+| Mesma referência explícita de apartamento/unidade | 3 |
+| Mesmo número AL declarado não-placeholder | 2 |
 
 Textos são descodificados de HTML, normalizados por Unicode/case e comparados
 como conjuntos de tokens alfanuméricos, preservando números. Títulos exigem
 Jaccard ≥0,5 e três termos comuns. Descrições exigem Jaccard ≥0,8 e pelo menos
-30 termos distintos em cada texto. Evidência ausente vale zero.
+30 termos distintos em cada texto. Evidência ausente vale zero. Extraímos
+`apartment`, `flat`, `apartamento`, `apt` e `unidade` seguidos de identificador
+numérico, alfanumérico ou letra única; múltiplas referências distintas são ambíguas.
+Referências de quarto/cama (`room`, `quarto`, `bed`, `cama`) ficam separadas.
+Sufixos plurais, possessivos, abreviaturas de prosa, artigos, contagens de quartos,
+intervalos de capacidade e tipologias T1/T2/T3 não identificam unidades.
 
-Agrupar exige ≥7 pontos, coordenadas válidas até 100 m e categorias de quarto
-compatíveis, sem contradição de unidade. Números de quartos conhecidos diferentes
-em dois apartamentos inteiros impedem o agrupamento; diferenças entre anúncios
-de quartos não estabelecem apartamentos distintos. Anfitriões diferentes não
-impedem automaticamente o agrupamento.
+Agrupar exige ≥8 pontos, coordenadas válidas até 500 m, ausência de contradição e:
+referência de apartamento partilhada mais semelhança de texto, ou número AL
+partilhado mais títulos e descrições semelhantes nos limiares acima. Apartamento
+com quartos e categorias de quarto diferentes exigem referência explícita comum.
+Referências de apartamento diferentes e atributos conhecidos contraditórios entre
+apartamentos inteiros (tipo de propriedade, quartos, camas, casas de banho e
+capacidade) impedem fusão automática. Diferenças entre quartos não estabelecem
+apartamentos distintos. Anfitriões diferentes não impedem automaticamente a fusão.
+Partilhar edifício, piso, anfitrião ou texto genérico não basta.
 
-Pares de 4–6 pontos ou bloqueados por informação em falta ficam em revisão,
-separados. Distâncias acima de 100 m, categorias incompatíveis, contradições de
-apartamento e pontuações até 3 ficam separados. A pontuação não é uma probabilidade.
+Pares plausíveis sem cumprir todos os requisitos ficam separados, em revisão.
+Conflitos de números AL e anúncios com múltiplos números nunca autorizam fusão.
+Um par plausível até 500 m pode ficar resolvido como `separate_apartments`, com
+`outcome: separate` e `distinct_registered_apartments`, quando ambos são anúncios
+Airbnb de apartamentos inteiros e cada um tem uma declaração integral com um
+único número AL diferente. Os dois registos nacionais têm de resolver modalidade
+Apartamento, município Lisboa e coordenadas até 500 m do respetivo anúncio.
+Referências explícitas de apartamento partilhadas, extrações parciais, múltiplos
+números, quartos, propriedades desconhecidas e campos RNAL por resolver ou
+inconsistentes mantêm o caso para revisão. A evidência RNAL vale zero pontos e
+apenas resolve uma separação já impedida pelo conflito de números; não altera as
+fusões. Coordenadas próximas ou iguais não provam que seja o mesmo edifício.
+
+Pares próximos sem identidade plausível são avaliados e descartados; os restantes
+assessments publicados são únicos por par de IDs, com `outcome`, `score`,
+`relationship` (`duplicate_adverts`, `separate_rooms`, `apartment_and_rooms`,
+`undetermined`, `separate_apartments`) e
+códigos de evidência em `reasons`. A pontuação não é uma probabilidade.
+`undetermined` é o valor por defeito: uma fusão de alojamento não prova que os
+anúncios sejam duplicados. `duplicate_adverts` exige um par elegível para fusão,
+com a mesma categoria conhecida e, para quartos/camas, a mesma referência
+explícita de quarto/cama (`same_room_reference`). Dois anúncios de apartamentos
+inteiros podem ser classificados assim pela evidência de identidade existente.
+Pares plausíveis com evidência insuficiente ou contraditória ficam `undetermined`,
+salvo quando as categorias/referências identificam uma relação de quartos.
+A classificação não altera pontuações nem grupos. A regra de apartamentos
+registados distintos pode resolver `review` como `separate`.
+
 
 O complete-link exige que **todos** os pares do grupo cumpram a regra. Escolhe-se
 a união com maior pontuação mínima entre grupos e desempata-se por IDs ordenados.
 Pares elegíveis impedidos por conflitos de grupo passam a revisão. IDs de candidatos
-são hashes do número normalizado e dos IDs ordenados dos membros.
+são hashes do número associado e dos IDs ordenados dos membros.
+
+Grupos podem combinar declarações numeradas, ausentes, de isenção e não reconhecidas.
+`al_number` associa o candidato ao único número utilizável declarado pelo conjunto;
+não significa que todos os membros o tenham declarado. As declarações individuais
+permanecem integralmente em `raw_licences`. Sem número, conservamos a categoria
+comum ou `mixed` quando divergem. Anúncios com vários números mantêm contribuições
+separadas por número e apenas relações para revisão. Sinais de ausência/declaração
+não reconhecida contam IDs a partir das declarações individuais, mesmo em grupos
+numerados. Associações inferidas não acrescentam declarações às fontes.
 
 ### Geografia e RNAL
 
@@ -201,7 +251,7 @@ As métricas usam as seguintes unidades:
   É uma convenção de contagem; não escolhe qual candidato representa corretamente um registo.
 - A barra horizontal de 100% reparte os candidatos sem duplicações: uma ocorrência por
   número comum, ocorrências adicionais de números reutilizados, uma ocorrência por número
-  fora do RNAL deste âmbito, declaração não reconhecida, isenção declarada por verificar
+  fora do RNAL deste âmbito, declaração não reconhecida, declarações mistas sem número, isenção declarada por verificar
   e ausência de declaração. Reutilização é candidatos com número menos números distintos.
   Os números reconhecidos fora do RNAL do âmbito aparecem separados dos valores não
   reconhecidos; podem existir noutra freguesia/município ou não ser encontrados nacionalmente.
@@ -243,15 +293,57 @@ Não há diagnósticos persistidos nem histórico analítico separado.
 
 ### Impacto da substituição
 
-No mesmo par `2026-06-23__2026-09-26`, os bytes SHA-256 permanecem os mesmos e a
-população original continua em **17 064 anúncios**; o resumo RNAL continua em
-**11 869 números distintos**. A estimativa antiga de 14 600 estabelecimentos
-usava componentes espaciais até 500 m e categorias gerais. O novo método usa
-extração múltipla, pontuação e complete-link até 100 m, produzindo **16 210 candidatos**
-na primeira execução. Estas duas estimativas têm métodos e unidades diferentes;
-não medem uma variação temporal. As regras estão documentadas acima.
-Os outputs antigos foram removidos da árvore atual por alterações Git normais;
-o histórico Git permanece intacto.
+No mesmo par `2026-06-23__2026-09-26`, a reanálise local conserva os hashes das
+fontes, **17 064 anúncios**, **11 869 números RNAL**, **8 923 números AL declarados**
+e **7 320 números comuns** às fontes em Lisboa. A cobertura foi verificada
+independentemente por leitura dos CSVs: todos os IDs, cada declaração original,
+cada contribuição anúncio–número e os totais originais por freguesia concordam.
+
+| Categoria de candidatos | Método anterior | Matcher único |
+| --- | ---: | ---: |
+| Com número associado | 11853 | 11845 |
+| Isenção declarada | 3585 | 3585 |
+| Sem declaração | 633 | 633 |
+| Declaração não reconhecida | 139 | 139 |
+| Mistas sem número | 0 | 0 |
+| Total | 16210 | 16202 |
+
+Há **452 candidatos com vários anúncios**, com 893 contribuições a menos do que
+se cada contribuição individual permanecesse separada.
+Os pares internos aceites distribuem-se por `duplicate_adverts`: 592; `separate_rooms`: 323; `apartment_and_rooms`: 0; `undetermined`: 1163.
+Estas são contagens de pares, não de candidatos; todos os pares de cada grupo
+cumprem os critérios. O maior grupo tem 24 anúncios.
+
+Neste par, 0 candidatos associam membros sem número utilizável a um número
+declarado por outro membro. Os casos de associação inferida, grupos inteiramente
+sem número e categorias mistas são exercitados pelas regressões sintéticas.
+Os sinais individuais de ausência (633) e declaração
+não reconhecida (139) mantêm-se independentes da associação do candidato.
+
+A regra de apartamentos registados distintos resolve **6 358 pares** antes em
+revisão, sem alterar candidatos, pontuações ou fusões. O número de candidatos
+com o sinal `grouping_review` passa de **8 661 para 6 934**. O par revisto
+`1000837114643475255` / `1003445988121476426`, com números 84776 e 84783,
+fica `separate` / `separate_apartments`, com 7 pontos e motivo
+`distinct_registered_apartments`. Ambos os RNAL resolvem Apartamento em Lisboa
+com localização até 500 m do respetivo anúncio. Não se infere identidade de edifício.
+
+A revisão local incluiu estes pares de IDs:
+
+| Par | Avaliação |
+| --- | --- |
+| 1000672424786379990 / 1019708606943533804 | Aceite: `undetermined`, 9 pontos |
+| 1035272767626393810 / 1035274669525746246 | Aceite: `separate_rooms`, 9 pontos |
+| 1055110451722367068 / 1056413133220721741 | Separados: apartamentos com números distintos e registos RNAL localmente consistentes |
+| 1001799626325440617 / 1004495237965399867 | Revisão: atributos de apartamento contraditórios |
+| 1000672424786379990 / 48377666 | Revisão: números AL diferentes |
+| 1019708606943533804 / 48900551 | Revisão: conflito complete-link |
+
+Foram também revistos exemplos de apartamentos autónomos com texto
+repetido: sufixos plurais, abreviaturas, quebras entre campos/parágrafos, artigos,
+contagens e tipologias não fornecem referências de unidade. As regras são
+indicadores de investigação; a diferença no total resulta do método, não de
+uma variação temporal nem de um objetivo de redução.
 
 ## Verificar
 

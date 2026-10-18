@@ -17,7 +17,9 @@ module SiteFilters
     {
       "absent" => "Sem número declarado", "unrecognised" => "Número não reconhecido",
       "found" => "Número encontrado no RNAL", "not_found" => "Número não encontrado no RNAL",
-      "exempt" => "Isenção declarada",
+      "exempt" => "Isenção declarada", "mixed" => "Declarações mistas sem número",
+      "missing_licence_declaration" => "Anúncio sem declaração",
+      "unrecognised_licence_declaration" => "Anúncio com declaração não reconhecida",
       "scored_merge" => "Anúncios agrupados por evidência concordante",
       "single_listing" => "Um anúncio neste potencial AL",
       "partial_licence_extraction" => "Declaração parcialmente reconhecida",

@@ -34,6 +34,89 @@ class PipelineRegressionTest < Minitest::Test
     end
   end
 
+  def test_cross_declaration_groups_preserve_raw_values_source_totals_and_signals
+    PipelineFixture.with_sources do |_, airbnb, official|
+      [true, false].each do |numbered|
+        template = CSV.read(File.join(PipelineFixture::SOURCES, "listings-2024-06-01.csv"), headers: true)
+        rows = template.take(5).map(&:to_h)
+        licences = numbered ? ["100/AL", nil, "Exempt", "UT registration", ""] : [nil, "", "Exempt", "UT registration", "Isento"]
+        rows.each_with_index do |row, index|
+          row.merge!("license" => licences[index], "latitude" => "38.73", "longitude" => "-9.14",
+            "name" => "Central lovely apartment B room", "description" => (1..40).map { |i| "token#{i}" }.join(" "),
+            "room_type" => "Private room", "host_id" => index.to_s)
+        end
+        # An inferred association must not create a new source declaration in Belém.
+        rows.last["neighbourhood_cleansed"] = "Belém"
+        CSV.open(airbnb, "w") do |csv|
+          csv << template.headers
+          rows.each { |row| csv << template.headers.map { |key| row[key] } }
+        end
+        File.delete("#{airbnb}.manifest.json") if File.exist?("#{airbnb}.manifest.json")
+        dataset = AlojamentoLocal::Analysis::DatasetBuilder.new(sources: PipelineFixture.pair(airbnb, official)).build
+        assert_equal 1, dataset.candidates.size
+        candidate = dataset.candidates.first
+        assert_equal licences, rows.map { |row| candidate["raw_licences"][row["id"]] }
+        assert_equal numbered ? "100" : nil, candidate["al_number"]
+        assert_equal numbered ? "found" : "mixed", candidate["registration_status"]
+        assert_nil candidate["freguesia"]
+        assert_equal 5, dataset.summary[:listings]
+        assert_equal 3, dataset.summary[:rnal]
+        assert_equal 10, dataset.grouping_assessments.size
+        assert_equal numbered ? 1 : 0, dataset.summary_document.dig("lisbon", "matched_al_numbers_count")
+        assert_equal numbered ? 0 : 1, dataset.summary_document.dig("lisbon", "mixed_licence_candidates_count")
+        assert_equal 0, dataset.summary_document["parishes"].last["matched_al_numbers_count"]
+        assert_equal [2, 1, 3], dataset.summary_document["signals"].values_at("empty_licence_listings", "unrecognised_licence_listings", "unidentified_licence_listings")
+        site = AlojamentoLocal::SiteData.new(dataset: dataset).site_data
+        assert_equal 1, site["metrics"]["candidate_breakdown"].sum { |segment| segment["count"] }
+        assert_equal 1, site["report_candidates"].size
+        invalid = CandidateFixture.documents(dataset)
+        invalid["candidates"].first["raw_licences"][rows.last["id"]] = "999/AL"
+        assert_raises(ArgumentError) { CandidateFixture.from_documents(invalid, refresh: true) }
+      end
+    end
+  end
+
+  def test_registered_apartment_separation_is_published_validated_and_clears_review_signals
+    PipelineFixture.with_sources do |root, airbnb, official|
+      table = CSV.read(airbnb, headers: true)
+      CSV.open(airbnb, "w") do |csv|
+        csv << table.headers
+        table.take(2).each_with_index do |row, index|
+          values = row.to_h.merge("license" => "#{100 + index * 100}/AL", "room_type" => "Entire home/apt",
+            "property_type" => "Entire rental unit", "latitude" => "38.73", "longitude" => "-9.14",
+            "name" => "Central studio balcony #{index + 1} floor", "description" => (1..40).map { |i| "token#{i}" }.join(" "))
+          csv << table.headers.map { |key| values[key] }
+        end
+      end
+      CSV.open(official, "w") do |csv|
+        csv << %w[NrRNAL Concelho Freguesia LatLong Modalidade NUTSII]
+        [100, 200].each { |number| csv << [number, "Lisboa", "Arroios", "38.73;-9.14", "Apartamento", "Grande Lisboa"] }
+      end
+      result = PipelineFixture.run(root, airbnb, official)
+      dataset = AlojamentoLocal::CandidateDataset.new(result.fetch(:path))
+      pair = dataset.grouping_assessments.fetch(0)
+      assert_equal [7, "separate", "separate_apartments"], pair.values_at("score", "outcome", "relationship")
+      assert_equal 2, dataset.candidates.size
+      assert dataset.candidates.none? { |candidate| candidate["signals"].include?("grouping_review") }
+      assert_equal 2, dataset.summary_document.dig("lisbon", "matched_al_numbers_count")
+      [
+        ->(doc) { doc["grouping_assessments"].first["outcome"] = "review" },
+        ->(doc) { doc["grouping_assessments"].first["relationship"] = "undetermined" },
+        ->(doc) { doc["grouping_assessments"].first["reasons"].delete("distinct_registered_apartments") },
+        ->(doc) { doc["candidates"].first["official_match"]["type"] = nil },
+        ->(doc) { doc["candidates"].first["official_match"]["municipality"] = "Porto" },
+        ->(doc) {
+          doc["grouping_assessments"].first["reasons"] << "same_apartment_reference"
+          doc["grouping_assessments"].first["score"] += 3
+        }
+      ].each do |mutate|
+        doc = CandidateFixture.documents(dataset)
+        mutate.call(doc)
+        assert_raises(ArgumentError) { CandidateFixture.from_documents(doc, refresh: true) }
+      end
+    end
+  end
+
   def test_national_record_consensus_and_independent_lisbon_summary
     PipelineFixture.with_sources do |_, airbnb, official|
       pair = PipelineFixture.pair(airbnb, official)

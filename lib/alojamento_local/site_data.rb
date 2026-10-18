@@ -49,11 +49,10 @@ module AlojamentoLocal
       candidates = @dataset.candidates.map do |candidate|
         candidate.merge("grouping_review_count" => 0, "minimum_merge_score" => nil)
       end
-      by_contribution = candidates.each_with_object({}) do |candidate, index|
-        candidate["listing_ids"].each { |id| index[[candidate["al_number"], id]] = candidate }
-      end
+      by_listing = Hash.new { |hash, id| hash[id] = [] }
+      candidates.each { |candidate| candidate["listing_ids"].each { |id| by_listing[id] << candidate } }
       @dataset.grouping_assessments.each do |pair|
-        related = pair["listing_ids"].map { |id| by_contribution.fetch([pair["al_number"], id]) }.uniq
+        related = pair["listing_ids"].flat_map { |id| by_listing.fetch(id) }.uniq
         related.each do |candidate|
           if pair["outcome"] == "review"
             candidate["grouping_review_count"] += 1
@@ -117,10 +116,10 @@ module AlojamentoLocal
       labels.each { |label| label["title"] = titles.fetch(label.fetch("key")) }
       counts = {"matched" => matched, "repeated" => numbered - declared,
                 "outside" => declared - matched, "unrecognised" => scope.fetch("unrecognised_licence_candidates_count"),
-                "exempt" => scope.fetch("exempt_candidates_count"), "absent" => scope.fetch("empty_licence_candidates_count")}
+                "mixed" => scope.fetch("mixed_licence_candidates_count"), "exempt" => scope.fetch("exempt_candidates_count"), "absent" => scope.fetch("empty_licence_candidates_count")}
       category_labels = {"matched" => "Número no RNAL (uma vez)", "repeated" => "Ocorrências adicionais de números reutilizados",
                          "outside" => "Número fora do RNAL desta geografia", "unrecognised" => "Declaração não reconhecida",
-                         "exempt" => "Isenção declarada — por verificar", "absent" => "Sem número declarado"}
+                         "mixed" => "Declarações mistas sem número", "exempt" => "Isenção declarada — por verificar", "absent" => "Sem número declarado"}
       breakdown = counts.map do |key, count|
         {"key" => key, "label" => category_labels.fetch(key), "count" => count,
          "width" => candidate_count.zero? ? 0 : count * 100.0 / candidate_count}

@@ -261,6 +261,7 @@ td {
 .candidate-breakdown--repeated { --segment-color: #b64b30; }
 .candidate-breakdown--outside { --segment-color: #965c45; }
 .candidate-breakdown--unrecognised { --segment-color: #a77d79; }
+.candidate-breakdown--mixed { --segment-color: #9a829f; }
 .candidate-breakdown--exempt { --segment-color: #789195; }
 .candidate-breakdown--absent { --segment-color: #d5cfc5; }
 .candidate-breakdown-legend { list-style: none; padding: 0; }
@@ -289,6 +290,7 @@ td {
 .candidate-breakdown:has([data-breakdown-category="repeated"]:is(:hover, :focus)) [data-breakdown-category="repeated"],
 .candidate-breakdown:has([data-breakdown-category="outside"]:is(:hover, :focus)) [data-breakdown-category="outside"],
 .candidate-breakdown:has([data-breakdown-category="unrecognised"]:is(:hover, :focus)) [data-breakdown-category="unrecognised"],
+.candidate-breakdown:has([data-breakdown-category="mixed"]:is(:hover, :focus)) [data-breakdown-category="mixed"],
 .candidate-breakdown:has([data-breakdown-category="exempt"]:is(:hover, :focus)) [data-breakdown-category="exempt"],
 .candidate-breakdown:has([data-breakdown-category="absent"]:is(:hover, :focus)) [data-breakdown-category="absent"] {
   opacity: 1;

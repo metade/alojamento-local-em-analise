@@ -21,13 +21,14 @@ one with unknown Airbnb parish (ID 11).
   though the other source evidence agrees.
 - ID 7 has no declaration; ID 8 declares an unsupported UT registration.
 - ID 9 declares 300 with missing listing coordinates.
-- ID 10 declares 200 near ID 4. Its score is 6: review, kept separate.
+- ID 10 declares 200 near ID 4. Its evidence lacks a strong description and involves a multi-number listing: review, kept separate.
 - ID 11 declares 400 with unknown Airbnb parish.
 
 There are **12 contributions**, **11 candidates** (7 numbered and 4 unnumbered),
 and **4 distinct AL numbers**. Every retained ID appears; ID 4 appears in two
-numbers. Assessment pairs: six for 100 and one for 200, including one merge and
-one review. IDs, groups and medoids are invariant under source-row reversal.
+numbers. Assessments are unique by listing-ID pair, including the one accepted merge
+and plausible unresolved pairs across declaration categories. Unrelated nearby
+pairs are evaluated without public review records. IDs, groups and medoids are invariant under source-row reversal.
 
 The national RNAL fixture has six rows and four numbers:
 
@@ -66,8 +67,12 @@ established site/report UX. It has **13 original listings**, **12 candidates**,
 **7 distinct candidate numbers** and **17 distinct RNAL numbers**. It includes a
 three-listing merged candidate, a listing contributing to two numbers, unknown
 geography, repeated numbers, a national nonmatch and two singleton exemptions.
-It now includes original declarations and complete pair assessments without
-changing those established presentation counts. Demo IDs never get live links.
+It includes original declarations and every internal merge assessment, with
+explicit evidence codes, relationships and a zero mixed-declaration segment, without
+changing those established presentation counts. Its relationship labels are
+`undetermined`: the invented fixture does not supply evidence distinguishing
+duplicate adverts from different rooms. Merged memberships remain unchanged.
+Demo IDs never get live links.
 Select it explicitly using `SNAPSHOT=test/fixtures/pipeline/snapshots/candidate`.
 It is not the output generated from `sources/`.
 

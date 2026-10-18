@@ -6,17 +6,22 @@
   pastas de pares datados, manifests locais, validação de cobertura e substituição segura.
 - [x] Extrair vários números explícitos, conservar declarações originais, resolver
   conflitos RNAL e calcular resumos RNAL/listings independentemente.
-- [x] Agrupar por evidência pontuada, complete-link até 100 m e medóide determinístico.
-  Manter isenções e restantes anúncios sem número em candidatos individuais.
+- [x] Comparar um único conjunto de anúncios, com procura espacial até 500 m,
+  referências de unidade, declarações distintas e complete-link pontuado.
+  Preservar declarações individuais, categorias mistas e medóide determinístico.
 - [x] Publicar downloads datados e relatórios na raiz, selecionar a pasta mais
   recente por defeito e manter a fixture de apresentação apenas por seleção explícita.
 - [x] Remover comparações, readers, expectativas, relatórios e snapshots antigos
   da árvore atual, preservando o histórico Git sem reescrita.
-- [ ] Investigar agrupamento de candidatos sem número com evidência adequada,
-  incluindo declarações de isenção. Partilhar o rótulo `Exempt` nunca estabelece
-  uma relação de agrupamento. Avaliar a redução do total estimado de candidatos
-  após revisão destas regras, mantendo distintos os totais de candidatos e de
-  números AL na visualização.
+- [x] Usar `undetermined` para relações sem evidência suficiente de duplicação;
+  distinguir a fusão de alojamentos da classificação dos anúncios como duplicados.
+- [x] Resolver como apartamentos separados os conflitos de números distintos com
+  declarações claras e registos RNAL de apartamentos localmente consistentes,
+  sem atribuir pontos de identidade nem afirmar que partilham um edifício.
+- [ ] Calibrar referências explícitas e relações de duplicados/quartos com amostra
+  verificada; ampliar vocabulário apenas com regressões. Rever ambiguidades,
+  anúncios de várias unidades e texto de anfitrião repetido, sem objetivo de redução
+  do número de candidatos. Partilhar `Exempt` nunca estabelece identidade.
 - [ ] Investigar fiabilidade da geografia Airbnb não verificada, deslocação ou
   imprecisão das coordenadas, proximidade dos limites CML e casos de fronteira.
   Validar os polígonos completos, qualidade/época das fontes e regras para eventual
@@ -30,7 +35,9 @@
 - [ ] Rever exemplos de quartos/apartamentos e calibrar regras com amostra
   verificada; pontuações são evidência e não probabilidades. Preservar regressões
   sintéticas equivalentes sem expor nomes, descrições ou anfitriões.
-- [ ] Capacidade permanece adiada.
+- [ ] Avaliar capacidade autorizada e correspondência RNAL com critérios e evidência
+  próprios. Os atributos de capacidade servem apenas para contradizer fusões de
+  apartamentos inteiros; existência nacional não pontua identidade.
 
 - [x] Manter um único relatório HTML/PDF e retirar diagnósticos persistidos e
   toda a geração de outputs privados.

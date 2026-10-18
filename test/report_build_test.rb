@@ -132,8 +132,8 @@ class ReportBuildTest < Minitest::Test
       note = "Os potenciais alojamentos locais resultam do tratamento e agrupamento de anúncios do Airbnb. Não correspondem necessariamente a alojamentos distintos ou a registos oficiais."
       assert_equal 1, homepage.gsub(/\s+/, " ").scan(note).size
       assert_includes homepage, 'aria-label="Distribuição de 100% dos potenciais AL"'
-      %w[matched repeated outside unrecognised exempt absent].each do |key|
-        assert_equal 2, homepage.scan(%(data-breakdown-category="#{key}")).size
+      %w[matched repeated outside unrecognised mixed exempt absent].each do |key|
+        assert_equal((key == "mixed") ? 1 : 2, homepage.scan(%(data-breakdown-category="#{key}")).size)
       end
       assert_match(/<li[^>]*data-breakdown-category="exempt"[^>]*tabindex="0"/, homepage)
       assert_includes homepage, 'aria-label="Número no RNAL (uma vez): 5 potenciais AL"'

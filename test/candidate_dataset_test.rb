@@ -13,7 +13,7 @@ class CandidateDatasetTest < Minitest::Test
     assert_equal [12, 13, 7, 17], site["summary"].values_at("candidate_count", "listing_count", "distinct_al_numbers", "official_numbers")
     assert_equal [12, 5, 2, 12], site["metrics"].values_at("airbnb", "matched_al_numbers", "other_declared_numbers", "unmatched_official_numbers")
     assert site["metrics"]["geometry"]
-    assert_equal [5, 1, 2, 1, 2, 1], site["metrics"]["candidate_breakdown"].map { |row| row["count"] }
+    assert_equal [5, 1, 2, 1, 0, 2, 1], site["metrics"]["candidate_breakdown"].map { |row| row["count"] }
     assert_equal 12, site["metrics"]["candidate_breakdown"].sum { |row| row["count"] }
     assert_equal 12, site["districts"].sum { |d| d["candidate_count"] } + site["unknown"]["candidate_count"]
     assert_equal 13, site["districts"].sum { |d| d["listing_count"] } + site["unknown"]["listing_count"]
@@ -43,8 +43,8 @@ class CandidateDatasetTest < Minitest::Test
   def test_candidate_bar_is_additive_and_counts_each_reused_number_once_in_the_first_occurrence
     site = data
     rows = site["metrics"].fetch("candidate_breakdown")
-    assert_equal %w[matched repeated outside unrecognised exempt absent], rows.map { |row| row["key"] }
-    assert_equal [5, 1, 2, 1, 2, 1], rows.map { |row| row["count"] }
+    assert_equal %w[matched repeated outside unrecognised mixed exempt absent], rows.map { |row| row["key"] }
+    assert_equal [5, 1, 2, 1, 0, 2, 1], rows.map { |row| row["count"] }
     assert_equal 12, rows.sum { |row| row["count"] }
     assert_in_delta 100, rows.sum { |row| row["width"] }, 1e-10
     assert_equal 7, site["metrics"]["remaining_candidates"]
@@ -144,7 +144,11 @@ class CandidateDatasetTest < Minitest::Test
       ->(d) { d["grouping_assessments"] << d["grouping_assessments"].first },
       ->(d) { d["grouping_assessments"].first["listing_ids"] = %w[demo-101 demo-102] },
       ->(d) { d["grouping_assessments"].first["outcome"] = "separate" },
-      ->(d) { d["grouping_assessments"].first["score"] = 6 }
+      ->(d) { d["grouping_assessments"].first["score"] = 6 },
+      ->(d) { d["lisbon"]["mixed_licence_candidates_count"] += 1 },
+      ->(d) { d["grouping_assessments"].first["reasons"].delete("distance_le_500m") },
+      ->(d) { d["grouping_assessments"].first["relationship"] = "apartment_and_rooms" },
+      ->(d) { d["grouping_assessments"].last["relationship"] = "duplicate_adverts" }
     ]
     mutations.each_with_index do |mutation, index|
       doc = document
@@ -153,7 +157,7 @@ class CandidateDatasetTest < Minitest::Test
     end
   end
 
-  def test_unnumbered_contributions_cannot_merge_or_duplicate
+  def test_unnumbered_contributions_require_pair_evidence_and_cannot_duplicate
     [false, true].each do |merge|
       doc = document
       candidate = doc["candidates"].find { |c| c["registration_status"] == "exempt" }
