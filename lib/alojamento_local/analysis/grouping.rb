@@ -13,6 +13,12 @@ module AlojamentoLocal
                 "same_host_room_group" => 1}.freeze
       OFFSETS = [-1, 0, 1].repeated_permutation(3).to_a.freeze
 
+      def self.evidence_category(reason)
+        return "unknown" if %w[missing_coordinates room_category_ambiguity].include?(reason)
+        return "contradicting" if reason.start_with?("different_apartment_", "distinct_") || %w[conflicting_al_numbers multiple_al_numbers distance_over_500m].include?(reason)
+        "supporting"
+      end
+
       def initialize(entries, official_records: {})
         @official_records = official_records
         @entries = entries.sort_by { |entry| entry.raw.fetch("id") }
@@ -21,7 +27,11 @@ module AlojamentoLocal
         discover do |a, b, distance|
           pair = assess(a, b, distance)
           # Nearby unrelated adverts are evaluated but need no public review record.
-          @assessments << pair if retain_assessment?(pair)
+          if retain_assessment?(pair)
+            first, second = [a, b].map { |entry| @prepared.fetch(entry.raw["id"]) }
+            pair.merge!(review_details(first, second, distance, pair["reasons"]))
+            @assessments << pair
+          end
         end
         @assessments.sort_by! { |pair| pair["listing_ids"] }
         @pairs = assessments.to_h { |pair| [pair.fetch("listing_ids"), pair] }
@@ -85,7 +95,7 @@ module AlojamentoLocal
         {tokens: text.map { |value| value.downcase.scan(/[\p{L}\p{N}]+/).to_set },
          apartment: reference(text, "apartment|flat|apartamento|apt\\.?|unidade"),
          room: reference(text, "room|quarto|bed|cama"),
-         category: category, property: property.empty? ? nil : property,
+         category: category, room_type: category ? entry.raw["room_type"] : nil, property: property.empty? ? nil : property,
          single_declaration: entry.declaration.numbers.one? && !entry.declaration.partial?,
          attributes: %w[bedrooms beds bathrooms accommodates].to_h { |key| [key, numeric(entry.raw[key])] },
          host: entry.raw["host_id"].to_s.strip, numbers: entry.declaration.numbers,
@@ -147,9 +157,26 @@ module AlojamentoLocal
         reasons = evidence_for(first, second, distance)
         score = reasons.sum { |reason| POINTS.fetch(reason, 0) }
         outcome, decision_reason = decide(first, second, reasons, score)
-        reasons << decision_reason
+        reasons << decision_reason if %w[distinct_registered_apartments distinct_apartment_attributes].include?(decision_reason)
         {"listing_ids" => [a.raw["id"], b.raw["id"]], "score" => score,
-         "outcome" => outcome, "relationship" => relationship_for(first, second, reasons, outcome), "reasons" => reasons}
+         "outcome" => outcome, "relationship" => relationship_for(first, second, reasons, outcome),
+         "decision_reason" => decision_reason, "reasons" => reasons}
+      end
+
+      def text_comparison(a, b)
+        shared = (a & b).size
+        {"similarity" => (a.empty? || b.empty?) ? nil : (shared.to_f / (a.size + b.size - shared)).round(4),
+         "token_counts" => [a.size, b.size], "shared_tokens" => shared}
+      end
+
+      def review_details(first, second, distance, reasons)
+        {"distance_m" => distance && (distance * 1000).round,
+         "title_comparison" => text_comparison(first[:tokens][0], second[:tokens][0]),
+         "description_comparison" => text_comparison(first[:tokens][1], second[:tokens][1]),
+         "room_types" => [first[:room_type], second[:room_type]],
+         "property_types" => [first[:property], second[:property]],
+         "attributes" => %w[bedrooms beds bathrooms accommodates].to_h { |key| [key, [first[:attributes][key], second[:attributes][key]]] },
+         "evidence" => reasons.to_h { |reason| [reason, {"category" => self.class.evidence_category(reason), "points" => POINTS.fetch(reason, 0)}] }}
       end
 
       def evidence_for(first, second, distance)
@@ -197,6 +224,12 @@ module AlojamentoLocal
         end
         properties = [first[:property], second[:property]]
         reasons << "different_apartment_property" if properties.none?(&:nil?) && properties.uniq.size > 1
+        # Dissimilarity is evidence only with enough text, not merely a failed similarity test.
+        different_text = [0, 1].zip([3, 30]).all? do |index, minimum|
+          a, b = [first, second].map { |data| data[:tokens][index] }
+          a.size >= minimum && b.size >= minimum && (a & b).size.fdiv((a | b).size) <= 0.25
+        end
+        reasons << "different_apartment_text" if different_text
         reasons
       end
 
@@ -204,8 +237,8 @@ module AlojamentoLocal
         return ["merge", "merge_threshold"] if merge_eligible?(reasons, score)
         return ["separate", "insufficient_identity"] unless plausible_relationship?(reasons)
         return ["separate", "distinct_registered_apartments"] if registered_apartments_distinct?(first, second, reasons)
-        return ["separate", "distinct_apartment_attributes"] if apartment_attributes_distinct?(reasons)
-        ["review", "review_score"]
+        return ["separate", "distinct_apartment_attributes"] if apartment_attributes_distinct?(first, second, reasons)
+        ["review", "insufficient_merge_evidence"]
       end
 
       def merge_eligible?(reasons, score)
@@ -236,9 +269,13 @@ module AlojamentoLocal
           reasons.include?("distance_le_500m") && first[:registered_apartment] && second[:registered_apartment]
       end
 
-      def apartment_attributes_distinct?(reasons)
-        (%w[same_al_number different_apartment_bedrooms different_apartment_beds different_apartment_accommodates] - reasons).empty? &&
-          (reasons & %w[same_apartment_reference conflicting_al_numbers multiple_al_numbers]).empty?
+      def apartment_attributes_distinct?(first, second, reasons)
+        return false unless (%w[same_al_number different_apartment_beds different_apartment_accommodates] - reasons).empty?
+        return false if (reasons & %w[same_apartment_reference conflicting_al_numbers multiple_al_numbers]).any?
+        return true if reasons.include?("different_apartment_bedrooms")
+        beds = first[:attributes]["beds"] - second[:attributes]["beds"]
+        capacity = first[:attributes]["accommodates"] - second[:attributes]["accommodates"]
+        reasons.include?("different_apartment_text") && beds * capacity > 0
       end
 
       # Merging accommodation does not necessarily establish duplicate adverts.
@@ -285,7 +322,7 @@ module AlojamentoLocal
         edges.each do |pair|
           unless memberships[pair["listing_ids"][0]].equal?(memberships[pair["listing_ids"][1]])
             pair["outcome"] = "review"
-            pair["reasons"] << "complete_link_conflict"
+            pair["decision_reason"] = "complete_link_conflict"
           end
         end
         @groups = memberships.values.uniq.sort_by { |group| group.map { |entry| entry.raw["id"] } }

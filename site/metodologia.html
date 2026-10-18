@@ -205,10 +205,23 @@ title: Metodologia e proveniência
       <p>
         Anúncios de alojamentos inteiros com o mesmo número AL também ficam resolvidos como
         apartamentos separados quando diferem simultaneamente no número conhecido de quartos, camas
-        e capacidade. Uma referência explícita de apartamento partilhada ou declarações com números
-        conflituantes/múltiplos impedem esta regra. Valores ausentes ou malformados são
+        e capacidade. Outra combinação exige camas e capacidade diferentes na mesma direção, títulos
+        e descrições com Jaccard até 0,25 e pelo menos 3 termos distintos por título e 30 por
+        descrição, mesmo com igual número de quartos. Falhar a semelhança forte ou ter texto em
+        falta não basta. Uma referência explícita de apartamento partilhada ou declarações com
+        números conflituantes/múltiplos impedem esta regra. Valores ausentes ou malformados são
         desconhecidos; diferenças isoladas continuam para revisão. A separação não atribui pontos
         nem determina qual anúncio corresponde ao RNAL. O sinal de número partilhado permanece.
+      </p>
+      <p>
+        Os assessments dos downloads incluem distância em metros arredondada à unidade, semelhanças
+        e contagens de termos, tipos de anúncio/propriedade e atributos comparados, pela ordem dos
+        IDs. Valores em falta são desconhecidos, não penalizações. Cada evidência indica os seus
+        pontos e se apoia, contradiz ou deixa por resolver a relação. A decisão aparece num campo
+        separado; «evidência insuficiente para fusão» não usa avaliações Airbnb. Distâncias e
+        semelhanças arredondadas servem para revisão; as regras usam os valores originais.
+        Contradições mantêm os bloqueios existentes, sem novos pesos ou penalizações. Não publicamos
+        textos, anfitriões ou coordenadas exatas.
       </p>
       <p>
         Cada potencial alojamento local conta uma vez na freguesia atribuída ou em localização

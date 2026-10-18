@@ -175,6 +175,27 @@ class CandidateDatasetTest < Minitest::Test
     end
   end
 
+  def test_assessment_measurements_and_decisions_are_validated
+    mutations = [
+      ->(pair) { pair["distance_m"] = 501 },
+      ->(pair) { pair["distance_m"] = nil },
+      ->(pair) { pair["title_comparison"]["similarity"] = 0.99 },
+      ->(pair) { pair["description_comparison"]["shared_tokens"] = 100 },
+      ->(pair) { pair["evidence"]["same_al_number"]["points"] = 3 },
+      ->(pair) { pair["evidence"]["same_al_number"]["category"] = "contradicting" },
+      ->(pair) { pair["evidence"].delete("same_al_number") },
+      ->(pair) { pair["decision_reason"] = "insufficient_merge_evidence" },
+      ->(pair) { pair["listing_ids"].reverse! },
+      ->(pair) { pair["attributes"]["beds"] = [-1, nil] },
+      ->(pair) { pair["latitude"] = 38.7 }
+    ]
+    mutations.each_with_index do |mutate, index|
+      doc = document
+      mutate.call(doc["grouping_assessments"].first)
+      assert_raises(ArgumentError, "review-detail mutation #{index}") { CandidateFixture.from_documents(doc) }
+    end
+  end
+
   def test_empty_population_and_nonadditive_rnal_are_supported
     doc = document
     doc["candidates"] = []

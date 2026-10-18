@@ -153,6 +153,46 @@ class PipelineRegressionTest < Minitest::Test
     end
   end
 
+  def test_same_bedroom_apartments_with_different_text_resolve_separation_and_keep_reuse
+    PipelineFixture.with_sources do |root, airbnb, official|
+      table = CSV.read(airbnb, headers: true)
+      headers = (table.headers + %w[beds accommodates]).uniq
+      CSV.open(airbnb, "w") do |csv|
+        csv << headers
+        table.take(2).each_with_index do |row, index|
+          values = row.to_h.merge("license" => "100/AL", "host_id" => "7", "room_type" => "Entire home/apt",
+            "property_type" => "Entire serviced apartment", "bedrooms" => "1",
+            "beds" => index.zero? ? "4" : "2", "accommodates" => index.zero? ? "4" : "2",
+            "name" => index.zero? ? "Quiet blue central apartment" : "Bright red river penthouse",
+            "description" => (1..40).map { |i| "text#{index}word#{i}" }.join(" "))
+          csv << headers.map { |key| values[key] }
+        end
+      end
+      result = PipelineFixture.run(root, airbnb, official)
+      dataset = AlojamentoLocal::CandidateDataset.new(result.fetch(:path))
+      pair = dataset.grouping_assessments.fetch(0)
+      assert_equal [4, "separate", "separate_apartments"], pair.values_at("score", "outcome", "relationship")
+      assert_includes pair["reasons"], "different_apartment_text"
+      assert_equal [1, 1], pair.dig("attributes", "bedrooms")
+      assert_equal 2, dataset.summary[:listings]
+      assert_equal 2, dataset.summary[:candidates]
+      assert dataset.candidates.all? { |candidate| candidate["signals"].include?("shared_number") }
+      assert dataset.candidates.none? { |candidate| candidate["signals"].include?("grouping_review") }
+      [
+        ->(assessment) {
+          assessment["reasons"].delete("different_apartment_text")
+          assessment["evidence"].delete("different_apartment_text")
+        },
+        ->(assessment) { assessment["title_comparison"] = {"similarity" => 0.5, "token_counts" => [3, 3], "shared_tokens" => 2} },
+        ->(assessment) { assessment["attributes"]["beds"] = [1, 2] }
+      ].each do |mutate|
+        doc = CandidateFixture.documents(dataset)
+        mutate.call(doc["grouping_assessments"].first)
+        assert_raises(ArgumentError) { CandidateFixture.from_documents(doc, refresh: true) }
+      end
+    end
+  end
+
   def test_host_room_merge_round_trips_with_complete_link_and_source_accounting
     PipelineFixture.with_sources do |root, airbnb, official|
       table = CSV.read(airbnb, headers: true)

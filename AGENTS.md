@@ -70,6 +70,17 @@ mtime zero and no filename/comment. No synthetic flags or test/production format
 and `grouping_assessments`; `summary` preserves the four-value Ruby analysis summary.
 Share candidate aggregate construction and validation in `candidate_aggregates`.
 
+Pair assessments include `distance_m` rounded to whole metres, text comparison
+Jaccard rounded to four decimals plus token/shared counts, ordered room/property
+types and numeric attribute pairs (null for unknown). Two-value arrays follow the
+sorted `listing_ids`; property types use matcher normalization. Raw, unrounded
+measurements still determine eligibility. `evidence` maps every `reasons` code to
+its category (supporting/contradicting/unknown) and points; points sum to `score`.
+Decision codes belong in `decision_reason`, including `complete_link_conflict`
+and `insufficient_merge_evidence` (not Airbnb ratings). Supported separation
+evidence also stays in `reasons`. Do not publish text, host IDs or exact coordinates.
+Assessment enrichment does not retune distance weights or introduce penalties.
+
 `airbnb_snapshot_date` is required and drives “Anúncios de”. Fetch dates
 `airbnb_fetched_on` and `rnal_fetched_on` may be null. Never infer them from mtime,
 listing `last_scraped`, backups or today. Local `*.csv.manifest.json` files record
@@ -123,6 +134,12 @@ RNAL still never awards matching points or authorizes a merge.
 
 Entire-home adverts sharing an AL number also resolve as `separate_apartments` /
 `separate` when all three known attributes differ: bedrooms, beds and capacity.
+Alternatively, beds and capacity differing in the same direction are sufficient with clearly different
+titles AND descriptions: Jaccard <=0.25 for each, with at least 3 distinct title
+tokens and 30 distinct description tokens per advert. Record zero-point
+`different_apartment_text`; a failed strong-similarity test or missing text is not
+positive separation evidence. This applies only to two entire-home adverts and
+may resolve a pair even when their bedroom counts coincide.
 Record `distinct_apartment_attributes` with zero points. A shared explicit apartment
 reference or conflicting/multiple numbers blocks this rule. Missing/malformed
 attributes stay unknown; isolated differences remain review. Preserve shared-number

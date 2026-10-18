@@ -213,6 +213,17 @@ fusões. Coordenadas próximas ou iguais não provam que seja o mesmo edifício.
 Dois anúncios de alojamentos inteiros com o mesmo número AL também ficam
 resolvidos como `separate_apartments` / `separate` quando diferem simultaneamente
 no número conhecido de quartos, camas e capacidade (`distinct_apartment_attributes`).
+Também podem resolver-se assim quando o número de quartos coincide, mas camas e
+capacidade diferem na mesma direção (mais camas e mais hóspedes) e os textos são
+claramente distintos (`different_apartment_text`):
+Jaccard ≤0,25 tanto nos títulos como nas descrições, com pelo menos 3 termos
+distintos por título e 30 por descrição. Este limiar inicial exige dissemelhança
+positiva; falhar o teste de semelhança forte não basta, e texto em falta não é
+evidência de separação. O motivo vale zero pontos e não altera fusões.
+Contagens de camas e capacidade que variam em sentidos opostos não encerram
+revisão por esta alternativa: podem refletir dados inconsistentes ou configurações
+de ocupação diferentes. O número AL continua assinalado como partilhado entre
+candidatos, mesmo depois de uma relação ficar resolvida como separação.
 Uma referência explícita de apartamento partilhada ou declarações com números
 conflituantes/múltiplos impedem esta regra. Valores ausentes ou malformados são
 desconhecidos; uma diferença isolada continua para revisão. Esta evidência não
@@ -223,6 +234,29 @@ assessments publicados são únicos por par de IDs, com `outcome`, `score`,
 `relationship` (`duplicate_adverts`, `separate_rooms`, `apartment_and_rooms`,
 `undetermined`, `separate_apartments`) e
 códigos de evidência em `reasons`. A pontuação não é uma probabilidade.
+
+Cada assessment publica ainda `distance_m` (metros, arredondados à unidade,
+ou null), `title_comparison` e `description_comparison` (Jaccard com quatro
+casas decimais, contagens de termos distintos e termos comuns), `room_types`,
+`property_types` normalizados e `attributes` (quartos, camas, casas de banho e
+capacidade). Os pares de valores seguem exatamente a ordem de `listing_ids`.
+Textos ausentes têm semelhança null; atributos ausentes/malformados também são
+null. As decisões usam os valores não arredondados. Assim, uma distância publicada
+de 500 m pode ficar de qualquer lado do limiar; o motivo de distância mantém a
+comparação original. As coordenadas Airbnb continuam aproximadas.
+
+`evidence` detalha a categoria (`supporting`, `contradicting`, `unknown`) e os
+`points` de cada código em `reasons`; a soma reproduz `score`. Categorias e
+referências de quarto podem apoiar a interpretação da relação sem pontuar
+identidade. Contradições continuam com zero pontos e os bloqueios existentes;
+não se introduziram penalizações nem novos pesos por distância nesta revisão.
+`decision_reason` separa a decisão da evidência: `merge_threshold`,
+`insufficient_merge_evidence`, `insufficient_identity`, separação fundamentada ou
+`complete_link_conflict`. O último identifica um par elegível deixado de fora
+pela coerência do grupo. `insufficient_merge_evidence` substitui o nome ambíguo
+`review_score`: não utiliza avaliações Airbnb e não atribui pontos.
+Não publicamos textos, anfitriões ou coordenadas exatas nestes detalhes.
+
 `undetermined` é o valor por defeito: uma fusão de alojamento não prova que os
 anúncios sejam duplicados. `duplicate_adverts` exige um par elegível para fusão,
 com a mesma categoria conhecida e, para quartos/camas, a mesma referência
@@ -406,6 +440,15 @@ as descrições distinguem apartamento inteiro e quarto privado partilhando o
 restante texto. O par `1386202580695011904` / `1386204287560026943`, de anúncios
 inteiros, fica em revisão por conflito complete-link. Esta via não autoriza
 fundir dois anúncios inteiros sem a evidência exigida pelas regras anteriores.
+
+Uma revisão posterior das separações resolve **76 pares** com camas e capacidade
+diferentes na mesma direção e textos claramente distintos, sem exigir diferença
+no número de quartos. O par `10020044` / `9634390` fica `separate` /
+`separate_apartments`, com `distinct_apartment_attributes` e 4 pontos. Ambos mantêm
+o sinal `shared_number` para 4037/AL; relações com outros anúncios desse número
+continuam por resolver. Candidatos com revisão passam de 6 031 a 5 997, sem mudar
+grupos, pontuações, totais ou cobertura. O par `1036096431487851829` / `37649719`
+permanece em revisão: os números de camas e hóspedes variam em sentidos opostos.
 
 ### Primeira classificação de portefólios de anfitriões
 

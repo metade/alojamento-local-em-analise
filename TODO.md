@@ -2,6 +2,13 @@
 
 ## Pipeline de candidatos
 
+- [x] Tornar assessments revistos legíveis com distância, semelhanças/contagens de
+  termos, tipos, atributos e pontos por evidência. Separar `decision_reason` e
+  substituir `review_score`, sem alterar candidatos, decisões ou pontuações.
+- [ ] Calibrar pesos de proximidade e eventuais penalizações suaves com pares
+  revistos que devem fundir e que devem ficar separados. Manter bloqueios fortes,
+  tratar informação ausente como desconhecida e avaliar quarto/apartamento à parte.
+
 - [x] Fazer uma primeira classificação descritiva dos 5 827 anfitriões do snapshot
   de setembro por composição dos anúncios: apartamentos inteiros, quartos privados,
   mistos ou outras categorias. Rever um portefólio misto em profundidade.
@@ -38,7 +45,12 @@
   texto-modelo e várias unidades; rever perdas de fusões apoiadas por frases.
 - [x] Resolver separações de anúncios inteiros com o mesmo AL e diferenças
   simultâneas de quartos, camas e capacidade, sem referência explícita comum de
-  apartamento. Diferenças isoladas mantêm revisão; o sinal de número partilhado permanece.
+  apartamento; também camas/capacidade diferentes na mesma direção com títulos e descrições claramente
+  distintos, mesmo com igual número de quartos. Diferenças isoladas mantêm revisão;
+  o sinal de número partilhado permanece.
+- [ ] Calibrar a separação apoiada em texto dissemelhante com traduções, alterações
+  de configuração e portefólios de grupos grandes; diferenças de camas/capacidade
+  em sentidos opostos continuam a requerer revisão nesta alternativa.
 - [ ] Investigar fiabilidade da geografia Airbnb não verificada, deslocação ou
   imprecisão das coordenadas, proximidade dos limites CML e casos de fronteira.
   Validar os polígonos completos, qualidade/época das fontes e regras para eventual

@@ -227,6 +227,7 @@ module AlojamentoLocal
       candidates_by_id = candidates.to_h { |candidate| [candidate["id"], candidate] }
       grouping_assessments.each do |pair|
         ids = pair["listing_ids"].sort
+        validate_pair_details!(pair)
         check(!assessments.key?(ids), "duplicate pair assessment")
         check(ids.all? { |id| memberships.key?(id) }, "invalid pair contributions")
         reasons = pair["reasons"]
@@ -257,7 +258,11 @@ module AlojamentoLocal
         check((registered_separation || attribute_separation) == (pair["relationship"] == "separate_apartments"), "apartment separation relationship differs")
         if attribute_separation
           check(pair["outcome"] == "separate", "distinct apartments must remain separate")
-          check((%w[same_al_number different_apartment_bedrooms different_apartment_beds different_apartment_accommodates] - reasons).empty?, "apartment separation lacks attribute evidence")
+          beds = pair["attributes"]["beds"]
+          capacity = pair["attributes"]["accommodates"]
+          coherent_changes = (beds + capacity).none?(&:nil?) && (beds[0] - beds[1]) * (capacity[0] - capacity[1]) > 0
+          check((%w[same_al_number different_apartment_beds different_apartment_accommodates] - reasons).empty? &&
+            (reasons.include?("different_apartment_bedrooms") || (reasons.include?("different_apartment_text") && coherent_changes)), "apartment separation lacks attribute evidence")
           check((reasons & %w[same_apartment_reference conflicting_al_numbers multiple_al_numbers room_category_ambiguity different_room_categories]).empty?, "apartment separation has conflicting identity evidence")
         end
         if registered_separation
@@ -275,10 +280,10 @@ module AlojamentoLocal
           end
         end
         if pair["relationship"] == "duplicate_adverts"
-          check(reasons.include?("merge_threshold"), "duplicate relationship lacks qualifying identity evidence")
+          check(%w[merge_threshold complete_link_conflict].include?(pair["decision_reason"]), "duplicate relationship lacks qualifying identity evidence")
           check((reasons & %w[room_category_ambiguity different_room_categories different_room_references]).empty?, "duplicate relationship has ambiguous or different rooms")
         end
-        if merged || pair["relationship"] == "duplicate_adverts"
+        if merged || pair["relationship"] == "duplicate_adverts" || pair["decision_reason"] == "complete_link_conflict"
           check(pair["score"] >= 8, "merged pair below threshold")
           check(reasons.include?("distance_le_500m"), "merge lacks nearby coordinates")
           explicit = reasons.include?("same_apartment_reference")
@@ -293,6 +298,51 @@ module AlojamentoLocal
         candidate["listing_ids"].sort.combination(2) do |ids|
           check(assessments[ids] && assessments[ids]["outcome"] == "merge", "missing internal merge assessment")
         end
+      end
+    end
+
+    def validate_pair_details!(pair)
+      reasons = pair.fetch("reasons")
+      check(pair["listing_ids"] == pair["listing_ids"].sort, "pair IDs must be ordered with comparison values")
+      expected = reasons.to_h { |reason| [reason, {"category" => Analysis::Grouping.evidence_category(reason), "points" => Analysis::Grouping::POINTS.fetch(reason, 0)}] }
+      check(pair["evidence"] == expected, "pair evidence breakdown differs")
+      {"title" => [3, 0.5, 3, "similar_title"], "description" => [30, 0.8, 0, "strong_description"]}.each do |name, (minimum, threshold, shared_minimum, reason)|
+        comparison = pair.fetch("#{name}_comparison")
+        counts = comparison.fetch("token_counts")
+        shared = comparison.fetch("shared_tokens")
+        check(shared <= counts.min, "shared tokens exceed text sizes")
+        similarity = counts.include?(0) ? nil : shared.fdiv(counts.sum - shared)
+        check(comparison["similarity"] == similarity&.round(4), "text similarity differs from token counts")
+        if reasons.include?(reason)
+          check(counts.min >= minimum && shared >= shared_minimum && similarity && similarity >= threshold, "text evidence lacks similarity")
+        end
+      end
+      distance = pair["distance_m"]
+      check(distance && distance <= 500, "nearby distance differs") if reasons.include?("distance_le_500m")
+      check(distance && distance >= 500, "distant distance differs") if reasons.include?("distance_over_500m")
+      check(distance.nil?, "missing distance differs") if reasons.include?("missing_coordinates")
+      pair["attributes"].each do |name, values|
+        if reasons.include?("different_apartment_#{name}")
+          check(pair["room_types"] == ["Entire home/apt", "Entire home/apt"] && values.none?(&:nil?) && values.uniq.size == 2, "apartment attribute evidence differs")
+        end
+      end
+      if reasons.include?("different_apartment_text")
+        check(pair["room_types"] == ["Entire home/apt", "Entire home/apt"], "different apartment text requires entire-home adverts")
+        {"title" => 3, "description" => 30}.each do |name, minimum|
+          comparison = pair.fetch("#{name}_comparison")
+          shared = comparison.fetch("shared_tokens")
+          check(comparison["token_counts"].min >= minimum && shared.fdiv(comparison["token_counts"].sum - shared) <= 0.25, "different apartment text lacks sufficient dissimilarity")
+        end
+      end
+      decision = pair["decision_reason"]
+      expected_outcome = case decision
+      when "merge_threshold" then "merge"
+      when "complete_link_conflict", "insufficient_merge_evidence" then "review"
+      else "separate"
+      end
+      check(pair["outcome"] == expected_outcome, "pair decision disagrees with outcome")
+      %w[distinct_registered_apartments distinct_apartment_attributes].each do |reason|
+        check(reasons.include?(reason) == (decision == reason), "separation decision differs")
       end
     end
   end

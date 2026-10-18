@@ -23,6 +23,35 @@ class GroupingTest < Minitest::Test
     assert_equal "merge", pair(entry(1), entry(2, room_type: nil))["outcome"]
   end
 
+  def test_review_details_show_measurements_unknowns_and_points_in_listing_order
+    a = entry(1, name: "alpha beta gamma", bedrooms: "bad", beds: "NaN")
+    b = entry(2, name: "alpha beta delta", bedrooms: "2", beds: "3", property_type: nil,
+      description: (2..41).map { |i| "token#{i}" }.join(" "))
+    assessment = Grouping.stub(:distance, 0.012345) { pair(b, a) }
+    assert_equal %w[1 2], assessment["listing_ids"]
+    assert_equal 12, assessment["distance_m"]
+    assert_equal({"similarity" => 0.5, "token_counts" => [3, 3], "shared_tokens" => 2}, assessment["title_comparison"])
+    assert_equal 0.9512, assessment.dig("description_comparison", "similarity")
+    refute_includes assessment["reasons"], "similar_title", "Three shared terms are required even at 50% similarity"
+    assert_equal ["Private room", "Private room"], assessment["room_types"]
+    assert_equal ["room in rental unit", nil], assessment["property_types"]
+    assert_equal [nil, 2], assessment.dig("attributes", "bedrooms")
+    assert_equal [nil, 3], assessment.dig("attributes", "beds")
+    assert_equal [nil, nil], assessment.dig("attributes", "bathrooms")
+    assert_equal({"category" => "supporting", "points" => 2}, assessment.dig("evidence", "same_al_number"))
+    assert_equal assessment["score"], assessment["evidence"].values.sum { |evidence| evidence["points"] }
+    assert_equal "merge_threshold", assessment["decision_reason"]
+    refute_includes assessment["reasons"], "merge_threshold"
+    missing = pair(a, entry(2, lat: nil, name: nil, description: nil))
+    assert_nil missing["distance_m"]
+    assert_nil missing.dig("title_comparison", "similarity")
+    assert_equal({"category" => "unknown", "points" => 0}, missing.dig("evidence", "missing_coordinates"))
+    assert_equal "insufficient_merge_evidence", missing["decision_reason"]
+    conflict = pair(entry(1, room_type: "Entire home/apt", bedrooms: "1"), entry(2, room_type: "Entire home/apt", bedrooms: "2"))
+    assert_equal({"category" => "contradicting", "points" => 0}, conflict.dig("evidence", "different_apartment_bedrooms"))
+    assert_equal [1, 2], conflict.dig("attributes", "bedrooms")
+  end
+
   def test_relationship_is_undetermined_without_specific_duplicate_evidence
     assert_equal ["merge", "undetermined"], pair(entry(1), entry(2, host_id: "2")).values_at("outcome", "relationship")
     assert_equal "undetermined", pair(entry(1), entry(2, description: nil))["relationship"]
@@ -55,7 +84,7 @@ class GroupingTest < Minitest::Test
     assert_equal unresolved["score"], resolved["score"]
     assert_includes resolved["reasons"], "conflicting_al_numbers"
     assert_includes resolved["reasons"], "distinct_registered_apartments"
-    refute_includes resolved["reasons"], "review_score"
+    assert_equal "distinct_registered_apartments", resolved["decision_reason"]
     grouping = Grouping.new([a, b], official_records: records)
     assert_equal [%w[1], %w[2]], grouping.groups.map { |group| group.map { |entry| entry.raw["id"] } }
     assert_equal grouping.assessments, Grouping.new([b, a], official_records: records).assessments
@@ -153,7 +182,7 @@ class GroupingTest < Minitest::Test
     assessment = pair(a, b)
     assert_equal [9, "separate", "separate_apartments"], assessment.values_at("score", "outcome", "relationship")
     assert_includes assessment["reasons"], "distinct_apartment_attributes"
-    refute_includes assessment["reasons"], "review_score"
+    assert_equal "distinct_apartment_attributes", assessment["decision_reason"]
     grouping = Grouping.new([a, b])
     assert_equal [%w[1], %w[2]], grouping.groups.map { |group| group.map { |member| member.raw["id"] } }
     assert_equal grouping.assessments, Grouping.new([b, a]).assessments
@@ -186,6 +215,44 @@ class GroupingTest < Minitest::Test
     assert_equal "review", pair(entry(1, room_type: "Entire home/apt"), entry(2, room_type: "Entire home/apt", property_type: "Entire house"))["outcome"]
     assert_equal "review", pair(entry(1, room_type: "Entire home/apt", property_type: "Entire rental unit"), entry(2, room_type: "Entire home/apt", property_type: "Entire loft"))["outcome"]
     assert_equal "merge", pair(entry(1, room_type: "Entire home/apt", property_type: "Entire rental unit"), entry(2, room_type: "Entire home/apt", property_type: "Entire apartment"))["outcome"]
+  end
+
+  def test_distinct_entire_apartments_can_have_the_same_bedroom_count
+    a = entry(1, room_type: "Entire home/apt", property_type: "Entire serviced apartment",
+      bedrooms: "1", beds: "4", accommodates: "4", name: "Quiet blue central apartment")
+    b = entry(2, room_type: "Entire home/apt", property_type: "Entire serviced apartment",
+      bedrooms: "1", beds: "2", accommodates: "2", name: "Bright red river penthouse",
+      description: (1..40).map { |i| "different#{i}" }.join(" "))
+    assessment = pair(a, b)
+    assert_equal [4, "separate", "separate_apartments"], assessment.values_at("score", "outcome", "relationship")
+    assert_equal "distinct_apartment_attributes", assessment["decision_reason"]
+    assert_equal({"category" => "contradicting", "points" => 0}, assessment.dig("evidence", "different_apartment_text"))
+    refute_includes assessment["reasons"], "different_apartment_bedrooms"
+    assert_equal [1, 1], assessment.dig("attributes", "bedrooms")
+    assert_equal assessment, pair(b, a)
+    boundary = entry(2, **b.raw.except("id").merge(
+      "name" => "Quiet blue bright red river penthouse",
+      "description" => ((1..16).map { |i| "token#{i}" } + (1..24).map { |i| "different#{i}" }).join(" ")
+    ))
+    assert_equal "separate", pair(a, boundary)["outcome"]
+    assert_equal 0.25, pair(a, boundary).dig("description_comparison", "similarity")
+    boundary.raw["description"] = ((1..17).map { |i| "token#{i}" } + (1..23).map { |i| "different#{i}" }).join(" ")
+    assert_equal "review", pair(a, boundary)["outcome"]
+    [
+      {beds: "4"}, {accommodates: "4"}, {beds: nil}, {accommodates: "bad"}, {beds: "5", accommodates: "2"},
+      {name: nil}, {name: "short title"}, {description: nil}, {description: "short text"},
+      {name: a.raw["name"]}, {description: a.raw["description"]},
+      {description: (1..29).map { |i| "different#{i}" }.join(" ")},
+      {license: "123/AL e 456/AL"}
+    ].each do |changes|
+      uncertain = entry(2, **b.raw.except("id").merge(changes.transform_keys(&:to_s)))
+      assert_equal "review", pair(a, uncertain)["outcome"], changes.inspect
+    end
+    a.raw["name"] = "Quiet blue apartment B"
+    b.raw["name"] = "Bright red apartment B"
+    assert_equal "review", pair(a, b)["outcome"]
+    a.raw["room_type"] = b.raw["room_type"] = "Private room"
+    refute_includes pair(a, b)["reasons"], "different_apartment_text"
   end
 
   def test_unit_and_room_references_and_cross_category_relationships
@@ -285,7 +352,7 @@ class GroupingTest < Minitest::Test
     assert_equal [%w[1 2], %w[3]], first.groups.map { |g| g.map { |e| e.raw["id"] } }
     leftover = first.assessments.find { |p| p["listing_ids"] == %w[2 3] }
     assert_equal "review", leftover["outcome"]
-    assert_includes leftover["reasons"], "complete_link_conflict"
+    assert_equal "complete_link_conflict", leftover["decision_reason"]
     second = Grouping.new(entries.reverse)
     assert_equal first.groups, second.groups
     assert_equal first.assessments, second.assessments

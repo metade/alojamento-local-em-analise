@@ -75,6 +75,11 @@ changing those established presentation counts. Its relationship labels are
 `undetermined`: the invented fixture does not supply evidence distinguishing
 duplicate adverts from different rooms. Merged memberships remain unchanged.
 Demo IDs never get live links.
+Review measurements in this invented fixture are illustrative: qualifying title
+comparisons have 6 shared tokens out of 8 per title (Jaccard 0.6), descriptions
+have 36 shared tokens out of 40 per text (0.8182), and nearby pairs use 100 m.
+Unavailable room/property types and numeric attributes remain null. Decision codes
+are separate from evidence, and the assessment points reproduce the existing scores.
 Select it explicitly using `SNAPSHOT=test/fixtures/pipeline/snapshots/candidate`.
 It is not the output generated from `sources/`.
 
