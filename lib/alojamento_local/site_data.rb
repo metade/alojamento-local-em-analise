@@ -108,20 +108,37 @@ module AlojamentoLocal
       end
       candidate_count = scope.fetch("candidates_count")
       numbered = scope.fetch("numbered_candidates_count")
+      declared = scope.fetch("distinct_al_numbers_count")
+      matched = scope.fetch("matched_al_numbers_count")
       rnal_count = scope.fetch("official_count")
-      geometry = Overlap.geometry(rnal_count, candidate_count, numbered) if numbered <= rnal_count
-      labels = geometry ? Overlap.labels(geometry, rnal_count - numbered, numbered, candidate_count - numbered) : []
-      titles = {"rnal" => "Restante RNAL", "common" => "Com número AL", "airbnb" => "Sem número AL"}
+      geometry = Overlap.geometry(rnal_count, candidate_count, matched)
+      labels = Overlap.labels(geometry, rnal_count - matched, matched, candidate_count - matched)
+      titles = {"rnal" => "Só RNAL", "common" => "Nas duas fontes", "airbnb" => "Restantes candidatos"}
       labels.each { |label| label["title"] = titles.fetch(label.fetch("key")) }
+      counts = {"matched" => matched, "repeated" => numbered - declared,
+                "outside" => declared - matched, "unrecognised" => scope.fetch("unrecognised_licence_candidates_count"),
+                "exempt" => scope.fetch("exempt_candidates_count"), "absent" => scope.fetch("empty_licence_candidates_count")}
+      category_labels = {"matched" => "Número no RNAL (uma vez)", "repeated" => "Ocorrências adicionais de números reutilizados",
+                         "outside" => "Número fora do RNAL desta geografia", "unrecognised" => "Declaração não reconhecida",
+                         "exempt" => "Isenção declarada — por verificar", "absent" => "Sem número declarado"}
+      breakdown = counts.map do |key, count|
+        {"key" => key, "label" => category_labels.fetch(key), "count" => count,
+         "width" => candidate_count.zero? ? 0 : count * 100.0 / candidate_count}
+      end
       metrics = {
         "geography" => parish || Geography::UNKNOWN,
         "rnal" => rnal_count,
         "airbnb" => candidate_count,
         "geometry" => geometry,
         "overlap_labels" => labels,
-        "intersection" => numbered,
-        "airbnb_only" => candidate_count - numbered,
-        "rnal_only" => rnal_count - numbered,
+        "candidate_breakdown" => breakdown,
+        "remaining_candidates" => candidate_count - matched,
+        "matched_al_numbers" => matched,
+        "other_declared_numbers" => declared - matched,
+        "unmatched_official_numbers" => rnal_count - matched,
+        "declared_numbers" => declared,
+        "candidate_count" => candidate_count,
+        "unnumbered_candidates" => candidate_count - numbered,
         "another_lisbon_parish" => nil,
         "another_municipality" => nil,
         "no_national_match" => nil,

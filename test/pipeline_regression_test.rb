@@ -59,6 +59,26 @@ class PipelineRegressionTest < Minitest::Test
     end
   end
 
+  def test_overlap_uses_distinct_numbers_and_lisbon_source_rows_before_national_resolution
+    PipelineFixture.with_sources do |_, airbnb, official|
+      dataset = AlojamentoLocal::Analysis::DatasetBuilder.new(sources: PipelineFixture.pair(airbnb, official)).build
+      site = AlojamentoLocal::SiteData.new(dataset: dataset).site_data
+      assert_equal [3, 11, 3, 0, 1], site["metrics"].values_at("rnal", "airbnb", "matched_al_numbers", "unmatched_official_numbers", "other_declared_numbers")
+      assert_equal [11, 4], site["metrics"].values_at("candidate_count", "unnumbered_candidates")
+      arroios = site["districts"].find { |row| row["name"] == "Arroios" }
+      belem = site["districts"].find { |row| row["name"] == "Belém" }
+      assert_equal [2, 10, 2, 0, 1], arroios["metrics"].values_at("rnal", "airbnb", "matched_al_numbers", "unmatched_official_numbers", "other_declared_numbers")
+      assert_equal [2, 0, 0, 2, 0], belem["metrics"].values_at("rnal", "airbnb", "matched_al_numbers", "unmatched_official_numbers", "other_declared_numbers")
+      assert_equal [0, 1, 0], site["unknown"]["metrics"].values_at("rnal", "airbnb", "matched_al_numbers")
+      # 100's official parish is contradictory and 200's municipality is contradictory.
+      # Their explicit Lisbon source rows still put both numbers in the city set.
+      assert_nil dataset.candidates.find { |row| row["al_number"] == "100" }.dig("official_match", "freguesia")
+      assert_nil dataset.candidates.find { |row| row["al_number"] == "200" }.dig("official_match", "municipality")
+      assert_equal 3, dataset.summary_document.dig("lisbon", "matched_al_numbers_count")
+      assert_operator dataset.candidates.count { |row| row["al_number"] }, :>, site["metrics"]["declared_numbers"]
+    end
+  end
+
   def test_missing_columns_and_duplicate_or_nonnumeric_ids_fail_locally
     PipelineFixture.with_sources do |_, airbnb, _|
       original = File.read(airbnb)

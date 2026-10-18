@@ -33,11 +33,14 @@ module AlojamentoLocal
         listings = counts(sources.airbnb.entries)
         summary = CandidateDataset.candidate_aggregates(candidates)
         summary["source_dates"] = sources.source_dates
-        summary["lisbon"].merge!("official_count" => rnal.dig("lisbon", "count"), "listings_count" => listings.dig("lisbon", "count"))
+        summary["lisbon"].merge!("official_count" => rnal.dig("lisbon", "count"), "listings_count" => listings.dig("lisbon", "count"),
+                                  "matched_al_numbers_count" => matched_count(candidates, sources.official.lisbon_entries))
         summary["parishes"].each_with_index do |row, index|
-          row.merge!("official_count" => rnal["parishes"][index]["count"], "listings_count" => listings["parishes"][index]["count"])
+          parish = row.fetch("freguesia")
+          row.merge!("matched_al_numbers_count" => matched_count(candidates.select { |c| c["freguesia"] == parish }, sources.official.lisbon_entries.select { |entry| entry.parish == parish }),
+                     "official_count" => rnal["parishes"][index]["count"], "listings_count" => listings["parishes"][index]["count"])
         end
-        assert_sources!({"candidates" => candidates, "rnal" => rnal, "listings" => listings})
+        assert_sources!({"candidates" => candidates, "rnal" => rnal, "listings" => listings, "summary" => summary})
         CandidateDataset.new(summary_document: summary, details_document: {"candidates" => candidates, "grouping_assessments" => assessments})
       end
 
@@ -51,6 +54,12 @@ module AlojamentoLocal
          "parishes" => (Geography::PARISHES + [nil]).map do |parish|
            {"freguesia" => parish, "count" => count.call(entries.select { |entry| entry.parish == parish })}
          end}
+      end
+
+      def matched_count(candidates, entries)
+        declared = candidates.filter_map { |row| row["al_number"] }.to_set
+        official = entries.filter_map(&:number).reject { |number| number == "0" }.to_set
+        (declared & official).size
       end
 
       def candidate(number, entries, assessments)
@@ -95,6 +104,14 @@ module AlojamentoLocal
         raise "Builder changed contributions" unless actual.to_set == expected && actual.size == expected.size
         raise "Builder changed listing summary" unless document["listings"] == counts(sources.airbnb.entries)
         raise "Builder changed RNAL summary" unless document["rnal"] == counts(sources.official.lisbon_entries, distinct: true)
+        summary = document.fetch("summary")
+        raise "Builder changed city overlap" unless summary.dig("lisbon", "matched_al_numbers_count") == matched_count(document["candidates"], sources.official.lisbon_entries)
+        summary.fetch("parishes").each do |row|
+          parish = row.fetch("freguesia")
+          candidates = document["candidates"].select { |candidate| candidate["freguesia"] == parish }
+          entries = sources.official.lisbon_entries.select { |entry| entry.parish == parish }
+          raise "Builder changed parish overlap" unless row["matched_al_numbers_count"] == matched_count(candidates, entries)
+        end
       end
     end
   end

@@ -88,7 +88,11 @@ validam as duas estruturas estritas; `CandidateDataset` valida as relações ent
 
 - `summary.json` contém `source_dates`, `lisbon`, as 24 `parishes` e uma linha
   desconhecida no fim. Cada âmbito tem `official_count`, `listings_count`,
-  `candidates_count`, `numbered_candidates_count` e `distinct_al_numbers_count`.
+  `candidates_count`, `numbered_candidates_count`, `distinct_al_numbers_count` e
+  `matched_al_numbers_count` (números distintos comuns às duas fontes no mesmo âmbito).
+  `exempt_candidates_count`, `empty_licence_candidates_count` e
+  `unrecognised_licence_candidates_count` completam a divisão exclusiva dos candidatos
+  juntamente com `numbered_candidates_count`.
   As contagens RNAL e dos anúncios originais vêm independentemente das fontes.
   Os totais de anúncios e candidatos são aditivos; números distintos podem sobrepor-se.
 - O resumo inclui as cinco contagens de sinais em `signals`,
@@ -187,12 +191,28 @@ linhas que declaram Lisboa, antes da resolução nacional.
 
 ## Métricas de registo
 
-Preservamos as unidades da apresentação:
+As métricas usam as seguintes unidades:
 
-- O diagrama conta todos os candidatos no Airbnb, os candidatos com número na
-  interseção e os sem número na área exclusiva. RNAL conta números distintos.
-  Números repetidos contam uma vez por candidato. Quando excedem RNAL, mostramos
-  contagens sem geometria proporcional impossível. Medidas desconhecidas mostram `???`.
+- O diagrama em forma de Venn dimensiona os círculos pelo total de registos RNAL e
+  pelo total de candidatos Airbnb. A sobreposição conta cada número comum uma vez,
+  mesmo quando vários candidatos o declaram (`matched_al_numbers_count`). As áreas
+  exclusivas são RNAL menos números comuns e candidatos menos números comuns.
+  «Restantes candidatos» pode incluir reutilizações de números existentes no RNAL.
+  É uma convenção de contagem; não escolhe qual candidato representa corretamente um registo.
+- A barra horizontal de 100% reparte os candidatos sem duplicações: uma ocorrência por
+  número comum, ocorrências adicionais de números reutilizados, uma ocorrência por número
+  fora do RNAL deste âmbito, declaração não reconhecida, isenção declarada por verificar
+  e ausência de declaração. Reutilização é candidatos com número menos números distintos.
+  Os números reconhecidos fora do RNAL do âmbito aparecem separados dos valores não
+  reconhecidos; podem existir noutra freguesia/município ou não ser encontrados nacionalmente.
+  Não se classificam isenções como corretas/incorretas sem critérios e evidência.
+- RNAL usa as linhas originais que declaram Lisboa e, nas freguesias, a mesma freguesia
+  oficial (incluindo desconhecida), antes da resolução nacional. Conflitos não apagam
+  essas pertenças. Números e reutilizações por freguesia podem sobrepor-se e não são
+  necessariamente aditivos. A construção verifica a contagem comum face às fontes;
+  a leitura verifica os limites dos conjuntos. Encontrar o número não confirma a
+  identidade nem a legalidade do alojamento. As categorias da barra usam candidatos,
+  não os sinais de anúncios distintos.
 - O sinal sem número identificável conta IDs distintos `absent`/`unrecognised`,
   excluindo isenções declaradas.
 - O sinal de reutilização conta IDs distintos em números associados a vários

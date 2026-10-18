@@ -112,7 +112,10 @@ module AlojamentoLocal
       ids = ->(rows) { rows.flat_map { |c| c.fetch("listing_ids") }.uniq }
       scope = ->(rows) {
         numbers = rows.filter_map { |c| c["al_number"] }
-        {"candidates_count" => rows.size, "numbered_candidates_count" => numbers.size, "distinct_al_numbers_count" => numbers.uniq.size}
+        {"candidates_count" => rows.size, "numbered_candidates_count" => numbers.size, "distinct_al_numbers_count" => numbers.uniq.size,
+         "exempt_candidates_count" => rows.count { |c| c["registration_status"] == "exempt" },
+         "empty_licence_candidates_count" => rows.count { |c| c["registration_status"] == "absent" },
+         "unrecognised_licence_candidates_count" => rows.count { |c| c["registration_status"] == "unrecognised" }}
       }
       empty = ids.call(candidates.select { |c| c["registration_status"] == "absent" })
       unrecognised = ids.call(candidates.select { |c| c["registration_status"] == "unrecognised" })
@@ -157,6 +160,13 @@ module AlojamentoLocal
       check(parishes.sum { |row| row["listings_count"] } == city["listings_count"], "original listing totals differ")
       counts = parishes.map { |row| row["official_count"] }
       check(city["official_count"].between?(counts.max, counts.sum), "RNAL counts disagree across geographies")
+      ([city] + parishes).each do |scope|
+        check(scope["matched_al_numbers_count"] <= [scope["official_count"], scope["distinct_al_numbers_count"]].min, "overlap exceeds a source population")
+        check(scope["matched_al_numbers_count"] <= city["matched_al_numbers_count"], "parish overlap exceeds city overlap")
+        rows = scope.equal?(city) ? candidates : candidates.select { |candidate| candidate["freguesia"] == scope["freguesia"] }
+        found = rows.select { |candidate| candidate["registration_status"] == "found" }.map { |candidate| candidate["al_number"] }.uniq.size
+        check(scope["matched_al_numbers_count"] <= found, "overlap exceeds nationally found numbers")
+      end
       aggregates = self.class.candidate_aggregates(candidates)
       aggregates.each do |key, expected|
         actual = summary_document.fetch(key)

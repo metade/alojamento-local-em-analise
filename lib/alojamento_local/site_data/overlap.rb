@@ -21,11 +21,12 @@ module AlojamentoLocal
         regions = [
           ["rnal", "Só RNAL", rnal_only, left, [common_left, g.fetch("x") + g.fetch("r")].min, 85, 330],
           ["common", "Nas duas fontes", intersection, common_left, common_right, 320, 385],
-          ["airbnb", "Só Airbnb", airbnb_only, [common_right, g.fetch("y") - g.fetch("s")].max, right, 555, 330]
+          ["airbnb", "Restantes candidatos", airbnb_only, [common_right, g.fetch("y") - g.fetch("s")].max, right, 520, 330]
         ]
         regions.map do |key, title, count, start, finish, fallback_x, fallback_y|
           target = (start + finish) / 2.0
-          callout = finish - start < (key == "common" ? 160 : 110)
+          label_width = {"common" => 160, "airbnb" => 220, "rnal" => 110}.fetch(key)
+          callout = finish - start < label_width
           {"key" => key, "title" => title, "count" => count, "target" => target.round(3),
            "callout" => callout, "x" => callout ? fallback_x : target.round(3), "y" => callout ? fallback_y : 188}
         end

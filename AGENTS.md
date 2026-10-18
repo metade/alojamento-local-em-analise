@@ -60,7 +60,8 @@ JSON Schema validates structure; Ruby validates relationships and summary/detail
 The summary has `source_dates`, `lisbon`, `parishes`, `signals`,
 `repeated_number_distances` and `outside_regions`. Scopes contain independent
 `official_count` and `listings_count`, plus `candidates_count`,
-`numbered_candidates_count` and `distinct_al_numbers_count`; include all parishes
+`numbered_candidates_count`, `distinct_al_numbers_count` and source-derived
+`matched_al_numbers_count`; include all parishes
 and unknown last. The decoded details contain `candidates` and `grouping_assessments`.
 Use compact UTF-8 JSON with a trailing newline, Zlib level 9, mtime zero and no
 filename/comment. No synthetic flags or test/production formats.
@@ -142,11 +143,26 @@ coordenadas e oficial concordantes e distância conhecida até 500 m. Casos por
 resolver permanecem visíveis. Totais, gráficos e downloads incluem todos os
 candidatos; a omissão não é uma certificação legal.
 
-The overlap diagram counts all candidates as Airbnb; numbered candidates form
-the intersection and unnumbered candidates the Airbnb-only area. Count repeated
-numbers once per candidate regardless of RNAL lookup. If numbered candidates
-exceed RNAL, retain counts without impossible proportional geometry. Unknown
-measures show `???` and create no measured areas.
+The Venn-style accounting diagram scales the circles to distinct RNAL registrations
+and all Airbnb candidates. The overlap counts distinct numbers present in both sources
+once (`matched_al_numbers_count`), even when reused. RNAL-only is official minus shared;
+remaining Airbnb candidates are all candidates minus shared. This is a counting convention,
+not a finding that any selected candidate is correct. Use “Restantes candidatos”, since
+this area can include reuse of registered numbers. Do not restore a separate yellow bubble.
+Below it, a 100% horizontal stacked bar partitions all candidates exclusively:
+one occurrence per shared number, additional occurrences of reused numbers, one occurrence
+per declared number outside the scope's RNAL, unrecognised declarations, declared exemptions
+awaiting assessment, and absent declarations. Reuse is numbered candidates minus distinct
+numbers within the scope. Do not arbitrarily choose a rightful candidate. Never classify
+exemptions as valid/invalid without criteria and evidence; keep that work in TODO.md.
+Per-scope summary counts `numbered_candidates_count`, `exempt_candidates_count`,
+`empty_licence_candidates_count` and `unrecognised_licence_candidates_count` are recomputed
+from details during validation. Never substitute distinct-listing signal counts.
+Shared numbers come from candidate numbers and RNAL source rows declaring Lisboa and,
+for parishes, the same official parish (including unknown), before national consensus.
+Source assertions and loaded count bounds validate this source-derived measure; resolved
+candidate records cannot reconstruct it exactly. Parish number/reuse counts need not
+be additive. Matching numbers do not verify establishment identity or legality.
 
 The unidentified-licence signal counts distinct listing IDs with absent or
 unrecognised values, excluding declared exemptions. Reuse groups non-null numbers

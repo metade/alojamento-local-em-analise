@@ -14,7 +14,9 @@
   da árvore atual, preservando o histórico Git sem reescrita.
 - [ ] Investigar agrupamento de candidatos sem número com evidência adequada,
   incluindo declarações de isenção. Partilhar o rótulo `Exempt` nunca estabelece
-  uma relação de agrupamento.
+  uma relação de agrupamento. Avaliar a redução do total estimado de candidatos
+  após revisão destas regras, mantendo distintos os totais de candidatos e de
+  números AL na visualização.
 - [ ] Investigar fiabilidade da geografia Airbnb não verificada, deslocação ou
   imprecisão das coordenadas, proximidade dos limites CML e casos de fronteira.
   Validar os polígonos completos, qualidade/época das fontes e regras para eventual
@@ -23,7 +25,8 @@
   distância aos limites e critérios para avaliações futuras de correspondência.
   A existência nacional de um número não valida a identidade do alojamento.
 - [ ] Avaliar isenções declaradas com critérios e fontes adequadas; o pipeline
-  atual regista apenas a declaração, sem conclusão legal.
+  atual regista apenas a declaração, sem conclusão legal. Definir critérios e evidência
+  antes de separar isenções corretas/incorretas na barra; até lá, todas ficam por verificar.
 - [ ] Rever exemplos de quartos/apartamentos e calibrar regras com amostra
   verificada; pontuações são evidência e não probabilidades. Preservar regressões
   sintéticas equivalentes sem expor nomes, descrições ou anfitriões.

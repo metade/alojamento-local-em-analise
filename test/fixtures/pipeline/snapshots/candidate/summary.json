@@ -4,7 +4,11 @@
     "numbered_candidates_count": 8,
     "distinct_al_numbers_count": 7,
     "official_count": 17,
-    "listings_count": 13
+    "listings_count": 13,
+    "matched_al_numbers_count": 5,
+    "exempt_candidates_count": 2,
+    "empty_licence_candidates_count": 1,
+    "unrecognised_licence_candidates_count": 1
   },
   "parishes": [
     {
@@ -13,7 +17,11 @@
       "numbered_candidates_count": 0,
       "distinct_al_numbers_count": 0,
       "official_count": 0,
-      "listings_count": 0
+      "listings_count": 0,
+      "matched_al_numbers_count": 0,
+      "exempt_candidates_count": 0,
+      "empty_licence_candidates_count": 0,
+      "unrecognised_licence_candidates_count": 0
     },
     {
       "freguesia": "Alcântara",
@@ -21,7 +29,11 @@
       "numbered_candidates_count": 0,
       "distinct_al_numbers_count": 0,
       "official_count": 0,
-      "listings_count": 0
+      "listings_count": 0,
+      "matched_al_numbers_count": 0,
+      "exempt_candidates_count": 0,
+      "empty_licence_candidates_count": 0,
+      "unrecognised_licence_candidates_count": 0
     },
     {
       "freguesia": "Alvalade",
@@ -29,7 +41,11 @@
       "numbered_candidates_count": 0,
       "distinct_al_numbers_count": 0,
       "official_count": 0,
-      "listings_count": 0
+      "listings_count": 0,
+      "matched_al_numbers_count": 0,
+      "exempt_candidates_count": 0,
+      "empty_licence_candidates_count": 0,
+      "unrecognised_licence_candidates_count": 0
     },
     {
       "freguesia": "Areeiro",
@@ -37,7 +53,11 @@
       "numbered_candidates_count": 0,
       "distinct_al_numbers_count": 0,
       "official_count": 0,
-      "listings_count": 0
+      "listings_count": 0,
+      "matched_al_numbers_count": 0,
+      "exempt_candidates_count": 0,
+      "empty_licence_candidates_count": 0,
+      "unrecognised_licence_candidates_count": 0
     },
     {
       "freguesia": "Arroios",
@@ -45,7 +65,11 @@
       "numbered_candidates_count": 4,
       "distinct_al_numbers_count": 4,
       "official_count": 6,
-      "listings_count": 8
+      "listings_count": 8,
+      "matched_al_numbers_count": 3,
+      "exempt_candidates_count": 1,
+      "empty_licence_candidates_count": 0,
+      "unrecognised_licence_candidates_count": 0
     },
     {
       "freguesia": "Avenidas Novas",
@@ -53,7 +77,11 @@
       "numbered_candidates_count": 0,
       "distinct_al_numbers_count": 0,
       "official_count": 0,
-      "listings_count": 0
+      "listings_count": 0,
+      "matched_al_numbers_count": 0,
+      "exempt_candidates_count": 0,
+      "empty_licence_candidates_count": 0,
+      "unrecognised_licence_candidates_count": 0
     },
     {
       "freguesia": "Beato",
@@ -61,7 +89,11 @@
       "numbered_candidates_count": 0,
       "distinct_al_numbers_count": 0,
       "official_count": 0,
-      "listings_count": 0
+      "listings_count": 0,
+      "matched_al_numbers_count": 0,
+      "exempt_candidates_count": 0,
+      "empty_licence_candidates_count": 0,
+      "unrecognised_licence_candidates_count": 0
     },
     {
       "freguesia": "Belém",
@@ -69,7 +101,11 @@
       "numbered_candidates_count": 0,
       "distinct_al_numbers_count": 0,
       "official_count": 1,
-      "listings_count": 1
+      "listings_count": 1,
+      "matched_al_numbers_count": 0,
+      "exempt_candidates_count": 0,
+      "empty_licence_candidates_count": 0,
+      "unrecognised_licence_candidates_count": 1
     },
     {
       "freguesia": "Benfica",
@@ -77,7 +113,11 @@
       "numbered_candidates_count": 0,
       "distinct_al_numbers_count": 0,
       "official_count": 0,
-      "listings_count": 0
+      "listings_count": 0,
+      "matched_al_numbers_count": 0,
+      "exempt_candidates_count": 0,
+      "empty_licence_candidates_count": 0,
+      "unrecognised_licence_candidates_count": 0
     },
     {
       "freguesia": "Campo de Ourique",
@@ -85,7 +125,11 @@
       "numbered_candidates_count": 0,
       "distinct_al_numbers_count": 0,
       "official_count": 0,
-      "listings_count": 0
+      "listings_count": 0,
+      "matched_al_numbers_count": 0,
+      "exempt_candidates_count": 0,
+      "empty_licence_candidates_count": 0,
+      "unrecognised_licence_candidates_count": 0
     },
     {
       "freguesia": "Campolide",
@@ -93,7 +137,11 @@
       "numbered_candidates_count": 0,
       "distinct_al_numbers_count": 0,
       "official_count": 0,
-      "listings_count": 0
+      "listings_count": 0,
+      "matched_al_numbers_count": 0,
+      "exempt_candidates_count": 0,
+      "empty_licence_candidates_count": 0,
+      "unrecognised_licence_candidates_count": 0
     },
     {
       "freguesia": "Carnide",
@@ -101,7 +149,11 @@
       "numbered_candidates_count": 0,
       "distinct_al_numbers_count": 0,
       "official_count": 0,
-      "listings_count": 0
+      "listings_count": 0,
+      "matched_al_numbers_count": 0,
+      "exempt_candidates_count": 0,
+      "empty_licence_candidates_count": 0,
+      "unrecognised_licence_candidates_count": 0
     },
     {
       "freguesia": "Estrela",
@@ -109,7 +161,11 @@
       "numbered_candidates_count": 1,
       "distinct_al_numbers_count": 1,
       "official_count": 2,
-      "listings_count": 0
+      "listings_count": 0,
+      "matched_al_numbers_count": 0,
+      "exempt_candidates_count": 0,
+      "empty_licence_candidates_count": 0,
+      "unrecognised_licence_candidates_count": 0
     },
     {
       "freguesia": "Lumiar",
@@ -117,7 +173,11 @@
       "numbered_candidates_count": 0,
       "distinct_al_numbers_count": 0,
       "official_count": 0,
-      "listings_count": 0
+      "listings_count": 0,
+      "matched_al_numbers_count": 0,
+      "exempt_candidates_count": 0,
+      "empty_licence_candidates_count": 0,
+      "unrecognised_licence_candidates_count": 0
     },
     {
       "freguesia": "Marvila",
@@ -125,7 +185,11 @@
       "numbered_candidates_count": 0,
       "distinct_al_numbers_count": 0,
       "official_count": 0,
-      "listings_count": 0
+      "listings_count": 0,
+      "matched_al_numbers_count": 0,
+      "exempt_candidates_count": 0,
+      "empty_licence_candidates_count": 0,
+      "unrecognised_licence_candidates_count": 0
     },
     {
       "freguesia": "Misericórdia",
@@ -133,7 +197,11 @@
       "numbered_candidates_count": 1,
       "distinct_al_numbers_count": 1,
       "official_count": 2,
-      "listings_count": 1
+      "listings_count": 1,
+      "matched_al_numbers_count": 0,
+      "exempt_candidates_count": 0,
+      "empty_licence_candidates_count": 0,
+      "unrecognised_licence_candidates_count": 0
     },
     {
       "freguesia": "Olivais",
@@ -141,7 +209,11 @@
       "numbered_candidates_count": 0,
       "distinct_al_numbers_count": 0,
       "official_count": 0,
-      "listings_count": 0
+      "listings_count": 0,
+      "matched_al_numbers_count": 0,
+      "exempt_candidates_count": 0,
+      "empty_licence_candidates_count": 0,
+      "unrecognised_licence_candidates_count": 0
     },
     {
       "freguesia": "Parque das Nações",
@@ -149,7 +221,11 @@
       "numbered_candidates_count": 0,
       "distinct_al_numbers_count": 0,
       "official_count": 0,
-      "listings_count": 0
+      "listings_count": 0,
+      "matched_al_numbers_count": 0,
+      "exempt_candidates_count": 0,
+      "empty_licence_candidates_count": 0,
+      "unrecognised_licence_candidates_count": 0
     },
     {
       "freguesia": "Penha de França",
@@ -157,7 +233,11 @@
       "numbered_candidates_count": 0,
       "distinct_al_numbers_count": 0,
       "official_count": 0,
-      "listings_count": 0
+      "listings_count": 0,
+      "matched_al_numbers_count": 0,
+      "exempt_candidates_count": 0,
+      "empty_licence_candidates_count": 0,
+      "unrecognised_licence_candidates_count": 0
     },
     {
       "freguesia": "Santa Clara",
@@ -165,7 +245,11 @@
       "numbered_candidates_count": 0,
       "distinct_al_numbers_count": 0,
       "official_count": 0,
-      "listings_count": 0
+      "listings_count": 0,
+      "matched_al_numbers_count": 0,
+      "exempt_candidates_count": 0,
+      "empty_licence_candidates_count": 0,
+      "unrecognised_licence_candidates_count": 0
     },
     {
       "freguesia": "Santa Maria Maior",
@@ -173,7 +257,11 @@
       "numbered_candidates_count": 2,
       "distinct_al_numbers_count": 2,
       "official_count": 4,
-      "listings_count": 1
+      "listings_count": 1,
+      "matched_al_numbers_count": 2,
+      "exempt_candidates_count": 0,
+      "empty_licence_candidates_count": 0,
+      "unrecognised_licence_candidates_count": 0
     },
     {
       "freguesia": "Santo António",
@@ -181,7 +269,11 @@
       "numbered_candidates_count": 0,
       "distinct_al_numbers_count": 0,
       "official_count": 1,
-      "listings_count": 1
+      "listings_count": 1,
+      "matched_al_numbers_count": 0,
+      "exempt_candidates_count": 1,
+      "empty_licence_candidates_count": 0,
+      "unrecognised_licence_candidates_count": 0
     },
     {
       "freguesia": "São Domingos de Benfica",
@@ -189,7 +281,11 @@
       "numbered_candidates_count": 0,
       "distinct_al_numbers_count": 0,
       "official_count": 0,
-      "listings_count": 0
+      "listings_count": 0,
+      "matched_al_numbers_count": 0,
+      "exempt_candidates_count": 0,
+      "empty_licence_candidates_count": 0,
+      "unrecognised_licence_candidates_count": 0
     },
     {
       "freguesia": "São Vicente",
@@ -197,7 +293,11 @@
       "numbered_candidates_count": 0,
       "distinct_al_numbers_count": 0,
       "official_count": 0,
-      "listings_count": 0
+      "listings_count": 0,
+      "matched_al_numbers_count": 0,
+      "exempt_candidates_count": 0,
+      "empty_licence_candidates_count": 0,
+      "unrecognised_licence_candidates_count": 0
     },
     {
       "freguesia": null,
@@ -205,7 +305,11 @@
       "numbered_candidates_count": 0,
       "distinct_al_numbers_count": 0,
       "official_count": 1,
-      "listings_count": 1
+      "listings_count": 1,
+      "matched_al_numbers_count": 0,
+      "exempt_candidates_count": 0,
+      "empty_licence_candidates_count": 1,
+      "unrecognised_licence_candidates_count": 0
     }
   ],
   "signals": {

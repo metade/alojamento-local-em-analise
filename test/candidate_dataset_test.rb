@@ -11,8 +11,10 @@ class CandidateDatasetTest < Minitest::Test
   def test_presentation_counts_and_many_to_many_accounting_are_preserved
     site = data
     assert_equal [12, 13, 7, 17], site["summary"].values_at("candidate_count", "listing_count", "distinct_al_numbers", "official_numbers")
-    assert_equal [12, 8, 4, 9], site["metrics"].values_at("airbnb", "intersection", "airbnb_only", "rnal_only")
+    assert_equal [12, 5, 2, 12], site["metrics"].values_at("airbnb", "matched_al_numbers", "other_declared_numbers", "unmatched_official_numbers")
     assert site["metrics"]["geometry"]
+    assert_equal [5, 1, 2, 1, 2, 1], site["metrics"]["candidate_breakdown"].map { |row| row["count"] }
+    assert_equal 12, site["metrics"]["candidate_breakdown"].sum { |row| row["count"] }
     assert_equal 12, site["districts"].sum { |d| d["candidate_count"] } + site["unknown"]["candidate_count"]
     assert_equal 13, site["districts"].sum { |d| d["listing_count"] } + site["unknown"]["listing_count"]
     assert_equal 24, site["districts"].size
@@ -25,6 +27,33 @@ class CandidateDatasetTest < Minitest::Test
     assert_equal 1, site["distance_total"]
     assert_equal [0, 0, 0, 0, 1], site["distance_ranges"].map { |r| r["count"] }
     assert_equal [{"name" => "Algarve", "count" => 1, "unresolved" => false, "width" => 100.0}], site.dig("outside_regions", "rows")
+  end
+
+  def test_reused_numbers_count_once_and_other_geographies_are_outside_the_intersection
+    site = data
+    arroios = site["districts"].find { |row| row["name"] == "Arroios" }
+    estrela = site["districts"].find { |row| row["name"] == "Estrela" }
+    assert_equal [6, 5, 3, 3, 1], arroios["metrics"].values_at("rnal", "airbnb", "matched_al_numbers", "unmatched_official_numbers", "other_declared_numbers")
+    assert_equal [2, 1, 0, 2, 1], estrela["metrics"].values_at("rnal", "airbnb", "matched_al_numbers", "unmatched_official_numbers", "other_declared_numbers")
+    assert_equal [12, 4], site["metrics"].values_at("candidate_count", "unnumbered_candidates")
+    assert_equal 7, site["metrics"]["declared_numbers"], "Repeated number 100005 counts once across the city"
+    assert_equal 5, site["metrics"]["matched_al_numbers"], "Faro registrations and national nonmatches stay outside the Lisbon intersection"
+  end
+
+  def test_candidate_bar_is_additive_and_counts_each_reused_number_once_in_the_first_occurrence
+    site = data
+    rows = site["metrics"].fetch("candidate_breakdown")
+    assert_equal %w[matched repeated outside unrecognised exempt absent], rows.map { |row| row["key"] }
+    assert_equal [5, 1, 2, 1, 2, 1], rows.map { |row| row["count"] }
+    assert_equal 12, rows.sum { |row| row["count"] }
+    assert_in_delta 100, rows.sum { |row| row["width"] }, 1e-10
+    assert_equal 7, site["metrics"]["remaining_candidates"]
+    assert_equal 5, site["metrics"]["matched_al_numbers"]
+    assert_operator site["metrics"]["geometry"]["r"], :>, site["metrics"]["geometry"]["s"]
+    # The first occurrence is counted by number, without identifying a rightful candidate.
+    assert_equal 1, rows.find { |row| row["key"] == "repeated" }["count"]
+    assert_match(/por verificar/, rows.find { |row| row["key"] == "exempt" }["label"])
+    refute rows.any? { |row| %w[exempt_correct exempt_incorrect].include?(row["key"]) }
   end
 
   def test_report_only_omits_resolved_unflagged_matches
@@ -51,13 +80,15 @@ class CandidateDatasetTest < Minitest::Test
     end
   end
 
-  def test_numbered_candidates_exceeding_rnal_keep_counts_without_invalid_geometry
+  def test_more_declared_numbers_than_rnal_have_valid_disjoint_geometry
     doc = document
     doc["lisbon"]["official_count"] = 0
-    doc["parishes"].each { |row| row["official_count"] = 0 }
+    doc["lisbon"]["matched_al_numbers_count"] = 0
+    doc["parishes"].each { |row| row["official_count"] = row["matched_al_numbers_count"] = 0 }
     metrics = data(doc)["metrics"]
-    assert_equal [12, 8, 4], metrics.values_at("airbnb", "intersection", "airbnb_only")
-    assert_nil metrics["geometry"]
+    assert_equal [12, 0, 7], metrics.values_at("airbnb", "matched_al_numbers", "other_declared_numbers")
+    assert metrics["geometry"]
+    assert_equal [12, 4], metrics.values_at("candidate_count", "unnumbered_candidates")
   end
 
   def test_distance_boundaries_zero_and_explicitly_unresolved_matches
@@ -101,6 +132,13 @@ class CandidateDatasetTest < Minitest::Test
       ->(d) { d["lisbon"]["listings_count"] += 1 },
       ->(d) { d["parishes"].first["listings_count"] += 1 },
       ->(d) { d["lisbon"]["official_count"] += 1 },
+      ->(d) { d["lisbon"].delete("exempt_candidates_count") },
+      ->(d) { d["lisbon"]["exempt_candidates_count"] += 1 },
+      ->(d) { d["parishes"][0]["empty_licence_candidates_count"] += 1 },
+      ->(d) { d["lisbon"].delete("matched_al_numbers_count") },
+      ->(d) { d["lisbon"]["matched_al_numbers_count"] = 8 },
+      ->(d) { d["parishes"].find { |row| row["freguesia"] == "Arroios" }["matched_al_numbers_count"] = 5 },
+      ->(d) { d["lisbon"]["matched_al_numbers_count"] = 1 },
       ->(d) { d["candidates"] = [] },
       ->(d) { d["grouping_assessments"] = [] },
       ->(d) { d["grouping_assessments"] << d["grouping_assessments"].first },
@@ -138,6 +176,8 @@ class CandidateDatasetTest < Minitest::Test
     doc["candidates"] = []
     doc["grouping_assessments"] = []
     doc["lisbon"]["listings_count"] = 0
+    doc["lisbon"]["matched_al_numbers_count"] = 0
+    doc["parishes"].each { |row| row["matched_al_numbers_count"] = 0 }
     doc["parishes"].each { |row| row["listings_count"] = 0 }
     doc["lisbon"]["official_count"] = 1
     doc["parishes"].each { |row| row["official_count"] = %w[Arroios Estrela].include?(row["freguesia"]) ? 1 : 0 }
@@ -145,6 +185,7 @@ class CandidateDatasetTest < Minitest::Test
     assert_equal [0, 0], site["summary"].values_at("listing_count", "candidate_count")
     assert_empty site["distance_ranges"]
     assert_empty site["outside_regions"]["rows"]
+    assert site["metrics"]["candidate_breakdown"].all? { |row| row["count"].zero? && row["width"].zero? }
   end
 
   def test_latest_dated_directory_is_selected_without_fallback

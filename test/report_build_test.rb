@@ -125,12 +125,22 @@ class ReportBuildTest < Minitest::Test
       refute_includes normalized, "· descarregados em"
       assert_match(/<strong[^>]*>\s*17\s*<\/strong>\s*<p[^>]*>registos no concelho de Lisboa/, homepage)
       assert_includes homepage, "12 candidatos</tspan>"
-      assert_includes homepage, 'aria-label="Com número AL: 8 AL"'
-      assert_includes homepage, 'aria-label="Sem número AL: 4 AL"'
+      assert_includes homepage, 'aria-label="Distribuição de 100% dos candidatos Airbnb"'
+      assert_includes homepage, 'aria-label="Número no RNAL (uma vez): 5 candidatos"'
+      assert_includes homepage, 'aria-label="Ocorrências adicionais de números reutilizados: 1 candidato"'
+      assert_includes homepage, 'aria-label="Número fora do RNAL desta geografia: 2 candidatos"'
+      assert_includes homepage, 'aria-label="Isenção declarada — por verificar: 2 candidatos"'
+      assert_includes homepage, 'aria-label="Sem número declarado: 1 candidato"'
+      assert_includes homepage, 'aria-label="Declaração não reconhecida: 1 candidato"'
+      assert_includes homepage, 'aria-label="Nas duas fontes: 5 números AL"'
+      assert_includes homepage, 'aria-label="Restantes candidatos: 7 candidatos"'
       assert_includes homepage, 'class="overlap-base overlap-base--airbnb"'
+      refute_includes homepage, 'comparison-segment'
+      arroios = File.read(File.join(full, "freguesias", "arroios", "index.html"))
+      assert_includes arroios, "5 candidatos</tspan>"
+      assert_includes arroios, 'aria-label="Número no RNAL (uma vez): 3 candidatos"'
       refute_includes homepage, "overlap-unresolved-bubble"
       refute_includes homepage, "overlap-label--unresolved"
-      assert_includes homepage, "???"
       refute_match(/<circle[^>]*r=""/, homepage)
       assert_includes File.read(File.join(full, "index.html")), "/preview/report.html"
       AlojamentoLocal::SiteChecker.check(full)

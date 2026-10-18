@@ -45,6 +45,13 @@ The independent Lisbon RNAL summary has **3 distinct numbers**. Arroios has
 than the city total 3. Unknown official parish has zero. No source row is dropped
 when resolving national conflicts.
 
+The number overlap is **3** for Lisbon (100/200/300) despite national conflicts,
+**2** for Arroios (100/300), and **0** for Belém and unknown. Candidate number 400
+is only in the Airbnb city set. The city circles count 3 RNAL numbers and 11 candidates, sharing 3 numbers
+once. The remaining candidate area is 8. Its stacked bar has 3 shared first occurrences,
+3 additional repeated occurrences, 1 outside number (400), 1 unrecognised declaration,
+2 unassessed exemptions and 1 absent declaration. Number 100 is counted once despite several candidates.
+
 `expected/public/summary.json` and `expected/public/candidates.json.gz` are the
 reviewed canonical pair. The gzip decodes to all candidates and pair assessments.
 These are the sole analysis outputs; no private directory or diagnostic files are generated.
@@ -63,3 +70,12 @@ It now includes original declarations and complete pair assessments without
 changing those established presentation counts. Demo IDs never get live links.
 Select it explicitly using `SNAPSHOT=test/fixtures/pipeline/snapshots/candidate`.
 It is not the output generated from `sources/`.
+
+The presentation Venn counts **5** shared city numbers (100001–100005),
+**12** RNAL-only and **2** Airbnb-only (100006/100007). Arroios shares 3 numbers;
+Santa Maria Maior shares 2; other parish intersections are zero. The repeated
+100005 contributes once to the city intersection, once in Arroios, and stays
+Airbnb-only in Estrela. The Airbnb circle represents all 12 candidates with 7 remaining candidates
+outside the shared area. The RNAL circle represents 17 numbers, including 12 unshared.
+The bar has 5 shared first occurrences, 1 repeated occurrence, 2 outside numbers,
+1 unrecognised declaration, 2 unassessed exemptions and 1 absent declaration. These reviewed invented memberships leave the candidate records unchanged.
