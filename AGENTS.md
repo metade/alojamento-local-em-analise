@@ -121,16 +121,34 @@ apartment reference keeps the conflict in review. Record
 assessments. This does not establish shared building identity or legal correctness;
 RNAL still never awards matching points or authorizes a merge.
 
+Entire-home adverts sharing an AL number also resolve as `separate_apartments` /
+`separate` when all three known attributes differ: bedrooms, beds and capacity.
+Record `distinct_apartment_attributes` with zero points. A shared explicit apartment
+reference or conflicting/multiple numbers blocks this rule. Missing/malformed
+attributes stay unknown; isolated differences remain review. Preserve shared-number
+signals: separation does not identify which candidate corresponds to the RNAL.
+
 Scores summarize evidence, not probabilities: nearby coordinates 1, same nonempty
 host 1, similar title 2, strong description 3, shared apartment reference 3, shared
-usable declared number 2. Merge requires at least 8, coordinates within 500 m,
+usable declared number 2, supported containing-apartment description 4. Merge requires at least 8, coordinates within 500 m,
 no contradiction and either explicit shared unit plus text similarity or shared
-AL number plus both title and description similarity. Cross-category and
+AL number plus both title and description similarity, or the restricted private-room
+rule below. Cross-category and
 apartment/room relationships additionally require a shared apartment reference.
 Known conflicting apartment attributes and different unit references prevent
 merging. Missing/malformed attributes remain unknown. RNAL adds no points.
 Different hosts do not block merging; room attribute differences do not establish
 separate apartments. Building, floor and generic host text do not identify a unit.
+
+`same_containing_apartment` requires two Private room adverts, the same nonempty
+host, one identical fully parsed declared AL number, coordinates within 500 m and
+description Jaccard >=0.7 with 30 distinct tokens per text. Match explicit English
+containing-flat sentences giving the same positive area in m² and total room/suite
+count (at least two), normalizing "other" counts. Ambiguous descriptions and
+conflicting unit references block this evidence. It is not an apartment identifier.
+The composite evidence earns 4 points; general text thresholds remain unchanged.
+Label `separate_rooms`, or `duplicate_adverts` for an explicit shared room reference.
+Entire-home, shared-room, hotel and unknown categories cannot use this rule.
 
 Retain deterministic complete-link groups: every internal pair must qualify.
 Choose eligible unions by highest minimum cross-pair score, then sorted listing

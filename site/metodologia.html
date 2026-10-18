@@ -158,7 +158,8 @@ title: Metodologia e proveniência
         Procuramos pares até 500 m, com número AL partilhado ou referência explícita de apartamento
         partilhada, independentemente do anfitrião. A distância até 500 m vale 1 ponto; o mesmo
         anfitrião vale 1, títulos semelhantes valem 2, descrições fortemente semelhantes valem 3, a
-        mesma referência de apartamento vale 3 e o mesmo número AL vale 2. RNAL não dá pontos.
+        mesma referência de apartamento vale 3 e o mesmo número AL vale 2. A descrição específica do
+        apartamento que contém quartos privados, com os apoios abaixo, vale 4. RNAL não dá pontos.
         Comparamos conjuntos de palavras e números: títulos exigem três termos comuns e Jaccard de
         0,5; descrições exigem 30 termos distintos por texto e Jaccard de 0,8.
       </p>
@@ -175,6 +176,17 @@ title: Metodologia e proveniência
         isenção, edifício, piso, anfitrião ou texto genérico não basta.
       </p>
       <p>
+        Uma via restrita a dois anúncios de quartos privados exige o mesmo anfitrião, um único
+        número AL comum integralmente declarado, coordenadas até 500 m e descrições com pelo menos
+        30 termos distintos por texto e Jaccard de 0,7. Reconhecemos inicialmente frases inglesas
+        explícitas que situam o quarto num apartamento com a mesma área em m² e o mesmo total de
+        quartos ou suites; contagens de «outros quartos» incluem o quarto anunciado. Referências de
+        apartamento contraditórias e áreas/contagens ambíguas bloqueiam esta via. Mantém-se o mínimo
+        de 8 pontos e a exigência de todos os pares do grupo qualificarem. Esta regra não se aplica
+        a anúncios de apartamentos inteiros e não altera os limiares gerais de semelhança. Texto
+        genérico sobre espaços partilhados não basta.
+      </p>
+      <p>
         Todos os pares de um grupo têm de cumprir a regra. Escolhemos a união com maior pontuação
         mínima e desempatamos por IDs ordenados. Pares plausíveis sem evidência suficiente,
         conflitos de números e fusões impedidas por conflitos de grupo ficam separados para revisão.
@@ -185,6 +197,14 @@ title: Metodologia e proveniência
         Declarações parciais ou múltiplas, quartos e campos oficiais por resolver não bastam. Esta
         evidência não dá pontos nem autoriza fusões. Não prova que seja o mesmo edifício. A
         pontuação resume evidência e não é uma probabilidade. A proximidade não prova identidade.
+      </p>
+      <p>
+        Anúncios de alojamentos inteiros com o mesmo número AL também ficam resolvidos como
+        apartamentos separados quando diferem simultaneamente no número conhecido de quartos, camas
+        e capacidade. Uma referência explícita de apartamento partilhada ou declarações com números
+        conflituantes/múltiplos impedem esta regra. Valores ausentes ou malformados são
+        desconhecidos; diferenças isoladas continuam para revisão. A separação não atribui pontos
+        nem determina qual anúncio corresponde ao RNAL. O sinal de número partilhado permanece.
       </p>
       <p>
         Cada potencial alojamento local conta uma vez na freguesia atribuída ou em localização

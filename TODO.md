@@ -22,6 +22,14 @@
   verificada; ampliar vocabulário apenas com regressões. Rever ambiguidades,
   anúncios de várias unidades e texto de anfitrião repetido, sem objetivo de redução
   do número de candidatos. Partilhar `Exempt` nunca estabelece identidade.
+- [x] Reconhecer quartos privados no mesmo apartamento por descrições explícitas
+  de área e total de quartos, com o mesmo anfitrião/AL e texto semelhante.
+  Manter complete-link e excluir anúncios de apartamentos inteiros desta via.
+- [ ] Ampliar frases de apartamento partilhado para português e outras variantes
+  apenas com exemplos revistos e regressões; áreas/contagens não identificam unidades sozinhas.
+- [x] Resolver separações de anúncios inteiros com o mesmo AL e diferenças
+  simultâneas de quartos, camas e capacidade, sem referência explícita comum de
+  apartamento. Diferenças isoladas mantêm revisão; o sinal de número partilhado permanece.
 - [ ] Investigar fiabilidade da geografia Airbnb não verificada, deslocação ou
   imprecisão das coordenadas, proximidade dos limites CML e casos de fronteira.
   Validar os polígonos completos, qualidade/época das fontes e regras para eventual

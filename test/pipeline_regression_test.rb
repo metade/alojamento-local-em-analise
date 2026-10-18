@@ -117,6 +117,94 @@ class PipelineRegressionTest < Minitest::Test
     end
   end
 
+  def test_attribute_separation_is_published_validated_and_clears_review_signals
+    PipelineFixture.with_sources do |root, airbnb, official|
+      table = CSV.read(airbnb, headers: true)
+      headers = (table.headers + %w[beds accommodates]).uniq
+      CSV.open(airbnb, "w") do |csv|
+        csv << headers
+        table.take(2).each_with_index do |row, index|
+          values = row.to_h.merge("license" => "100/AL", "room_type" => "Entire home/apt",
+            "bedrooms" => index.to_s, "beds" => (index + 2).to_s, "accommodates" => (index * 2 + 2).to_s)
+          csv << headers.map { |key| values[key] }
+        end
+      end
+      result = PipelineFixture.run(root, airbnb, official)
+      dataset = AlojamentoLocal::CandidateDataset.new(result.fetch(:path))
+      assessment = dataset.grouping_assessments.fetch(0)
+      assert_equal ["separate", "separate_apartments"], assessment.values_at("outcome", "relationship")
+      assert_includes assessment["reasons"], "distinct_apartment_attributes"
+      assert_equal 2, dataset.candidates.size
+      assert dataset.candidates.all? { |candidate| candidate["signals"].include?("shared_number") }
+      assert dataset.candidates.none? { |candidate| candidate["signals"].include?("grouping_review") }
+      [
+        ->(pair) { pair["outcome"] = "review" },
+        ->(pair) { pair["relationship"] = "undetermined" },
+        ->(pair) { pair["reasons"].delete("different_apartment_bedrooms") },
+        ->(pair) {
+          pair["reasons"] << "same_apartment_reference"
+          pair["score"] += 3
+        }
+      ].each do |mutate|
+        doc = CandidateFixture.documents(dataset)
+        mutate.call(doc["grouping_assessments"].first)
+        assert_raises(ArgumentError) { CandidateFixture.from_documents(doc, refresh: true) }
+      end
+    end
+  end
+
+  def test_containing_flat_merge_round_trips_with_complete_link_and_source_accounting
+    PipelineFixture.with_sources do |root, airbnb, official|
+      table = CSV.read(airbnb, headers: true)
+      description = "The suite is in a 180m² flat with 3 other suites. #{(1..40).map { |i| "word#{i}" }.join(" ")}"
+      rows = table.take(3).map.with_index do |row, index|
+        row.to_h.merge("license" => "100/AL", "host_id" => "7", "room_type" => "Private room",
+          "name" => ["Quiet single suite", "Bright double suite", "Sunny spacious room"][index],
+          "latitude" => "38.73", "longitude" => "-9.14",
+          "description" => case index
+                           when 1 then "#{description} #{(1..15).map { |i| "extra#{i}" }.join(" ")}"
+                           when 2 then description.sub("180m²", "190m²")
+                           else description
+                           end)
+      end
+      write_rows = ->(values) {
+        CSV.open(airbnb, "w") do |csv|
+          csv << table.headers
+          values.each { |row| csv << table.headers.map { |key| row[key] } }
+        end
+      }
+      write_rows.call(rows)
+      result = PipelineFixture.run(root, airbnb, official)
+      dataset = AlojamentoLocal::CandidateDataset.new(result.fetch(:path))
+      assert_equal [%w[1 2], %w[3]], dataset.candidates.map { |candidate| candidate["listing_ids"] }.sort
+      assessment = dataset.grouping_assessments.find { |pair| pair["listing_ids"] == %w[1 2] }
+      assert_equal [8, "merge", "separate_rooms"], assessment.values_at("score", "outcome", "relationship")
+      assert_equal 3, dataset.summary[:listings]
+      assert_equal 2, dataset.summary[:candidates]
+      assert_equal 1, dataset.summary_document.dig("lisbon", "matched_al_numbers_count")
+      assert_equal({"1" => "100/AL", "2" => "100/AL", "3" => "100/AL"}, dataset.candidates.map { |c| c["raw_licences"] }.reduce(&:merge))
+      ["same_host", "same_al_number", "same_containing_apartment"].each do |reason|
+        doc = CandidateFixture.documents(dataset)
+        pair = doc["grouping_assessments"].find { |item| item["listing_ids"] == %w[1 2] }
+        pair["reasons"].delete(reason)
+        pair["score"] -= AlojamentoLocal::Analysis::Grouping::POINTS.fetch(reason)
+        assert_raises(ArgumentError) { CandidateFixture.from_documents(doc, refresh: true) }
+      end
+      original = AlojamentoLocal::CandidateDataset::FILES.map { |file| File.binread(File.join(result[:path], file)) }
+      write_rows.call(rows.reverse)
+      File.delete("#{airbnb}.manifest.json")
+      PipelineFixture.run(root, airbnb, official)
+      assert_equal original, AlojamentoLocal::CandidateDataset::FILES.map { |file| File.binread(File.join(result[:path], file)) }
+      # All evidence can coexist; the contract must accept the full 16-point score.
+      rows.take(2).each { |row| row.merge!("name" => "Central lovely apartment B room 1", "description" => description) }
+      write_rows.call(rows.take(2))
+      File.delete("#{airbnb}.manifest.json")
+      PipelineFixture.run(root, airbnb, official)
+      maximum = AlojamentoLocal::CandidateDataset.new(result.fetch(:path))
+      assert_equal [16, "merge", "duplicate_adverts"], maximum.grouping_assessments.first.values_at("score", "outcome", "relationship")
+    end
+  end
+
   def test_national_record_consensus_and_independent_lisbon_summary
     PipelineFixture.with_sources do |_, airbnb, official|
       pair = PipelineFixture.pair(airbnb, official)

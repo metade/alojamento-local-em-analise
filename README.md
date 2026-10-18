@@ -153,6 +153,7 @@ apartamentos com registos distintos e localmente consistentes, como descrito aba
 | Descrições fortemente semelhantes | 3 |
 | Mesma referência explícita de apartamento/unidade | 3 |
 | Mesmo número AL declarado não-placeholder | 2 |
+| Mesma descrição específica do apartamento que contém quartos privados, com todos os apoios abaixo | 4 |
 
 Textos são descodificados de HTML, normalizados por Unicode/case e comparados
 como conjuntos de tokens alfanuméricos, preservando números. Títulos exigem
@@ -174,6 +175,21 @@ capacidade) impedem fusão automática. Diferenças entre quartos não estabelec
 apartamentos distintos. Anfitriões diferentes não impedem automaticamente a fusão.
 Partilhar edifício, piso, anfitrião ou texto genérico não basta.
 
+Uma via adicional, restrita a dois anúncios `Private room`, reconhece descrições
+explícitas do apartamento que os contém (`same_containing_apartment`, 4 pontos).
+Exige o mesmo anfitrião não vazio, um único AL comum integralmente declarado,
+coordenadas até 500 m e descrições com pelo menos 30 termos distintos e Jaccard
+≥0,7. A área e o total de quartos/suites têm de coincidir. Inicialmente reconhece
+frases inglesas como «The suite is in a 180m² flat with 3 other suites» e
+«This room is part of a 180 m² apartment with 4 rooms». «Other» soma o quarto
+anunciado; áreas/contagens ambíguas ou ausentes não dão evidência. Não confundir
+estas medidas com identificadores de apartamento. Referências de apartamento
+contraditórias bloqueiam fusão. Esta via mantém o mínimo de 8 pontos e o
+complete-link; não baixa os limiares gerais de títulos/descrições nem se aplica a
+apartamentos inteiros, quartos partilhados, hotéis ou categorias desconhecidas.
+A relação é `separate_rooms`, salvo referência explícita ao mesmo quarto/cama,
+que permite `duplicate_adverts`. Texto genérico sobre espaços partilhados não basta.
+
 Pares plausíveis sem cumprir todos os requisitos ficam separados, em revisão.
 Conflitos de números AL e anúncios com múltiplos números nunca autorizam fusão.
 Um par plausível até 500 m pode ficar resolvido como `separate_apartments`, com
@@ -187,6 +203,14 @@ inconsistentes mantêm o caso para revisão. A evidência RNAL vale zero pontos 
 apenas resolve uma separação já impedida pelo conflito de números; não altera as
 fusões. Coordenadas próximas ou iguais não provam que seja o mesmo edifício.
 
+Dois anúncios de alojamentos inteiros com o mesmo número AL também ficam
+resolvidos como `separate_apartments` / `separate` quando diferem simultaneamente
+no número conhecido de quartos, camas e capacidade (`distinct_apartment_attributes`).
+Uma referência explícita de apartamento partilhada ou declarações com números
+conflituantes/múltiplos impedem esta regra. Valores ausentes ou malformados são
+desconhecidos; uma diferença isolada continua para revisão. Esta evidência não
+atribui pontos, não altera fusões e não determina qual anúncio corresponde ao RNAL.
+
 Pares próximos sem identidade plausível são avaliados e descartados; os restantes
 assessments publicados são únicos por par de IDs, com `outcome`, `score`,
 `relationship` (`duplicate_adverts`, `separate_rooms`, `apartment_and_rooms`,
@@ -198,7 +222,8 @@ com a mesma categoria conhecida e, para quartos/camas, a mesma referência
 explícita de quarto/cama (`same_room_reference`). Dois anúncios de apartamentos
 inteiros podem ser classificados assim pela evidência de identidade existente.
 Pares plausíveis com evidência insuficiente ou contraditória ficam `undetermined`,
-salvo quando as categorias/referências identificam uma relação de quartos.
+salvo quando as categorias/referências identificam uma relação de quartos ou
+uma regra de separação identifica apartamentos distintos.
 A classificação não altera pontuações nem grupos. A regra de apartamentos
 registados distintos pode resolver `review` como `separate`.
 
@@ -344,6 +369,23 @@ repetido: sufixos plurais, abreviaturas, quebras entre campos/parágrafos, artig
 contagens e tipologias não fornecem referências de unidade. As regras são
 indicadores de investigação; a diferença no total resulta do método, não de
 uma variação temporal nem de um objetivo de redução.
+
+### Revisão do snapshot de setembro
+
+O par local `2026-09-19__2026-09-26` contém **17 153 anúncios**, **16 288 candidatos**,
+**8 784 números AL declarados**, **11 869 números RNAL** e **7 247 números comuns**
+em Lisboa. Todos os IDs e declarações originais foram novamente confrontados com
+o CSV de setembro, independentemente da validação do builder.
+
+A via de quartos privados com descrição do apartamento funde os três anúncios
+`1001265559722983156`, `1001268286809894172` e `996128642401673810`, que declaram
+35505/AL e descrevem o mesmo apartamento de 220 m² com cinco suites. Todos os três
+pares qualificam; o par revisto tem 8 pontos e `separate_rooms`. O anúncio
+`1370956532727112515`, com descrição semelhante mas outro AL, permanece separado.
+Um grupo já existente de quatro suites com 115214/AL recebe a nova evidência sem
+alterar membros. Assim, apenas três pares passam de revisão a fusão e o total de
+candidatos passa de 16 290 a 16 288; números distintos e cobertura não mudam.
+Os limiares gerais mantêm-se, e a fixture de apresentação conserva os seus totais.
 
 ## Verificar
 

@@ -235,11 +235,25 @@ module AlojamentoLocal
           numbers = ids.map { |id| Analysis::Declaration.new(raw_values.fetch(id)).numbers }
           check((numbers[0] & numbers[1]).any?, "pair claims an undeclared shared number")
         end
+        room_identity = reasons.include?("same_containing_apartment")
+        if room_identity
+          check((%w[distance_le_500m same_host same_al_number] - reasons).empty?, "containing apartment lacks supporting evidence")
+          check((reasons & %w[different_apartment_reference conflicting_al_numbers multiple_al_numbers room_category_ambiguity different_room_categories]).empty? && reasons.none? { |reason| reason.start_with?("different_apartment_") }, "containing apartment has contradictory evidence")
+          declarations = ids.map { |id| Analysis::Declaration.new(raw_values.fetch(id)) }
+          check(declarations.all? { |declaration| declaration.numbers.one? && !declaration.partial? }, "containing apartment requires complete single declarations")
+          check(pair["relationship"] == (reasons.include?("same_room_reference") ? "duplicate_adverts" : "separate_rooms"), "containing apartment relationship differs")
+        end
         merged = (memberships[ids[0]] & memberships[ids[1]]).any?
         check(merged == (pair["outcome"] == "merge"), "assessment disagrees with final groups")
-        separation = reasons.include?("distinct_registered_apartments")
-        check(separation == (pair["relationship"] == "separate_apartments"), "registered separation relationship differs")
-        if separation
+        registered_separation = reasons.include?("distinct_registered_apartments")
+        attribute_separation = reasons.include?("distinct_apartment_attributes")
+        check((registered_separation || attribute_separation) == (pair["relationship"] == "separate_apartments"), "apartment separation relationship differs")
+        if attribute_separation
+          check(pair["outcome"] == "separate", "distinct apartments must remain separate")
+          check((%w[same_al_number different_apartment_bedrooms different_apartment_beds different_apartment_accommodates] - reasons).empty?, "apartment separation lacks attribute evidence")
+          check((reasons & %w[same_apartment_reference conflicting_al_numbers multiple_al_numbers room_category_ambiguity different_room_categories]).empty?, "apartment separation has conflicting identity evidence")
+        end
+        if registered_separation
           check(pair["outcome"] == "separate", "registered apartments must remain separate")
           check((%w[distance_le_500m conflicting_al_numbers] - reasons).empty?, "registered separation lacks evidence")
           check((reasons & %w[same_apartment_reference multiple_al_numbers room_category_ambiguity different_room_categories]).empty?, "registered separation has conflicting unit evidence")
@@ -262,7 +276,7 @@ module AlojamentoLocal
           check(reasons.include?("distance_le_500m"), "merge lacks nearby coordinates")
           explicit = reasons.include?("same_apartment_reference")
           text = (reasons & %w[similar_title strong_description]).any?
-          check((explicit && text) || (%w[same_al_number similar_title strong_description] - reasons).empty?, "merge lacks identity evidence")
+          check((explicit && text) || (%w[same_al_number similar_title strong_description] - reasons).empty? || room_identity, "merge lacks identity evidence")
           check(explicit || (pair["relationship"] != "apartment_and_rooms" && !reasons.include?("different_room_categories")), "room relationship lacks unit reference")
           check(reasons.none? { |reason| reason.start_with?("different_apartment_") } && (reasons & %w[conflicting_al_numbers multiple_al_numbers]).empty?, "contradictory merge")
         end

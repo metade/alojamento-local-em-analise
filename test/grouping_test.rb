@@ -96,6 +96,94 @@ class GroupingTest < Minitest::Test
     assert_equal "review", pair(a, entry(2, lat: 39.0))["outcome"]
   end
 
+  def containing_flat_pair(**changes)
+    description = "The suite is in a 180m² flat with 3 other suites. #{DESCRIPTION}"
+    a = entry(1, name: "Quiet single suite", description: description)
+    b = entry(2, name: "Bright double suite", description: "#{description} #{(1..15).map { |i| "extra#{i}" }.join(" ")}", **changes)
+    [a, b]
+  end
+
+  def test_private_rooms_merge_using_specific_containing_flat_description
+    a, b = containing_flat_pair
+    assessment = pair(a, b)
+    assert_equal [8, "merge", "separate_rooms"], assessment.values_at("score", "outcome", "relationship")
+    assert_includes assessment["reasons"], "same_containing_apartment"
+    refute_includes assessment["reasons"], "similar_title"
+    refute_includes assessment["reasons"], "strong_description"
+    grouping = Grouping.new([a, b])
+    assert_equal [%w[1 2]], grouping.groups.map { |group| group.map { |member| member.raw["id"] } }
+    assert_equal grouping.assessments, Grouping.new([b, a]).assessments
+    five = (1..5).map { |id| entry(id, name: "Suite#{id}", description: a.raw["description"]) }
+    grouped = Grouping.new(five)
+    assert_equal 1, grouped.groups.size
+    assert_equal 10, grouped.assessments.count { |assessment| assessment["outcome"] == "merge" }
+    assert_equal grouped.assessments, Grouping.new(five.reverse).assessments
+    # HTML/Unicode and equivalent total-versus-other counts normalize consistently.
+    b.raw["description"] = a.raw["description"].sub("180m² flat with 3 other suites", "180 m&sup2; apartment with 4 rooms")
+    assert_equal "merge", pair(a, b)["outcome"]
+    assert_includes pair(a, b)["reasons"], "same_containing_apartment"
+    a.raw["name"] = b.raw["name"] = "Lovely central room 1"
+    assert_equal "duplicate_adverts", pair(a, b)["relationship"]
+  end
+
+  def test_containing_flat_rule_excludes_apartments_unknowns_and_template_conflicts
+    a, b = containing_flat_pair
+    [
+      {host_id: "2"}, {host_id: nil}, {license: "999/AL"}, {license: "123/AL e 999/AL"},
+      {license: "123/AL with residual text"}, {license: "Exempt"}, {license: nil},
+      {room_type: "Entire home/apt"}, {room_type: "Shared room"}, {room_type: nil},
+      {lat: nil}, {lat: 39.0},
+      {description: b.raw["description"].sub("180m²", "190m²")},
+      {description: b.raw["description"].sub("3 other suites", "4 other suites")},
+      {description: "The suite is in a flat with 3 other suites. #{DESCRIPTION}"},
+      {description: "A 180m² flat with 3 other suites. #{DESCRIPTION}"},
+      {description: "The suite is in a 180m² flat with 3 other suites."},
+      {description: "The suite is in a 180m² flat with 3 other suites. #{(1..50).map { |i| "unrelated#{i}" }.join(" ")}"},
+      {description: "#{b.raw["description"]} The suite is in a 190m² flat with 3 other suites."}
+    ].each do |changes|
+      _, uncertain = containing_flat_pair(**changes)
+      assessment = pair(a, uncertain)
+      next unless assessment
+      refute_includes assessment.fetch("reasons"), "same_containing_apartment", changes.inspect
+      refute_equal "merge", assessment["outcome"], changes.inspect
+    end
+    entire = [a, b].map.with_index { |e, i| entry(i + 1, **e.raw.except("id").merge("room_type" => "Entire home/apt")) }
+    assert_equal "review", pair(*entire)["outcome"]
+    a.raw["name"] = "Lovely apartment A central"
+    b.raw["name"] = "Lovely apartment B central"
+    assert_equal "review", pair(a, b)["outcome"]
+    refute_includes pair(a, b)["reasons"], "same_containing_apartment"
+  end
+
+  def test_shared_number_with_three_conflicting_entire_home_attributes_resolves_separation
+    a = entry(1, room_type: "Entire home/apt", bedrooms: "0", beds: "2", accommodates: "2")
+    b = entry(2, room_type: "Entire home/apt", bedrooms: "1", beds: "3", accommodates: "4")
+    assessment = pair(a, b)
+    assert_equal [9, "separate", "separate_apartments"], assessment.values_at("score", "outcome", "relationship")
+    assert_includes assessment["reasons"], "distinct_apartment_attributes"
+    refute_includes assessment["reasons"], "review_score"
+    grouping = Grouping.new([a, b])
+    assert_equal [%w[1], %w[2]], grouping.groups.map { |group| group.map { |member| member.raw["id"] } }
+    assert_equal grouping.assessments, Grouping.new([b, a]).assessments
+    %w[bedrooms beds accommodates].each do |attribute|
+      [nil, "bad", a.raw[attribute]].each do |value|
+        uncertain = entry(2, **b.raw.except("id").merge(attribute => value))
+        assert_equal "review", pair(a, uncertain)["outcome"]
+      end
+    end
+    shared_unit = [a, b].map.with_index do |original, index|
+      entry(index + 1, **original.raw.except("id").merge("name" => "Lovely central apartment B"))
+    end
+    assert_equal "review", pair(*shared_unit)["outcome"]
+    ["999/AL", "123/AL e 999/AL"].each do |licence|
+      assert_equal "review", pair(a, entry(2, **b.raw.except("id").merge("license" => licence)))["outcome"]
+    end
+    rooms = [a, b].map.with_index do |original, index|
+      entry(index + 1, **original.raw.except("id").merge("room_type" => "Private room"))
+    end
+    assert_equal "merge", pair(*rooms)["outcome"]
+  end
+
   def test_entire_apartment_attributes_contradict_but_room_attributes_do_not
     %w[bedrooms beds bathrooms accommodates].each do |key|
       assert_equal "merge", pair(entry(1, **{key => "1"}), entry(2, **{key => "3"}))["outcome"]
