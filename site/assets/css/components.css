@@ -248,18 +248,57 @@ td {
   stroke-width: 4;
 }
 
-.overlap-label--unresolved {
-  fill: #735400;
+.candidate-breakdown-bar {
+  display: flex;
+  height: 28px;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--color-line);
+}
+.candidate-breakdown-segment { display: block; flex: 0 0 auto; background: var(--segment-color); }
+.candidate-breakdown-segment:focus-visible { outline: 2px solid var(--color-ink); outline-offset: -2px; }
+.candidate-breakdown--matched { --segment-color: #176e87; }
+.candidate-breakdown--repeated { --segment-color: #b64b30; }
+.candidate-breakdown--outside { --segment-color: #965c45; }
+.candidate-breakdown--unrecognised { --segment-color: #a77d79; }
+.candidate-breakdown--mixed { --segment-color: #9a829f; }
+.candidate-breakdown--exempt { --segment-color: #789195; }
+.candidate-breakdown--absent { --segment-color: #d5cfc5; }
+.candidate-breakdown-legend { list-style: none; padding: 0; }
+.candidate-breakdown-legend li { display: grid; grid-template-columns: 10px 1fr auto; gap: 8px; align-items: baseline; margin: 10px 0; }
+.candidate-breakdown-swatch { display: inline-block; width: 10px; height: 10px; background: var(--segment-color); border-radius: 2px; }
+
+/* Link each bar segment to its legend row without changing its measured width. */
+.candidate-breakdown [data-breakdown-category] {
+  transition: opacity .15s ease, background-color .15s ease;
 }
 
-.overlap-unresolved-bubble {
-  fill: color-mix(in srgb, var(--color-yellow) 15%, transparent);
-  stroke: var(--color-yellow);
-  stroke-width: 2;
+.candidate-breakdown-legend [data-breakdown-category] {
+  background-color: var(--breakdown-highlight, transparent);
 }
 
-.overlap-label--unresolved:is(:hover, :focus-visible) .overlap-unresolved-bubble {
-  fill: color-mix(in srgb, var(--color-yellow) 35%, transparent);
-  stroke: #735400;
-  stroke-width: 3;
+.candidate-breakdown-legend [data-breakdown-category]:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 3px;
+}
+
+.candidate-breakdown:has([data-breakdown-category]:is(:hover, :focus)) .candidate-breakdown-segment {
+  opacity: .35;
+}
+
+.candidate-breakdown:has([data-breakdown-category="matched"]:is(:hover, :focus)) [data-breakdown-category="matched"],
+.candidate-breakdown:has([data-breakdown-category="repeated"]:is(:hover, :focus)) [data-breakdown-category="repeated"],
+.candidate-breakdown:has([data-breakdown-category="outside"]:is(:hover, :focus)) [data-breakdown-category="outside"],
+.candidate-breakdown:has([data-breakdown-category="unrecognised"]:is(:hover, :focus)) [data-breakdown-category="unrecognised"],
+.candidate-breakdown:has([data-breakdown-category="mixed"]:is(:hover, :focus)) [data-breakdown-category="mixed"],
+.candidate-breakdown:has([data-breakdown-category="exempt"]:is(:hover, :focus)) [data-breakdown-category="exempt"],
+.candidate-breakdown:has([data-breakdown-category="absent"]:is(:hover, :focus)) [data-breakdown-category="absent"] {
+  opacity: 1;
+  --breakdown-highlight: color-mix(in srgb, var(--segment-color) 12%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .candidate-breakdown [data-breakdown-category] {
+    transition: none;
+  }
 }

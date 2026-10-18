@@ -15,6 +15,16 @@ class SiteDataOverlapTest < Minitest::Test
     end
   end
 
+  def test_lisbon_candidate_circle_is_larger_and_its_remaining_area_is_additive
+    geometry = AlojamentoLocal::SiteData::Overlap.geometry(11869, 16210, 7320)
+    assert_operator geometry["s"], :>, geometry["r"]
+    assert_in_delta 16210.0 / 11869, geometry["s"]**2 / geometry["r"]**2, 1e-6
+    labels = AlojamentoLocal::SiteData::Overlap.labels(geometry, 4549, 7320, 8890)
+    assert_equal [4549, 7320, 8890], labels.map { |row| row["count"] }
+    area = AlojamentoLocal::SiteData::Overlap.area(geometry["r"], geometry["s"], geometry["distance"])
+    assert_in_delta 7320.0 / 16210, area / (Math::PI * geometry["s"]**2), 1e-6
+  end
+
   def test_labels_support_empty_disjoint_identical_and_contained_sets
     [[0,0,0], [0,80,0], [100,80,0], [100,100,100], [100,25,25], [25,100,25]].each do |a,b,i|
       geometry = AlojamentoLocal::SiteData::Overlap.geometry(a,b,i)

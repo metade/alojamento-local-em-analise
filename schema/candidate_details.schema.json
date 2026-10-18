@@ -1,0 +1,550 @@
+{
+  "type": "object",
+  "properties": {
+    "candidates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/candidate"
+      }
+    },
+    "grouping_assessments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "listing_ids": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^(?:demo-)?[0-9]+$"
+            }
+          },
+          "score": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 13
+          },
+          "outcome": {
+            "enum": [
+              "merge",
+              "review",
+              "separate"
+            ]
+          },
+          "reasons": {
+            "type": "array",
+            "minItems": 0,
+            "uniqueItems": true,
+            "items": {
+              "$ref": "#/$defs/grouping_evidence_reason"
+            }
+          },
+          "relationship": {
+            "enum": [
+              "duplicate_adverts",
+              "separate_rooms",
+              "apartment_and_rooms",
+              "undetermined",
+              "separate_apartments"
+            ]
+          },
+          "decision_reason": {
+            "enum": [
+              "merge_threshold",
+              "insufficient_identity",
+              "insufficient_merge_evidence",
+              "distinct_registered_apartments",
+              "distinct_apartment_attributes",
+              "complete_link_conflict"
+            ]
+          },
+          "distance_m": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "title_comparison": {
+            "$ref": "#/$defs/text_comparison"
+          },
+          "description_comparison": {
+            "$ref": "#/$defs/text_comparison"
+          },
+          "room_types": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "enum": [
+                "Entire home/apt",
+                "Private room",
+                "Shared room",
+                "Hotel room",
+                null
+              ]
+            }
+          },
+          "property_types": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1
+            }
+          },
+          "attributes": {
+            "type": "object",
+            "properties": {
+              "bedrooms": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 2,
+                "items": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": 0
+                }
+              },
+              "beds": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 2,
+                "items": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": 0
+                }
+              },
+              "bathrooms": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 2,
+                "items": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": 0
+                }
+              },
+              "accommodates": {
+                "type": "array",
+                "minItems": 2,
+                "maxItems": 2,
+                "items": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": 0
+                }
+              }
+            },
+            "required": [
+              "bedrooms",
+              "beds",
+              "bathrooms",
+              "accommodates"
+            ],
+            "additionalProperties": false
+          },
+          "evidence": {
+            "type": "object",
+            "propertyNames": {
+              "$ref": "#/$defs/grouping_evidence_reason"
+            },
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "category": {
+                  "enum": [
+                    "supporting",
+                    "contradicting",
+                    "unknown"
+                  ]
+                },
+                "points": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 3
+                }
+              },
+              "required": [
+                "category",
+                "points"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "listing_ids",
+          "score",
+          "outcome",
+          "reasons",
+          "relationship",
+          "decision_reason",
+          "distance_m",
+          "title_comparison",
+          "description_comparison",
+          "room_types",
+          "property_types",
+          "attributes",
+          "evidence"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "candidates",
+    "grouping_assessments"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "parish": {
+      "enum": [
+        "Ajuda",
+        "Alcântara",
+        "Alvalade",
+        "Areeiro",
+        "Arroios",
+        "Avenidas Novas",
+        "Beato",
+        "Belém",
+        "Benfica",
+        "Campo de Ourique",
+        "Campolide",
+        "Carnide",
+        "Estrela",
+        "Lumiar",
+        "Marvila",
+        "Misericórdia",
+        "Olivais",
+        "Parque das Nações",
+        "Penha de França",
+        "Santa Clara",
+        "Santa Maria Maior",
+        "Santo António",
+        "São Domingos de Benfica",
+        "São Vicente",
+        null
+      ]
+    },
+    "distance": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "candidate": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9_-]+$"
+        },
+        "al_number": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[1-9][0-9]*$"
+        },
+        "listing_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^(?:demo-)?[0-9]+$"
+          }
+        },
+        "listing_count": {
+          "$ref": "#/$defs/count"
+        },
+        "freguesia": {
+          "$ref": "#/$defs/parish"
+        },
+        "geography": {
+          "type": "object",
+          "properties": {
+            "coordinate_freguesia": {
+              "$ref": "#/$defs/parish"
+            },
+            "airbnb_freguesias": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "enum": [
+                  "Ajuda",
+                  "Alcântara",
+                  "Alvalade",
+                  "Areeiro",
+                  "Arroios",
+                  "Avenidas Novas",
+                  "Beato",
+                  "Belém",
+                  "Benfica",
+                  "Campo de Ourique",
+                  "Campolide",
+                  "Carnide",
+                  "Estrela",
+                  "Lumiar",
+                  "Marvila",
+                  "Misericórdia",
+                  "Olivais",
+                  "Parque das Nações",
+                  "Penha de França",
+                  "Santa Clara",
+                  "Santa Maria Maior",
+                  "Santo António",
+                  "São Domingos de Benfica",
+                  "São Vicente"
+                ]
+              }
+            }
+          },
+          "required": [
+            "coordinate_freguesia",
+            "airbnb_freguesias"
+          ],
+          "additionalProperties": false
+        },
+        "registration_status": {
+          "enum": [
+            "absent",
+            "unrecognised",
+            "found",
+            "not_found",
+            "exempt",
+            "mixed"
+          ]
+        },
+        "grouping_reason": {
+          "enum": [
+            "single_listing",
+            "scored_merge"
+          ]
+        },
+        "signals": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "partial_licence_extraction",
+              "grouping_review",
+              "shared_number",
+              "official_municipality_mismatch",
+              "official_parish_mismatch",
+              "official_location_far_from_listings",
+              "observed_parish_disagreement",
+              "missing_licence_declaration",
+              "unrecognised_licence_declaration"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "official_match": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "municipality": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "freguesia": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "type": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "district": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1
+            },
+            "distance_km": {
+              "$ref": "#/$defs/distance"
+            }
+          },
+          "required": [
+            "municipality",
+            "freguesia",
+            "type",
+            "district",
+            "distance_km"
+          ],
+          "additionalProperties": false
+        },
+        "raw_licences": {
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": {
+            "pattern": "^(?:demo-)?[0-9]+$"
+          },
+          "additionalProperties": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "required": [
+        "id",
+        "al_number",
+        "listing_ids",
+        "listing_count",
+        "freguesia",
+        "geography",
+        "registration_status",
+        "grouping_reason",
+        "signals",
+        "official_match",
+        "raw_licences"
+      ],
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "registration_status": {
+                "enum": [
+                  "found",
+                  "not_found"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "al_number": {
+                "type": "string"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "al_number": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "registration_status": {
+                "const": "found"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "official_match": {
+                "type": "object"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "official_match": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "grouping_evidence_reason": {
+      "enum": [
+        "distance_le_500m",
+        "distance_over_500m",
+        "missing_coordinates",
+        "same_host",
+        "similar_title",
+        "strong_description",
+        "same_apartment_reference",
+        "different_apartment_reference",
+        "different_room_references",
+        "same_al_number",
+        "conflicting_al_numbers",
+        "multiple_al_numbers",
+        "room_category_ambiguity",
+        "different_apartment_bedrooms",
+        "different_apartment_beds",
+        "different_apartment_bathrooms",
+        "different_apartment_accommodates",
+        "different_apartment_property",
+        "different_room_categories",
+        "same_room_reference",
+        "distinct_registered_apartments",
+        "distinct_apartment_attributes",
+        "same_host_room_group",
+        "different_apartment_text"
+      ]
+    },
+    "text_comparison": {
+      "type": "object",
+      "properties": {
+        "similarity": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "token_counts": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "shared_tokens": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "similarity",
+        "token_counts",
+        "shared_tokens"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

@@ -3,12 +3,14 @@
 
 require "open3"
 require "json"
+require "zlib"
+require "stringio"
 require_relative "../lib/alojamento_local"
 
-PUBLIC_ROOTS = ["data/snapshots/", "data/history/"].freeze
+PUBLIC_ROOTS = ["data/snapshots/", "data/history/", "test/fixtures/pipeline/snapshots/", "test/fixtures/pipeline/expected/public/"].freeze
 ARTIFACT_ROOTS = ["_site/"].freeze
 PRIVATE_PATHS = [
-  %r{\Adata_sources/},
+  %r{\Adata_sources/(?!lisboa-freguesias\.geojson\z)},
   %r{\Adata/private/},
   %r{\Atmp/}
 ].freeze
@@ -51,27 +53,37 @@ rescue Errno::ENOENT
   nil
 end
 
-# Parse the nested document: a CSV-header scan cannot detect nested fields.
-def audit_snapshot(text, label, validate_schema: true)
+# Historical safety inspection parses arbitrary JSON without a legacy dataset reader.
+def audit_historical_document(text, label)
   errors = []
   begin
     data = JSON.parse(text)
     inspect_keys = lambda do |value|
       case value
       when Hash
-        forbidden = value.keys & (AlojamentoLocal::FORBIDDEN_PUBLIC_FIELDS + %w[listing_id path])
-        errors << "campo proibido em #{label}: #{forbidden.join(', ')}" unless forbidden.empty?
+        forbidden = value.keys & (FORBIDDEN_PUBLIC_FIELDS + %w[path])
+        errors << "campo proibido em #{label}: #{forbidden.join(", ")}" unless forbidden.empty?
         value.each_value { |item| inspect_keys.call(item) }
       when Array
         value.each { |item| inspect_keys.call(item) }
       end
     end
     inspect_keys.call(data)
-    AlojamentoLocal::PublicSnapshot.validate!(data, expected_run_id: data.fetch("metadata").fetch("run_id")) if validate_schema
   rescue => error
     errors << "snapshot inválido em #{label}: #{error.message}"
   end
   errors
+end
+
+def audit_pair(path)
+  AlojamentoLocal::CandidateDataset.new(File.dirname(path))
+  []
+rescue => error
+  ["snapshot inválido em #{path}: #{error.message}"]
+end
+
+def candidate_link_text(text)
+  text.gsub(%r{https://www\.airbnb\.com/rooms/[0-9]+(?=["'\s<)>]|$)}, "")
 end
 
 def audit_worktree
@@ -86,26 +98,21 @@ def audit_worktree
 
     text = file_text(path)
     next unless text
+    if AlojamentoLocal::CandidateDataset::FILES.include?(File.basename(path))
+      errors.concat(audit_pair(path))
+      next
+    end
 
+    errors << "snapshot obsoleto em #{path}" if File.basename(path) == "snapshot.json"
     fields = FORBIDDEN_PUBLIC_FIELDS.select do |field|
       text.lines.first.to_s.split(",").map { |value| value.strip.downcase }.include?(field)
     end
-    errors << "campo proibido em #{path}: #{fields.join(', ')}" unless fields.empty?
-    errors << "URL de anúncio em #{path}" if text.match?(LISTING_URL)
-    errors << "padrão de identificador em #{path}" if text.match?(AIRBNB_IDENTIFIER)
+    errors << "campo proibido em #{path}: #{fields.join(", ")}" unless fields.empty?
+    checked_text = candidate_link_text(text)
+    errors << "URL de anúncio em #{path}" if checked_text.match?(LISTING_URL)
+    errors << "padrão de identificador em #{path}" if checked_text.match?(AIRBNB_IDENTIFIER)
     errors << "referência a fonte local em #{path}" if text.match?(RAW_SOURCE_PATH)
     errors << "relatório privado em #{path}" if text.include?('name="al-private-report"') || text.include?("/private-reports/")
-
-    errors.concat(audit_snapshot(text, path)) if File.basename(path) == "snapshot.json"
-
-    if artifact_file?(path) && File.basename(path) == "metadata.json"
-      begin
-        metadata = JSON.parse(text)
-        errors << "modo não público em #{path}" unless metadata["mode"] == "public"
-      rescue JSON::ParserError
-        errors << "metadata inválido em #{path}"
-      end
-    end
   end
 
   errors << "atribuição em falta: NOTICE" unless tracked_files.include?("site/NOTICE")
@@ -132,11 +139,21 @@ def audit_history
       text, text_status = Open3.capture2("git", "show", "#{commit}:#{path}")
       next unless text_status.success?
 
-      errors.concat(audit_snapshot(text, "#{commit[0, 12]} #{path}", validate_schema: false)) if File.basename(path) == "snapshot.json"
+      if File.basename(path) == "candidates.json.gz"
+        begin
+          text = Zlib::GzipReader.new(StringIO.new(text)).read
+        rescue => error
+          errors << "#{commit[0, 12]} gzip inválido em #{path}: #{error.message}"
+          next
+        end
+      end
+      if (AlojamentoLocal::CandidateDataset::FILES + ["snapshot.json"]).include?(File.basename(path))
+        errors.concat(audit_historical_document(text, "#{commit[0, 12]} #{path}"))
+      end
 
       header = text.lines.first.to_s.split(",").map { |value| value.strip.downcase }
       fields = FORBIDDEN_PUBLIC_FIELDS & header
-      errors << "#{commit[0, 12]} campo proibido em #{path}: #{fields.join(', ')}" unless fields.empty?
+      errors << "#{commit[0, 12]} campo proibido em #{path}: #{fields.join(", ")}" unless fields.empty?
       errors << "#{commit[0, 12]} URL de anúncio em #{path}" if text.match?(LISTING_URL)
       errors << "#{commit[0, 12]} padrão de identificador em #{path}" if text.match?(AIRBNB_IDENTIFIER)
     end
@@ -153,38 +170,25 @@ def audit_artifact(root)
   files.each do |path|
     relative = path.delete_prefix("#{root}/")
     errors << "ficheiro local/bruto no artefacto: #{relative}" if relative.match?(RAW_SOURCE_PATH)
-    if relative.match?(/(?:private-reports|report_data_local|metadata_local|summary_local|detailed)/)
+    if relative.match?(/(?:private-reports|report_data_local|metadata_local|summary_local|detailed|\Aruns\/)/)
       errors << "dados privados no artefacto: #{relative}"
     end
     text = file_text(path)
     next unless text
+    if AlojamentoLocal::CandidateDataset::FILES.include?(File.basename(path))
+      errors.concat(audit_pair(path))
+      next
+    end
 
+    errors << "snapshot obsoleto em #{relative}" if File.basename(path) == "snapshot.json"
     header = text.lines.first.to_s.split(",").map { |value| value.strip.downcase }
     fields = FORBIDDEN_PUBLIC_FIELDS & header
-    errors << "campo proibido em #{relative}: #{fields.join(', ')}" unless fields.empty?
-    errors << "URL de anúncio em #{relative}" if text.match?(LISTING_URL)
-    errors << "padrão de identificador em #{relative}" if text.match?(AIRBNB_IDENTIFIER)
+    errors << "campo proibido em #{relative}: #{fields.join(", ")}" unless fields.empty?
+    checked_text = candidate_link_text(text)
+    errors << "URL de anúncio em #{relative}" if checked_text.match?(LISTING_URL)
+    errors << "padrão de identificador em #{relative}" if checked_text.match?(AIRBNB_IDENTIFIER)
     errors << "referência a fonte local em #{relative}" if text.match?(RAW_SOURCE_PATH)
     errors << "relatório privado em #{relative}" if text.include?('name="al-private-report"') || text.include?("/private-reports/")
-
-    errors.concat(audit_snapshot(text, relative)) if File.basename(path) == "snapshot.json"
-
-    if File.basename(path) == "metadata.json"
-      begin
-        metadata = JSON.parse(text)
-        errors << "modo não público em #{relative}" unless metadata["mode"] == "public"
-      rescue JSON::ParserError
-        errors << "metadata inválido em #{relative}"
-      end
-    end
-  end
-
-  Dir.glob(File.join(root, "runs", "*")).select { |path| File.directory?(path) }.each do |path|
-    begin
-      AlojamentoLocal::PublicSnapshot.load(path)
-    rescue => error
-      errors << "dados inválidos em #{path}: #{error.message}"
-    end
   end
 
   notice = File.join(root, "NOTICE")
@@ -194,9 +198,9 @@ end
 
 history = ARGV.delete("--history")
 artifact = if (index = ARGV.index("--artifact"))
-             ARGV.delete_at(index)
-             ARGV.delete_at(index)
-           end
+  ARGV.delete_at(index)
+  ARGV.delete_at(index)
+end
 errors = audit_worktree
 errors.concat(audit_history) if history
 errors.concat(audit_artifact(artifact)) if artifact

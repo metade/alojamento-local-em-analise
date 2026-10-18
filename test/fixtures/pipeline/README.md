@@ -1,96 +1,93 @@
-# Synthetic pipeline regression fixture
+# Synthetic regression fixtures
 
-All rows are invented. The licence numbers, hosts, names, addresses and
-`example.invalid` URLs are test values, not downloaded or anonymized records.
-The fixture uses known Lisbon geography names to exercise the existing rules.
+`sources/` contains invented source CSVs. Tests copy them to a temporary directory
+before registering manifests or analysing, so source fixtures remain unchanged.
+`expected/` is the reviewed source-to-snapshot baseline, independent of the
+presentation fixture. There are no legacy expectations or history files.
 
-`PipelineRegressionTest` runs the single analysis from dated synthetic CSVs,
-seeds the aggregate history with compatible and incompatible runs, and feeds the
-snapshot and auxiliary histories into `SiteData`. It compares 7 result files:
-one public snapshot, two private diagnostic CSVs, three aggregate histories,
-and site data. The 3.7.0/schema 7.0.0 baseline removes
-mode fields, the duplicate local snapshot and private history. Analytical
-accounting, methodology, CSV rows and aggregate histories remain unchanged.
-Only schema 7.0.0 is supported; previous formats require verified reanalysis.
+## Source accounting
 
-The 3.8.0 / methodology 2.2.0 parser trims invisible Unicode characters at
-licence-value boundaries. These synthetic sources contain no such values, so
-their analytical outputs remain unchanged. Expected version fields and the
-synthetic comparable-history row move to 2.2.0; no counts are adjusted.
+The Airbnb fixture has 12 source rows: IDs 1–11 declare Lisboa, ID 12 declares
+Porto and is excluded. Thus there are **11 original listings**: ten in Arroios and
+one with unknown Airbnb parish (ID 11).
 
-The current 3.9.0 / methodology 2.3.0 baseline adds extraction of one explicit
-number/AL token from surrounding prose. No synthetic source row changes its
-parsed number; expected versions and the comparable-history row move to 2.3.0
-with identical counts and detailed outputs.
+- IDs 1 and 2 declare number 100 and merge. They are room listings with different
+  bedroom counts; this does not establish separate apartments. Their same host, AL
+  and strong descriptions also qualify for `same_host_room_group`: the pair has
+  10 points and relationship `separate_rooms`, with unchanged members/counts. Their medoid tie
+  selects ID 1, at the official location.
+- ID 3 declares 100 at a separate location.
+- ID 4 declares 100 and 200 plus unsupported residual text. It creates two
+  contributions, no residual unnumbered contribution, and stays separate.
+- IDs 5 and 6 declare `Exempt`. They remain separate unnumbered candidates even
+  though the other source evidence agrees.
+- ID 7 has no declaration; ID 8 declares an unsupported UT registration.
+- ID 9 declares 300 with missing listing coordinates.
+- ID 10 declares 200 near ID 4. Its evidence lacks a strong description and involves a multi-number listing: review, kept separate.
+- ID 11 declares 400 with unknown Airbnb parish.
 
-The test does not download sources, use repository snapshots or private caches,
-invoke Jekyll, or create a PDF. Site builds and publication audits remain separate
-CI checks. A dedicated regression test also audits the synthetic public artifact.
-The empty fixture-owned quotes file keeps editorial changes out of this test.
+There are **12 contributions**, **11 candidates** (7 numbered and 4 unnumbered),
+and **4 distinct AL numbers**. Every retained ID appears; ID 4 appears in two
+numbers. Assessments are unique by listing-ID pair, including the one accepted merge
+and plausible unresolved pairs across declaration categories. Unrelated nearby
+pairs are evaluated without public review records. IDs, groups and medoids are invariant under source-row reversal.
 
-## Cases
+The national RNAL fixture has six rows and four numbers:
 
-| Number / source row | Purpose |
-| --- | --- |
-| `001` / `1` | Two identical official entries; normalized leading zeroes; room establishment observed in two parishes with different hosts |
-| `2` | Repetition in one location without room/unit terms |
-| `3` | Same host across several locations; a connected chain plus a distant cluster; distance history over 5 km |
-| `4`, `5` | Officially outside Lisbon; known versus missing region; outside classification takes priority over missing observed coordinates |
-| `6` | Identifiable number absent nationally; nearby announcements remain separate |
-| `7`, `15` | Missing/sentinel official municipality |
-| `8`, `9`, `10`, `20` | Conflicting municipalities, parishes, coordinates, and known/missing municipalities |
-| `11` | Anchored `Registration Number:` prefix; exact coordinate match; listing scrape date differs from archive date |
-| `12` | One missing-coordinate announcement prevents the group from collapsing |
-| `13`, `22` | RNAL-only numbers; the observed Porto row for `22` is excluded |
-| `406/UT/2017` | Unparseable official number retained in official-entry counts |
-| `16`, `18` | Unknown official parish and unknown observed parish |
-| `17` | Legacy year format; officially registered in another Lisbon parish |
-| `21` | Chain endpoints exceed 500 m but form one connected component |
-| Empty, whitespace, `Exempt`, `/UT/` | Disjoint empty and filled-unrecognized announcement counts |
-| ` Lisboa `, `lisboa`, `Porto` | Normalized Lisbon variants enter classification, metrics and reuse counts; Porto is excluded |
+- 100 has two equivalent normalized numbers and identical coordinate pairs,
+  with conflicting official parishes Arroios/Belém. Municipality and coordinates
+  resolve, parish stays null.
+- 200 appears in Lisboa/Belém and Porto/Bonfim with conflicting locations and
+  regions. Municipality, dependent parish/location and region stay null. It is
+  still `found` nationally.
+- 300 appears in Lisboa/Arroios without coordinates.
+- 400 appears in Faro/Sé without region.
 
-## Independent accounting
+The independent Lisbon RNAL summary has **3 distinct numbers**. Arroios has
+100/300 (2) and Belém has 100/200 (2), so local distinct counts sum to 4 rather
+than the city total 3. Unknown official parish has zero. No source row is dropped
+when resolving national conflicts.
 
-There are 25 official rows. Nineteen declare Lisbon, of which one has no
-parseable AL number; those rows produce 15 distinct Lisbon numbers. Five extra
-entries repeat numbers, three entries have unresolved municipalities, and two
-Lisbon entries have unknown parishes.
+The number overlap is **3** for Lisbon (100/200/300) despite national conflicts,
+**2** for Arroios (100/300), and **0** for Belém and unknown. Candidate number 400
+is only in the Airbnb city set. The city circles count 3 RNAL numbers and 11 candidates, sharing 3 numbers
+once. The remaining candidate area is 8. Its stacked bar has 3 shared first occurrences,
+3 additional repeated occurrences, 1 outside number (400), 1 unrecognised declaration,
+2 unassessed exemptions and 1 absent declaration. Number 100 is counted once despite several candidates.
 
-The source has 36 announcements. Two Porto rows are excluded. The 34 included
-announcements contain 30 identifiable
-numbers, two empty licences and two filled-unrecognized licences. Two
-identifiable announcements use `6`, absent from RNAL, so 28 match nationally.
+`expected/public/summary.json` and `expected/public/candidates.json.gz` are the
+reviewed canonical pair. The gzip decodes to all candidates and pair assessments.
+These are the sole analysis outputs; no private directory or diagnostic files are generated.
+Source manifests remain beside the copied CSV inputs.
+Review diffs and independently recount these relationships before updating.
 
-Lisbon RNAL numbers are `1,2,3,8,9,10,11,12,13,16,17,18,20,21,22`.
-Observed numbers are `1,2,3,4,5,6,7,8,9,10,11,12,15,16,17,18,20,21`.
-Their intersection has 13 numbers. RNAL-only is `13,22`; Airbnb-only is
-`4,5` (other municipality), `6` (no national match), and `7,15` (unresolved).
+## Presentation fixture
 
-The estimate collapses three announcements for `1`, one for `2`, and two for `21`:
-`34 - 3 - 1 - 2 = 28`. It leaves all suspicious, unmatched, outside and unresolved
-cases separate. The independent test pins these totals, all difference
-categories, every geography, diagnostics, classifications and source dates.
+`snapshots/candidate/summary.json` and `snapshots/candidate/candidates.json.gz`
+form a separate invented dataset for the
+established site/report UX. It has **13 original listings**, **12 candidates**,
+**7 distinct candidate numbers** and **17 distinct RNAL numbers**. It includes a
+three-listing merged candidate, a listing contributing to two numbers, unknown
+geography, repeated numbers, a national nonmatch and two singleton exemptions.
+It includes original declarations and every internal merge assessment, with
+explicit evidence codes, relationships and a zero mixed-declaration segment, without
+changing those established presentation counts. Its relationship labels are
+`undetermined`: the invented fixture does not supply evidence distinguishing
+duplicate adverts from different rooms. Merged memberships remain unchanged.
+Demo IDs never get live links.
+Review measurements in this invented fixture are illustrative: qualifying title
+comparisons have 6 shared tokens out of 8 per title (Jaccard 0.6), descriptions
+have 36 shared tokens out of 40 per text (0.8182), and nearby pairs use 100 m.
+Unavailable room/property types and numeric attributes remain null. Decision codes
+are separate from evidence, and the assessment points reproduce the existing scores.
+Select it explicitly using `SNAPSHOT=test/fixtures/pipeline/snapshots/candidate`.
+It is not the output generated from `sources/`.
 
-## Updating expectations
-
-Normal tests only read `expected/`; they never regenerate it. To update it after
-an intentional, reviewed behavior change:
-
-```bash
-ruby test/support/update_pipeline_expectations.rb --write
-bundle exec rake test TEST=test/pipeline_regression_test.rb
-```
-
-Review every changed expected file and the independent accounting assertions.
-Do not update the baseline merely to make a failing refactor pass. Version fields,
-source hashes, dates, definitions, row ordering and unknown/new fields are retained.
-Only these volatile values are replaced with explicit placeholders:
-
-- Top-level `generated_at` in current summaries, including the site summary
-  and the consolidated document summary.
-- The current run's `generated_at` column in summary histories; seed dates remain.
-- `git_commit` and `git_worktree_dirty` in metadata, including site metadata
-  and snapshot metadata.
-
-If files are intentionally removed, delete their obsolete expectations explicitly;
-the updater does not delete files and the test rejects unexpected/missing outputs.
+The presentation Venn counts **5** shared city numbers (100001–100005),
+**12** RNAL-only and **2** Airbnb-only (100006/100007). Arroios shares 3 numbers;
+Santa Maria Maior shares 2; other parish intersections are zero. The repeated
+100005 contributes once to the city intersection, once in Arroios, and stays
+Airbnb-only in Estrela. The Airbnb circle represents all 12 candidates with 7 remaining candidates
+outside the shared area. The RNAL circle represents 17 numbers, including 12 unshared.
+The bar has 5 shared first occurrences, 1 repeated occurrence, 2 outside numbers,
+1 unrecognised declaration, 2 unassessed exemptions and 1 absent declaration. These reviewed invented memberships leave the candidate records unchanged.

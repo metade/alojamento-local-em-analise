@@ -1,0 +1,409 @@
+{
+  "lisbon": {
+    "candidates_count": 15920,
+    "numbered_candidates_count": 11241,
+    "distinct_al_numbers_count": 8784,
+    "exempt_candidates_count": 3405,
+    "empty_licence_candidates_count": 1153,
+    "unrecognised_licence_candidates_count": 121,
+    "mixed_licence_candidates_count": 0,
+    "official_count": 11869,
+    "listings_count": 17153,
+    "matched_al_numbers_count": 7247
+  },
+  "parishes": [
+    {
+      "freguesia": "Ajuda",
+      "candidates_count": 223,
+      "numbered_candidates_count": 168,
+      "distinct_al_numbers_count": 140,
+      "exempt_candidates_count": 44,
+      "empty_licence_candidates_count": 9,
+      "unrecognised_licence_candidates_count": 2,
+      "mixed_licence_candidates_count": 0,
+      "matched_al_numbers_count": 106,
+      "official_count": 185,
+      "listings_count": 235
+    },
+    {
+      "freguesia": "Alcântara",
+      "candidates_count": 279,
+      "numbered_candidates_count": 195,
+      "distinct_al_numbers_count": 166,
+      "exempt_candidates_count": 65,
+      "empty_licence_candidates_count": 17,
+      "unrecognised_licence_candidates_count": 2,
+      "mixed_licence_candidates_count": 0,
+      "matched_al_numbers_count": 125,
+      "official_count": 233,
+      "listings_count": 297
+    },
+    {
+      "freguesia": "Alvalade",
+      "candidates_count": 238,
+      "numbered_candidates_count": 150,
+      "distinct_al_numbers_count": 108,
+      "exempt_candidates_count": 69,
+      "empty_licence_candidates_count": 19,
+      "unrecognised_licence_candidates_count": 0,
+      "mixed_licence_candidates_count": 0,
+      "matched_al_numbers_count": 79,
+      "official_count": 153,
+      "listings_count": 266
+    },
+    {
+      "freguesia": "Areeiro",
+      "candidates_count": 386,
+      "numbered_candidates_count": 201,
+      "distinct_al_numbers_count": 116,
+      "exempt_candidates_count": 157,
+      "empty_licence_candidates_count": 27,
+      "unrecognised_licence_candidates_count": 1,
+      "mixed_licence_candidates_count": 0,
+      "matched_al_numbers_count": 70,
+      "official_count": 147,
+      "listings_count": 472
+    },
+    {
+      "freguesia": "Arroios",
+      "candidates_count": 1815,
+      "numbered_candidates_count": 1256,
+      "distinct_al_numbers_count": 923,
+      "exempt_candidates_count": 396,
+      "empty_licence_candidates_count": 148,
+      "unrecognised_licence_candidates_count": 15,
+      "mixed_licence_candidates_count": 0,
+      "matched_al_numbers_count": 651,
+      "official_count": 1194,
+      "listings_count": 2113
+    },
+    {
+      "freguesia": "Avenidas Novas",
+      "candidates_count": 713,
+      "numbered_candidates_count": 347,
+      "distinct_al_numbers_count": 234,
+      "exempt_candidates_count": 314,
+      "empty_licence_candidates_count": 50,
+      "unrecognised_licence_candidates_count": 2,
+      "mixed_licence_candidates_count": 0,
+      "matched_al_numbers_count": 166,
+      "official_count": 344,
+      "listings_count": 849
+    },
+    {
+      "freguesia": "Beato",
+      "candidates_count": 122,
+      "numbered_candidates_count": 87,
+      "distinct_al_numbers_count": 69,
+      "exempt_candidates_count": 31,
+      "empty_licence_candidates_count": 4,
+      "unrecognised_licence_candidates_count": 0,
+      "mixed_licence_candidates_count": 0,
+      "matched_al_numbers_count": 54,
+      "official_count": 95,
+      "listings_count": 131
+    },
+    {
+      "freguesia": "Belém",
+      "candidates_count": 272,
+      "numbered_candidates_count": 189,
+      "distinct_al_numbers_count": 149,
+      "exempt_candidates_count": 52,
+      "empty_licence_candidates_count": 29,
+      "unrecognised_licence_candidates_count": 2,
+      "mixed_licence_candidates_count": 0,
+      "matched_al_numbers_count": 115,
+      "official_count": 199,
+      "listings_count": 283
+    },
+    {
+      "freguesia": "Benfica",
+      "candidates_count": 76,
+      "numbered_candidates_count": 40,
+      "distinct_al_numbers_count": 37,
+      "exempt_candidates_count": 32,
+      "empty_licence_candidates_count": 4,
+      "unrecognised_licence_candidates_count": 0,
+      "mixed_licence_candidates_count": 0,
+      "matched_al_numbers_count": 19,
+      "official_count": 50,
+      "listings_count": 79
+    },
+    {
+      "freguesia": "Campo de Ourique",
+      "candidates_count": 442,
+      "numbered_candidates_count": 264,
+      "distinct_al_numbers_count": 212,
+      "exempt_candidates_count": 138,
+      "empty_licence_candidates_count": 36,
+      "unrecognised_licence_candidates_count": 4,
+      "mixed_licence_candidates_count": 0,
+      "matched_al_numbers_count": 165,
+      "official_count": 280,
+      "listings_count": 452
+    },
+    {
+      "freguesia": "Campolide",
+      "candidates_count": 265,
+      "numbered_candidates_count": 177,
+      "distinct_al_numbers_count": 113,
+      "exempt_candidates_count": 65,
+      "empty_licence_candidates_count": 13,
+      "unrecognised_licence_candidates_count": 10,
+      "mixed_licence_candidates_count": 0,
+      "matched_al_numbers_count": 83,
+      "official_count": 125,
+      "listings_count": 311
+    },
+    {
+      "freguesia": "Carnide",
+      "candidates_count": 35,
+      "numbered_candidates_count": 28,
+      "distinct_al_numbers_count": 26,
+      "exempt_candidates_count": 6,
+      "empty_licence_candidates_count": 1,
+      "unrecognised_licence_candidates_count": 0,
+      "mixed_licence_candidates_count": 0,
+      "matched_al_numbers_count": 19,
+      "official_count": 34,
+      "listings_count": 35
+    },
+    {
+      "freguesia": "Estrela",
+      "candidates_count": 944,
+      "numbered_candidates_count": 652,
+      "distinct_al_numbers_count": 540,
+      "exempt_candidates_count": 211,
+      "empty_licence_candidates_count": 74,
+      "unrecognised_licence_candidates_count": 7,
+      "mixed_licence_candidates_count": 0,
+      "matched_al_numbers_count": 415,
+      "official_count": 717,
+      "listings_count": 993
+    },
+    {
+      "freguesia": "Lumiar",
+      "candidates_count": 130,
+      "numbered_candidates_count": 63,
+      "distinct_al_numbers_count": 56,
+      "exempt_candidates_count": 50,
+      "empty_licence_candidates_count": 16,
+      "unrecognised_licence_candidates_count": 1,
+      "mixed_licence_candidates_count": 0,
+      "matched_al_numbers_count": 39,
+      "official_count": 86,
+      "listings_count": 131
+    },
+    {
+      "freguesia": "Marvila",
+      "candidates_count": 91,
+      "numbered_candidates_count": 53,
+      "distinct_al_numbers_count": 51,
+      "exempt_candidates_count": 34,
+      "empty_licence_candidates_count": 4,
+      "unrecognised_licence_candidates_count": 0,
+      "mixed_licence_candidates_count": 0,
+      "matched_al_numbers_count": 29,
+      "official_count": 75,
+      "listings_count": 99
+    },
+    {
+      "freguesia": "Misericórdia",
+      "candidates_count": 2538,
+      "numbered_candidates_count": 1950,
+      "distinct_al_numbers_count": 1601,
+      "exempt_candidates_count": 377,
+      "empty_licence_candidates_count": 205,
+      "unrecognised_licence_candidates_count": 6,
+      "mixed_licence_candidates_count": 0,
+      "matched_al_numbers_count": 1302,
+      "official_count": 2185,
+      "listings_count": 2662
+    },
+    {
+      "freguesia": "Olivais",
+      "candidates_count": 191,
+      "numbered_candidates_count": 101,
+      "distinct_al_numbers_count": 80,
+      "exempt_candidates_count": 74,
+      "empty_licence_candidates_count": 14,
+      "unrecognised_licence_candidates_count": 2,
+      "mixed_licence_candidates_count": 0,
+      "matched_al_numbers_count": 61,
+      "official_count": 110,
+      "listings_count": 199
+    },
+    {
+      "freguesia": "Parque das Nações",
+      "candidates_count": 325,
+      "numbered_candidates_count": 173,
+      "distinct_al_numbers_count": 152,
+      "exempt_candidates_count": 114,
+      "empty_licence_candidates_count": 35,
+      "unrecognised_licence_candidates_count": 3,
+      "mixed_licence_candidates_count": 0,
+      "matched_al_numbers_count": 94,
+      "official_count": 199,
+      "listings_count": 328
+    },
+    {
+      "freguesia": "Penha de França",
+      "candidates_count": 555,
+      "numbered_candidates_count": 382,
+      "distinct_al_numbers_count": 285,
+      "exempt_candidates_count": 130,
+      "empty_licence_candidates_count": 33,
+      "unrecognised_licence_candidates_count": 10,
+      "mixed_licence_candidates_count": 0,
+      "matched_al_numbers_count": 186,
+      "official_count": 323,
+      "listings_count": 636
+    },
+    {
+      "freguesia": "Santa Clara",
+      "candidates_count": 40,
+      "numbered_candidates_count": 10,
+      "distinct_al_numbers_count": 10,
+      "exempt_candidates_count": 25,
+      "empty_licence_candidates_count": 4,
+      "unrecognised_licence_candidates_count": 1,
+      "mixed_licence_candidates_count": 0,
+      "matched_al_numbers_count": 2,
+      "official_count": 11,
+      "listings_count": 40
+    },
+    {
+      "freguesia": "Santa Maria Maior",
+      "candidates_count": 3482,
+      "numbered_candidates_count": 2793,
+      "distinct_al_numbers_count": 2362,
+      "exempt_candidates_count": 423,
+      "empty_licence_candidates_count": 242,
+      "unrecognised_licence_candidates_count": 24,
+      "mixed_licence_candidates_count": 0,
+      "matched_al_numbers_count": 1974,
+      "official_count": 3157,
+      "listings_count": 3649
+    },
+    {
+      "freguesia": "Santo António",
+      "candidates_count": 1418,
+      "numbered_candidates_count": 964,
+      "distinct_al_numbers_count": 718,
+      "exempt_candidates_count": 350,
+      "empty_licence_candidates_count": 91,
+      "unrecognised_licence_candidates_count": 13,
+      "mixed_licence_candidates_count": 0,
+      "matched_al_numbers_count": 517,
+      "official_count": 936,
+      "listings_count": 1521
+    },
+    {
+      "freguesia": "São Domingos de Benfica",
+      "candidates_count": 139,
+      "numbered_candidates_count": 79,
+      "distinct_al_numbers_count": 73,
+      "exempt_candidates_count": 47,
+      "empty_licence_candidates_count": 10,
+      "unrecognised_licence_candidates_count": 3,
+      "mixed_licence_candidates_count": 0,
+      "matched_al_numbers_count": 54,
+      "official_count": 94,
+      "listings_count": 145
+    },
+    {
+      "freguesia": "São Vicente",
+      "candidates_count": 1171,
+      "numbered_candidates_count": 889,
+      "distinct_al_numbers_count": 776,
+      "exempt_candidates_count": 201,
+      "empty_licence_candidates_count": 68,
+      "unrecognised_licence_candidates_count": 13,
+      "mixed_licence_candidates_count": 0,
+      "matched_al_numbers_count": 583,
+      "official_count": 937,
+      "listings_count": 1227
+    },
+    {
+      "freguesia": null,
+      "candidates_count": 30,
+      "numbered_candidates_count": 30,
+      "distinct_al_numbers_count": 28,
+      "exempt_candidates_count": 0,
+      "empty_licence_candidates_count": 0,
+      "unrecognised_licence_candidates_count": 0,
+      "mixed_licence_candidates_count": 0,
+      "matched_al_numbers_count": 0,
+      "official_count": 0,
+      "listings_count": 0
+    }
+  ],
+  "signals": {
+    "empty_licence_listings": 1153,
+    "unrecognised_licence_listings": 121,
+    "unidentified_licence_listings": 1274,
+    "repeated_listings": 4460,
+    "outside_listings": 507
+  },
+  "repeated_number_distances": [
+    {
+      "range": "up_to_500_m",
+      "count": 812
+    },
+    {
+      "range": "500_m_1_km",
+      "count": 30
+    },
+    {
+      "range": "1_2_km",
+      "count": 35
+    },
+    {
+      "range": "2_5_km",
+      "count": 39
+    },
+    {
+      "range": "over_5_km",
+      "count": 48
+    },
+    {
+      "range": "unresolved",
+      "count": 182
+    }
+  ],
+  "outside_regions": [
+    {
+      "district": "Algarve",
+      "count": 209
+    },
+    {
+      "district": "Norte",
+      "count": 100
+    },
+    {
+      "district": "Grande Lisboa",
+      "count": 54
+    },
+    {
+      "district": "Oeste e Vale do Tejo",
+      "count": 51
+    },
+    {
+      "district": "Península de Setúbal",
+      "count": 35
+    },
+    {
+      "district": "Centro",
+      "count": 30
+    },
+    {
+      "district": "Alentejo",
+      "count": 28
+    }
+  ],
+  "source_dates": {
+    "airbnb_snapshot_date": "2026-09-19",
+    "airbnb_fetched_on": "2026-10-18",
+    "rnal_fetched_on": null
+  }
+}

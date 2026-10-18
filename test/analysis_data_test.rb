@@ -68,6 +68,8 @@ class AnalysisDataTest < Minitest::Test
         end
       end
       assert_equal ["https://example.com/listings.csv.gz", Data::OFFICIAL_URL, "https://example.com/rnal.csv"], requests
+      assert_equal "2024-07-01", Data.manifest(airbnb)["fetched_on"]
+      assert_equal "2024-07-01", Data.manifest(official)["fetched_on"]
       assert_equal "downloaded airbnb", File.read(airbnb)
       assert_equal "downloaded rnal", File.read(official)
       assert_equal "historical bytes", File.read(older)
@@ -121,32 +123,20 @@ class AnalysisDataTest < Minitest::Test
     end
   end
 
-  def test_snapshot_source_selection_uses_recorded_dates_and_verifies_bytes
+  def test_offline_registration_preserves_unknown_fetch_dates_and_known_manifests
     Dir.mktmpdir do |root|
-      airbnb = write_source(root, "listings", "2024-06-01", "airbnb bytes")
-      official = write_source(root, "Estabelecimentos_de_Alojamento_Local", "2024-07-01", "official bytes")
-      write_source(root, "listings", "2024-08-01")
-      write_source(root, "Estabelecimentos_de_Alojamento_Local", "2024-09-01")
-      snapshot = {"metadata" => {
-        "run_id" => "2024-06-01__2024-07-01",
-        "source_dates" => {"airbnb_snapshot_date" => "2024-06-01", "official_register_download_date" => "2024-07-01"},
-        "source_files" => {"airbnb" => {"sha256" => Digest::SHA256.file(airbnb).hexdigest},
-                           "official" => {"sha256" => Digest::SHA256.file(official).hexdigest}}
-      }}
-      URI.stub(:open, ->(*) { flunk "Snapshot source selection must not download" }) do
-        assert_equal [airbnb, official], Data.local_paths_for_snapshot!(snapshot, root: root)
-        [airbnb, official].each do |path|
-          bytes = File.binread(path)
-          File.write(path, "changed bytes")
-          error = assert_raises(RuntimeError) { Data.local_paths_for_snapshot!(snapshot, root: root) }
-          assert_includes error.message, "Source bytes differ from selected run"
-          assert_includes error.message, path
-          File.delete(path)
-          error = assert_raises(RuntimeError) { Data.local_paths_for_snapshot!(snapshot, root: root) }
-          assert_includes error.message, "Missing source"
-          assert_includes error.message, path
-          File.binwrite(path, bytes)
-        end
+      airbnb = write_source(root, "listings", "2024-06-01")
+      official = write_source(root, "Estabelecimentos_de_Alojamento_Local", "2024-07-01")
+      File.utime(Time.now, Time.now, airbnb)
+      URI.stub(:open, ->(*) { flunk "Registration must stay offline" }) do
+        first = Data.register!(root: root)
+        assert_equal [nil, nil], first.map { |record| record["fetched_on"] }
+        assert_equal ["2024-06-01", nil], first.map { |record| record["archive_date"] }
+        known = Data.manifest(airbnb, fetched_on: "2024-06-03")
+        assert_equal known, Data.manifest(airbnb)
+        assert_equal "2024-06-03", Data.register!(root: root).first["fetched_on"]
+        File.open(official, "a") { |file| file.write("changed") }
+        assert_raises(RuntimeError) { Data.manifest(official) }
       end
     end
   end
@@ -160,7 +150,11 @@ class AnalysisDataTest < Minitest::Test
       FileUtils.mkdir_p(destination)
       File.write(File.join(destination, "old.csv"), "obsolete")
       assert_equal destination, Data.archive!(root: root, destination: destination)
-      assert_equal [File.basename(official), File.basename(airbnb)].sort, Dir.children(destination).sort
+      assert_equal [airbnb, official].flat_map { |path| [File.basename(path), File.basename(path) + ".manifest.json"] }.sort, Dir.children(destination).sort
+      known = Data.manifest(airbnb, fetched_on: "2024-06-03")
+      Data.archive!(root: root, destination: destination)
+      assert_equal known, Data.manifest(File.join(destination, File.basename(airbnb)))
+      assert_nil Data.manifest(File.join(destination, File.basename(official)))["fetched_on"]
       [airbnb, official].each { |path| assert_equal File.binread(path), File.binread(File.join(destination, File.basename(path))) }
     end
   end

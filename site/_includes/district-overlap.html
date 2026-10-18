@@ -14,10 +14,11 @@
   {% assign airbnb_tip_y = 265 | minus: airbnb_offset %}
   <svg
     class="overlap-diagram block w-full"
-    viewBox="0 0 640 640"
+    viewBox="0 0 640 480"
     role="group"
-    aria-label="Números de registo AL nas duas fontes. Foque uma legenda para destacar o conjunto."
+    aria-label="Registos RNAL e potenciais AL no Airbnb, contando cada número comum uma vez. Foque uma legenda para destacar o conjunto."
   >
+    {% if m.geometry %}
     <defs>
       <clipPath id="{{ diagram_id }}-airbnb">
         <circle cx="{{ g.y }}" cy="190" r="{{ g.s }}" />
@@ -26,15 +27,15 @@
         <path clip-rule="evenodd" d="M {{ left_edge }} 190 a {{ g.r }} {{ g.r }} 0 1 0 {{ rnal_diameter }} 0 a {{ g.r }} {{ g.r }} 0 1 0 -{{ rnal_diameter }} 0 Z M {{ right_edge }} 190 a {{ g.s }} {{ g.s }} 0 1 0 {{ airbnb_diameter }} 0 a {{ g.s }} {{ g.s }} 0 1 0 -{{ airbnb_diameter }} 0 Z" />
       </clipPath>
     </defs>
-    <g class="overlap-total overlap-total--rnal" data-overlap="rnal-total" tabindex="0" role="img" aria-label="RNAL: {{ m.rnal | pt_number }} números">
-      <text x="30" y="25">RNAL<tspan x="30" dy="34" class="overlap-total-value">{{ m.rnal | pt_number }} números</tspan></text>
+    <g class="overlap-total overlap-total--rnal" data-overlap="rnal-total" tabindex="0" role="img" aria-label="RNAL: {{ m.rnal | pt_count: 'registo', 'registos' }}">
+      <text x="30" y="25">RNAL<tspan x="30" dy="34" class="overlap-total-value">{{ m.rnal | pt_count: 'registo', 'registos' }}</tspan></text>
       {% if m.rnal > 0 %}
         <path class="overlap-total-leader" d="M 150 76 L 150 {{ rnal_tip_y | minus: 22 }} L {{ rnal_tip_x }} {{ rnal_tip_y }}" />
         <path class="overlap-total-arrow" d="M {{ rnal_tip_x | minus: 10 }} {{ rnal_tip_y | minus: 3 }} L {{ rnal_tip_x }} {{ rnal_tip_y }} L {{ rnal_tip_x | minus: 2 }} {{ rnal_tip_y | minus: 10 }}" />
       {% endif %}
     </g>
-    <g class="overlap-total overlap-total--airbnb" data-overlap="airbnb-total" tabindex="0" role="img" aria-label="Airbnb: {{ m.airbnb | pt_number }} números">
-      <text x="380" y="25">Airbnb<tspan x="380" dy="34" class="overlap-total-value">{{ m.airbnb | pt_number }} números</tspan></text>
+    <g class="overlap-total overlap-total--airbnb" data-overlap="airbnb-total" tabindex="0" role="img" aria-label="Airbnb: {{ m.airbnb | pt_count: 'potencial AL', 'potenciais AL' }}">
+      <text x="330" y="25">Airbnb<tspan x="330" dy="34" class="overlap-total-value">{{ m.airbnb | pt_count: 'potencial AL', 'potenciais AL' }}</tspan></text>
       {% if m.airbnb > 0 %}
         <path class="overlap-total-leader" d="M 490 76 L 490 {{ airbnb_tip_y | minus: 22 }} L {{ airbnb_tip_x }} {{ airbnb_tip_y }}" />
         <path class="overlap-total-arrow" d="M {{ airbnb_tip_x | plus: 10 }} {{ airbnb_tip_y | minus: 3 }} L {{ airbnb_tip_x }} {{ airbnb_tip_y }} L {{ airbnb_tip_x | plus: 2 }} {{ airbnb_tip_y | minus: 10 }}" />
@@ -48,7 +49,7 @@
       <circle cx="{{ g.x }}" cy="190" r="{{ g.r }}" clip-path="url(#{{ diagram_id }}-airbnb)" class="overlap-region overlap-region--common" data-overlap="common" aria-hidden="true" />
     {% for label in m.overlap_labels %}
       {% if label.count > 0 %}
-        <g class="overlap-label overlap-label--{{ label.key }}" data-overlap="{{ label.key }}" tabindex="0" role="img" aria-label="{{ label.title }}: {{ label.count | pt_number }} números">
+        <g class="overlap-label overlap-label--{{ label.key }}" data-overlap="{{ label.key }}" tabindex="0" role="img" aria-label="{{ label.title }}: {% if label.key == 'airbnb' %}{{ label.count | pt_count: 'potencial AL', 'potenciais AL' }}{% else %}{{ label.count | pt_count: 'número AL', 'números AL' }}{% endif %}">
           {% if label.callout %}
             <path d="M {{ label.target }} 205 L {{ label.target }} 270 L {{ label.x }} {{ label.y | minus: 48 }}" />
             <circle cx="{{ label.target }}" cy="205" r="3" />
@@ -61,61 +62,64 @@
       {% endif %}
     {% endfor %}
     </g>
-    <g class="overlap-label overlap-label--unresolved" data-overlap="unresolved" tabindex="0" role="img" aria-label="{{ m.unresolved | pt_number }} anúncios sem número identificável, numa escala separada dos números de registo">
-      <circle class="overlap-unresolved-bubble" cx="520" cy="540" r="{{ m.bubble_radius }}" />
-      <text x="55" y="535">
-        <tspan class="overlap-value" x="55">{{ m.unresolved | pt_number }} anúncios</tspan>
-        <tspan x="55" dy="28">Sem número identificável</tspan>
-      </text>
-      {% if m.unresolved > 0 %}
-        <path d="M 370 540 L {{ 520 | minus: m.bubble_radius }} 540" />
-      {% endif %}
-    </g>
+    {% else %}
+      <g class="overlap-total overlap-total--rnal"><text x="30" y="25">RNAL<tspan x="30" dy="34" class="overlap-total-value">{{ m.rnal | pt_count: 'registo', 'registos' }}</tspan></text></g>
+      <g class="overlap-total overlap-total--airbnb"><text x="330" y="25">Airbnb<tspan x="330" dy="34" class="overlap-total-value">{{ m.airbnb | pt_count: 'potencial AL', 'potenciais AL' }}</tspan></text></g>
+      <g class="overlap-label"><text x="320" y="265" text-anchor="middle"><tspan class="overlap-value">{{ m.matched_al_numbers | pt_number }} — Correspondência encontrada</tspan><tspan x="320" dy="30">{{ m.remaining_candidates | pt_number }} — Outros potenciais AL</tspan></text></g>
+    {% endif %}
   </svg>
-  <figcaption class="mt-6 border-t border-[var(--color-line)] pt-5 text-sm text-[var(--color-ink)]/75">
-    <p class="mt-0!">
-      Círculos e sobreposição proporcionais aos números de registo AL distintos nesta geografia. A
-      bolha amarela representa a fração de anúncios sem número identificável, noutra escala.
+  <div class="candidate-breakdown mt-6 border-t border-[var(--color-line)] pt-5 text-sm">
+    <p class="font-semibold">
+      Como se distribuem os {{ m.airbnb | pt_count: 'potencial AL', 'potenciais AL' }}
     </p>
-    <details>
-      <summary class="cursor-pointer font-semibold text-[var(--color-ink)] underline underline-offset-4">
-        Como interpretar estes números
-      </summary>
-      <p>
-        «Só no RNAL» significa ausente do Airbnb nesta geografia; pode aparecer noutra. «Só no
-        Airbnb» pode ter registo nacional noutra localização.
-      </p>
-      <ul class="space-y-1">
-        <li>
-          Registo noutra freguesia de Lisboa:
-          <strong>{{ m.another_lisbon_parish | pt_number }}</strong>
+    {% if m.airbnb > 0 %}
+      <div
+        class="candidate-breakdown-bar"
+        role="group"
+        aria-label="Distribuição de 100% dos potenciais AL"
+      >
+        {% for category in m.candidate_breakdown %}
+          {% if category.count > 0 %}
+            <span
+              class="candidate-breakdown-segment candidate-breakdown--{{ category.key }}"
+              data-breakdown-category="{{ category.key }}"
+              style="width:{{ category.width }}%"
+              tabindex="0"
+              role="img"
+              aria-label="{{ category.label | escape }}: {{ category.count | pt_count: 'potencial AL', 'potenciais AL' }}"
+              title="{{ category.label | escape }}: {{ category.count | pt_number }}"
+            ></span>
+          {% endif %}
+        {% endfor %}
+      </div>
+    {% else %}
+      <p>Não há potenciais alojamentos locais nesta geografia.</p>
+    {% endif %}
+    <ul class="candidate-breakdown-legend">
+      {% for category in m.candidate_breakdown %}
+        {% if category.key == 'mixed' and category.count == 0 %}{% continue %}{% endif %}
+        <li
+          class="candidate-breakdown--{{ category.key }}"
+          data-breakdown-category="{{ category.key }}"
+          tabindex="0"
+        >
+          <span
+            class="candidate-breakdown-swatch candidate-breakdown--{{ category.key }}"
+            aria-hidden="true"
+          ></span>
+          <span>{{ category.label | escape }}</span>
+          <strong>{{ category.count | pt_number }}</strong>
         </li>
-        <li>
-          Registo noutro município:
-          <strong>{{ m.another_municipality | pt_number }}</strong>
-        </li>
-        <li>
-          Sem correspondência nacional:
-          <strong>{{ m.no_national_match | pt_number }}</strong>
-        </li>
-        <li>
-          Geografia oficial por resolver:
-          <strong>{{ m.unresolved_official_geography | pt_number }}</strong>
-        </li>
-      </ul>
-      {% if m.observed_unknown_parish > 0 or m.official_unknown_parish > 0 %}
-        <p>
-          Freguesia por resolver: {{ m.observed_unknown_parish | pt_number }} anúncios e
-          {{ m.official_unknown_parish | pt_number }} entradas oficiais de Lisboa. Incluídos no
-          total municipal, sem atribuição a uma freguesia conhecida.
-        </p>
-      {% endif %}
-      <p class="mt-4">
-        Dos {{ m.announcements | pt_number }} anúncios: {{ m.empty_licence | pt_number }} têm campo
-        vazio, {{ m.unrecognised_licence | pt_number }} têm valor não reconhecido e
-        {{ m.identifiable_number | pt_number }} têm número identificável. Destes últimos,
-        {{ m.confirmed_rnal_match | pt_number }} correspondem a um número no RNAL nacional datado.
-      </p>
-    </details>
+      {% endfor %}
+    </ul>
+  </div>
+  <figcaption class="mt-6 border-t border-[var(--color-line)] pt-5 text-sm text-[var(--color-ink)]/75">
+    Cada número AL comum conta uma vez na sobreposição; a barra reparte todos os potenciais AL.
+    <a
+      class="underline underline-offset-4"
+      href="{{ '/metodologia.html#contagens' | relative_url }}"
+    >
+      Como contamos →
+    </a>
   </figcaption>
 </figure>

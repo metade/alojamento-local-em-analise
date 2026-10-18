@@ -66,23 +66,33 @@ title: Metodologia e proveniência
         <div>
           <dt class="font-semibold">Registos oficiais</dt>
           <dd class="mt-1">
-            Entradas no RNAL. A contagem de Lisboa usa o concelho indicado no registo, sem garantir
-            que cada estabelecimento esteja hoje em funcionamento.
+            Números AL distintos no RNAL, contados uma vez em cada âmbito. A contagem de Lisboa usa
+            o concelho indicado no registo, sem garantir que cada estabelecimento esteja hoje em
+            funcionamento.
           </dd>
         </div>
         <div>
-          <dt class="font-semibold">Estabelecimentos estimados</dt>
+          <dt class="font-semibold">Potenciais AL</dt>
           <dd class="mt-1">
-            Estimativa a partir dos anúncios, depois de agrupar apenas as categorias de menor risco.
-            Não é uma contagem oficial de AL ativos.
+            Registos resultantes do tratamento e agrupamento de anúncios do Airbnb, com zero ou um
+            número AL e referências a um ou vários anúncios. Não correspondem necessariamente a
+            alojamentos distintos ou a registos oficiais.
           </dd>
         </div>
       </dl>
       <p class="mt-6 text-sm text-[var(--color-ink)]/75">
-        «Anúncios com número identificável» conta anúncios, não números distintos nem
-        correspondências confirmadas no RNAL. Os diagramas contam números distintos e usam o
-        concelho e a freguesia oficiais no RNAL e a freguesia observada no Airbnb. Um número pode
-        aparecer em várias freguesias; não somamos os seus totais para obter Lisboa.
+        No diagrama em forma de Venn, as áreas dos círculos são proporcionais aos totais de registos
+        RNAL e potenciais alojamentos locais do Airbnb. A sobreposição conta cada número AL comum
+        uma única vez, mesmo quando reutilizado. A área restante Airbnb é o total de potenciais
+        alojamentos locais menos os números comuns; pode incluir reutilizações de números existentes
+        no RNAL. Esta convenção não escolhe um potencial alojamento local correto por número. A
+        barra horizontal de 100% reparte todos os potenciais alojamentos locais: uma ocorrência por
+        número comum, reutilizações adicionais, números fora do RNAL deste âmbito, declarações não
+        reconhecidas, declarações mistas sem número, isenções declaradas por verificar e ausência de
+        declaração. Ainda não se avalia a validade das isenções. As correspondências usam as linhas
+        originais RNAL de Lisboa e da mesma freguesia oficial, antes da resolução nacional. Números
+        e reutilizações por freguesia não são necessariamente aditivos. Encontrar um número não
+        confirma a identidade nem a legalidade do alojamento.
       </p>
     </section>
 
@@ -104,11 +114,12 @@ title: Metodologia e proveniência
       <p class="text-sm text-[var(--color-ink)]/75">
         <a
           class="text-[var(--color-blue)] underline underline-offset-4"
-          href="{{ d.metadata.source_urls.official }}"
+          href="{{ d.metadata.source_urls.official | escape }}"
         >
           Consultar a fonte oficial ↗
         </a>
-        · descarregada em {{ d.metadata.source_dates.official_register_download_date }}.
+        · descarregada em
+        {{ d.source_dates.rnal_fetched_on | default: '???' }}.
       </p>
     </section>
 
@@ -120,44 +131,122 @@ title: Metodologia e proveniência
       <h2 id="listings-title">Anúncios e agrupamento</h2>
       <p>
         Usamos o snapshot de Lisboa do Inside Airbnb de
-        <strong>{{ d.metadata.source_dates.airbnb_snapshot_date }}</strong>
+        <strong>{{ d.source_dates.airbnb_snapshot_date | default: '???' }}</strong>
         , com
-        <strong>{{ s.listings | pt_number }} anúncios</strong>
+        <strong>{{ s.listing_count | pt_count: 'anúncio', 'anúncios' }}</strong>
         . Esta é a data do arquivo: as datas de recolha de cada anúncio (
         <code>last_scraped</code>
         ) podem abranger vários dias.
       </p>
       <p>
         A estimativa de
-        <strong>{{ s.establishment_estimate | pt_number }} estabelecimentos</strong>
+        <strong>{{ s.candidate_count | pt_count: 'potencial AL', 'potenciais AL' }}</strong>
         parte destes anúncios. O RNAL é uma fonte separada: ajuda a classificar os números, mas a
         sua contagem não é o ponto de partida da estimativa.
       </p>
-      <h3 class="mt-6">Quando agrupamos anúncios?</h3>
+      <h3 class="mt-6">Como se relacionam anúncios e potenciais AL?</h3>
       <p>
-        Para cada número AL repetido, analisamos a proximidade, os nomes dos anúncios, os tipos de
-        quarto e de propriedade, a modalidade oficial e o concelho do registo. O identificador do
-        anfitrião não é um critério de agrupamento.
+        Um potencial alojamento local tem um ID próprio, zero ou um número AL e um ou vários IDs de
+        anúncio. Agrupamos duplicados da mesma unidade e quartos ou camas do mesmo apartamento
+        quando há evidência suficiente. Apartamentos autónomos ficam separados. O número associado
+        ao potencial alojamento local é o único número utilizável declarado pelo conjunto dos
+        membros; não significa que todos o tenham declarado. Conservamos cada declaração original.
+        Sem número, a categoria é a comum aos membros ou mista. Anúncios com vários números mantêm
+        contribuições separadas e ficam fora das fusões automáticas.
       </p>
       <p>
-        Na estimativa, cada grupo classificado como
-        <strong>«provável estabelecimento com anúncios múltiplos»</strong>
-        ou
-        <strong>«licença repetida na mesma localização»</strong>
-        conta uma vez. A primeira categoria usa indícios de quartos ou unidades em pelo menos metade
-        dos anúncios, ou uma modalidade oficial de hospedagem, hostel ou quartos.
+        Procuramos pares até 500 m, com número AL partilhado ou referência explícita de apartamento
+        partilhada, independentemente do anfitrião. A distância até 500 m vale 1 ponto; o mesmo
+        anfitrião vale 1, títulos semelhantes valem 2, descrições fortemente semelhantes valem 3, a
+        mesma referência de apartamento vale 3 e o mesmo número AL vale 2. A compatibilidade de
+        quartos/apartamento com o mesmo anfitrião, AL e descrição forte vale 1. RNAL não dá pontos.
+        Comparamos conjuntos de palavras e números: títulos exigem três termos comuns e Jaccard de
+        0,5; descrições exigem 30 termos distintos por texto e Jaccard de 0,8.
       </p>
       <p>
-        Anúncios sem número identificável, números repetidos em localizações diferentes e registos
-        oficiais fora de Lisboa permanecem separados. Agrupar é uma opção analítica; não confirma
-        que os anúncios pertençam ao mesmo estabelecimento.
+        Agrupar exige pelo menos 8 pontos, coordenadas até 500 m, ausência de contradições e uma
+        referência explícita comum com texto semelhante, ou número AL comum com títulos e descrições
+        semelhantes, ou a via de quartos do mesmo anfitrião abaixo. Reconhecemos apartment, flat,
+        apartamento, apt e unidade seguidos de identificador numérico, alfanumérico ou letra única;
+        referências ambíguas não dão pontos. Referências de quarto/cama são distintas das de
+        apartamento. Apartamentos com quartos e outras categorias de quarto diferentes exigem
+        referência de apartamento comum, salvo a via abaixo. Referências distintas de apartamento ou
+        atributos conhecidos contraditórios entre apartamentos inteiros impedem fusão: tipo de
+        propriedade, quartos, camas, casas de banho ou capacidade. Diferenças entre quartos e
+        anfitriões diferentes não impedem por si só o agrupamento. Partilhar isenção, edifício,
+        piso, anfitrião ou texto genérico não basta.
       </p>
-      <h3 class="mt-6">A regra dos 500 metros</h3>
       <p>
-        Anúncios com o mesmo número formam um agrupamento espacial quando estão ligados por
-        distâncias até 500 metros. A ligação pode ser em cadeia: dois anúncios do mesmo grupo podem
-        estar a mais de 500 metros entre si. As distâncias em linha reta são calculadas pela fórmula
-        de Haversine, a partir das coordenadas aproximadas do snapshot.
+        Uma via para quartos do mesmo anfitrião exige um único número AL comum integralmente
+        declarado, coordenadas até 500 m e descrições com pelo menos 30 termos distintos por texto e
+        Jaccard de 0,8. Pelo menos um anúncio tem de ser um quarto privado; o outro pode ser outro
+        quarto privado ou um apartamento inteiro com tipo de propriedade reconhecido. Esta
+        compatibilidade vale 1 ponto, somando 8 com proximidade, anfitrião, AL e descrição. Não
+        exige títulos semelhantes nem frases específicas. Referências de apartamentos diferentes e
+        números contraditórios ou múltiplos bloqueiam fusão. Diferenças de quartos ou capacidade
+        entre um quarto e o apartamento inteiro são esperadas. Não é necessário observar todos os
+        quartos: todos os pares do grupo têm de qualificar. Dois anúncios de apartamentos inteiros
+        mantêm as regras de duplicados e de atributos contraditórios. Partilhar anfitrião/AL não
+        identifica por si só um apartamento; texto-modelo pode causar falsos positivos e requer
+        revisão.
+      </p>
+      <p>
+        Todos os pares de um grupo têm de cumprir a regra. Escolhemos a união com maior pontuação
+        mínima e desempatamos por IDs ordenados. Pares plausíveis sem evidência suficiente,
+        conflitos de números e fusões impedidas por conflitos de grupo ficam separados para revisão.
+        Uma exceção permite resolver a separação de apartamentos inteiros com declarações claras de
+        números AL distintos: ambos os registos RNAL têm de indicar Apartamento em Lisboa e
+        coordenadas até 500 m do respetivo anúncio, e os anúncios têm de estar até 500 m entre si.
+        Uma referência explícita de apartamento partilhada mantém o conflito para revisão.
+        Declarações parciais ou múltiplas, quartos e campos oficiais por resolver não bastam. Esta
+        evidência não dá pontos nem autoriza fusões. Não prova que seja o mesmo edifício. A
+        pontuação resume evidência e não é uma probabilidade. A proximidade não prova identidade.
+      </p>
+      <p>
+        Anúncios de alojamentos inteiros com o mesmo número AL também ficam resolvidos como
+        apartamentos separados quando diferem simultaneamente no número conhecido de quartos, camas
+        e capacidade. Outra combinação exige camas e capacidade diferentes na mesma direção, títulos
+        e descrições com Jaccard até 0,25 e pelo menos 3 termos distintos por título e 30 por
+        descrição, mesmo com igual número de quartos. Falhar a semelhança forte ou ter texto em
+        falta não basta. Uma referência explícita de apartamento partilhada ou declarações com
+        números conflituantes/múltiplos impedem esta regra. Valores ausentes ou malformados são
+        desconhecidos; diferenças isoladas continuam para revisão. A separação não atribui pontos
+        nem determina qual anúncio corresponde ao RNAL. O sinal de número partilhado permanece.
+      </p>
+      <p>
+        Os assessments dos downloads incluem distância em metros arredondada à unidade, semelhanças
+        e contagens de termos, tipos de anúncio/propriedade e atributos comparados, pela ordem dos
+        IDs. Valores em falta são desconhecidos, não penalizações. Cada evidência indica os seus
+        pontos e se apoia, contradiz ou deixa por resolver a relação. A decisão aparece num campo
+        separado; «evidência insuficiente para fusão» não usa avaliações Airbnb. Distâncias e
+        semelhanças arredondadas servem para revisão; as regras usam os valores originais.
+        Contradições mantêm os bloqueios existentes, sem novos pesos ou penalizações. Não publicamos
+        textos, anfitriões ou coordenadas exatas.
+      </p>
+      <p>
+        Cada potencial alojamento local conta uma vez na freguesia atribuída ou em localização
+        desconhecida. Esses totais somam o total de Lisboa. Os totais originais de anúncios usam a
+        freguesia declarada na fonte Airbnb e também somam Lisboa, incluindo localização
+        desconhecida. A freguesia atribuída aos potenciais alojamentos locais pode diferir da
+        original. Números distintos podem aparecer em várias freguesias. A avaliação da capacidade
+        autorizada fica para uma etapa posterior.
+      </p>
+      <h3 class="mt-6">Localização e correspondência</h3>
+      <p>
+        A freguesia observada pelo Airbnb, a derivada de coordenadas e a oficial são mantidas
+        separadamente. O snapshot regista a freguesia atribuída e os motivos de divergência. A
+        geografia Airbnb não está verificada. Atribuímos uma freguesia apenas quando todos os
+        membros declaram a mesma freguesia reconhecida. Usamos o membro que minimiza a soma de
+        distâncias aos restantes para consultar os polígonos CML completos e calcular a distância ao
+        RNAL. A freguesia por coordenadas não substitui a atribuída. A fiabilidade das coordenadas e
+        a proximidade dos limites exigem investigação adicional.
+      </p>
+      <p>
+        Encontrar um número no RNAL não verifica a identidade do alojamento. A avaliação de
+        correspondência fica para uma etapa posterior. Registamos apenas a declaração de isenção,
+        sem avaliar a sua validade legal nesta etapa. Nos registos RNAL duplicados, valores não
+        vazios concordantes são conservados; campos contraditórios ficam por resolver. Uma
+        divergência de município deixa também freguesia e localização por resolver.
       </p>
     </section>
 
@@ -170,7 +259,11 @@ title: Metodologia e proveniência
       <p>
         O campo da licença é preenchido no anúncio. Normalizamos de forma conservadora: retiramos
         espaços exteriores e zeros iniciais, reconhecemos números simples e variantes com AL antes
-        ou depois do número. Também aceitamos formatos antigos com ano entre 2010 e 2029.
+        ou depois do número. Também aceitamos formatos antigos com ano entre 2010 e 2029. Extraímos
+        todos os tokens AL explícitos e conservamos a declaração original no ficheiro de dados.
+        Extrações parciais recebem um sinal; o texto restante não cria um potencial alojamento local
+        adicional. Uma isenção só é reconhecida como declaração completa, nunca pela presença da
+        palavra em prosa.
       </p>
       <table class="my-6 w-full table-fixed border-collapse text-sm [&_th]:normal-case! [&_th]:tracking-normal! [&_th]:text-[length:inherit]! [&_th]:text-[var(--color-ink)]! [&_th]:px-0! [&_td]:px-0! [&_td]:text-left! [&_td:first-child]:pr-4! [&_td]:break-words">
         <caption class="mb-4 text-left text-sm text-[var(--color-ink)]/75">
@@ -237,9 +330,9 @@ title: Metodologia e proveniência
       <p class="text-sm text-[var(--color-ink)]/75">
         As diferenças contam números: «só no RNAL» é ausência no Airbnb da mesma geografia, não em
         toda a plataforma. «Só no Airbnb» distingue outra freguesia de Lisboa, outro município,
-        ausência no RNAL nacional e geografia oficial por resolver. Entradas oficiais duplicadas
-        contam uma vez nos conjuntos; continuam separadas na contagem de entradas. Freguesias
-        ausentes ou desconhecidas ficam num agregado próprio e entram no total municipal.
+        ausência no RNAL nacional e geografia oficial por resolver. Números repetidos na fonte
+        oficial contam uma vez em cada âmbito. Freguesias ausentes ou desconhecidas ficam num
+        agregado próprio e entram no total municipal.
       </p>
       <p>
         Outros regimes, como
@@ -256,13 +349,27 @@ title: Metodologia e proveniência
     >
       <h2 id="signals-title">Definições dos sinais</h2>
       <p>
-        Os sinais contam anúncios do snapshot de Lisboa. As percentagens de cada sinal no total usam
-        os {{ s.listings | pt_number }} anúncios como denominador. Os gráficos de distância e de
-        região têm unidades próprias, descritas abaixo.
+        Na página inicial, os sinais contam IDs de anúncio distintos. São independentes: um anúncio
+        pode apresentar mais de um sinal. O sinal de licença não identificável distingue campos
+        vazios de valores não reconhecidos e exclui declarações de isenção. O cartão da página
+        inicial apresenta o conjunto mais amplo de anúncios sem número AL declarado, incluindo as
+        isenções numa categoria separada, por verificar. Conta cada declaração original uma vez por
+        anúncio, mesmo quando há agrupamento. A distribuição por região usa a NUTS II do registo
+        RNAL fora de Lisboa e conta cada anúncio uma vez. Regiões em falta ou contraditórias ficam
+        por resolver. A distribuição de distâncias conta números AL distintos, usando a maior
+        distância de um potencial alojamento local ao registo RNAL. Declarar isenção não equivale a
+        uma validação legal.
+      </p>
+      <p>
+        Nas páginas de freguesia, a tabela conta potenciais AL atribuídos à freguesia, uma vez por
+        sinal ou declaração. Um potencial AL pode aparecer em várias linhas; estas não formam uma
+        repartição do total. As declarações são verificadas nos valores originais dos anúncios de
+        cada grupo, incluindo grupos associados a um número AL.
       </p>
       <ul class="my-6 grid gap-3 text-sm text-[var(--color-blue)] sm:grid-cols-2 [&_a]:underline [&_a]:underline-offset-4">
         <li><a href="#campo-vazio">Campo da licença vazio</a></li>
         <li><a href="#valor-nao-reconhecido">Valor não reconhecido</a></li>
+        <li><a href="#isencao-declarada">Isenção declarada</a></li>
         <li><a href="#localizacoes-diferentes">Localizações diferentes</a></li>
         <li><a href="#fora-de-lisboa">Registo fora de Lisboa</a></li>
       </ul>
@@ -274,8 +381,9 @@ title: Metodologia e proveniência
           <h3 id="empty-title">Campo da licença vazio</h3>
           <p>
             O valor original está ausente ou contém apenas espaços. A categoria interna «sem
-            licença» descreve esse campo; não demonstra ausência de licença. Na apresentação, «sem
-            número identificável» reúne este sinal e o seguinte.
+            licença» descreve esse campo; não demonstra ausência de licença. O sinal de número não
+            identificável reúne este caso e o seguinte; o cartão da página inicial acrescenta as
+            declarações de isenção, apresentadas separadamente.
           </p>
         </section>
         <section
@@ -290,25 +398,35 @@ title: Metodologia e proveniência
           </p>
         </section>
         <section
+          id="isencao-declarada"
+          aria-labelledby="exempt-title"
+        >
+          <h3 id="exempt-title">Isenção declarada — por verificar</h3>
+          <p>
+            O campo contém uma declaração completa de isenção reconhecida pelo método, como
+            «Exempt». Estes anúncios aparecem separadamente no cartão sem número AL declarado. Não
+            entram no sinal de campo vazio ou valor não reconhecido. A declaração é conservada sem
+            avaliar se a isenção se aplica ao alojamento.
+          </p>
+        </section>
+        <section
           id="localizacoes-diferentes"
           aria-labelledby="locations-title"
         >
-          <h3 id="locations-title">Mesmo número, localizações diferentes</h3>
+          <h3 id="locations-title">Mesmo número, potenciais AL separados</h3>
           <p>
-            O mesmo número aparece em mais de um agrupamento espacial. Contamos os anúncios
-            associados, exceto quando existe um registo oficial fora de Lisboa: essa classificação
-            tem prioridade.
+            O mesmo número aparece em potenciais alojamentos locais separados. Contamos os IDs de
+            anúncio associados uma vez neste sinal, mantendo os potenciais alojamentos locais
+            separados. A distância de cada potencial alojamento local ao seu registo RNAL fica
+            registada no snapshot.
           </p>
           <p>
-            O gráfico de distâncias na página inicial conta
-            <strong>números AL distintos</strong>
-            . Cada número entra uma vez, pela maior distância entre dois anúncios de agrupamentos
-            diferentes, mesmo que tenha três ou mais agrupamentos.
-          </p>
-          <p class="text-sm text-[var(--color-ink)]/75">
-            Os intervalos não se sobrepõem: 500 m ≤ distância &lt; 1 km; 1 km ≤ distância &lt; 2 km;
-            2 km ≤ distância ≤ 5 km; distância &gt; 5 km. São indicadores baseados em posições
-            aproximadas, não medições no terreno.
+            O gráfico conta cada número AL repetido uma vez, segundo a maior distância de um dos
+            seus potenciais alojamentos locais ao respetivo registo RNAL. Com três ou mais
+            potenciais alojamentos locais, usamos o maior desses valores, sem calcular uma média. Os
+            intervalos são até 500 m, 500 m–1 km, 1–2 km, 2–5 km e mais de 5 km; o limite superior
+            pertence ao intervalo. Correspondências ou distâncias em falta ficam por resolver. As
+            posições são aproximadas e os sinais exigem verificação individual.
           </p>
         </section>
         <section
@@ -323,17 +441,10 @@ title: Metodologia e proveniência
             é diferente de Lisboa. Esta divergência exige verificação individual.
           </p>
           <p>
-            O gráfico regional conta
-            <strong>anúncios</strong>
-            , agrupados pelo campo
-            <strong>NUTSII</strong>
-            do registo oficial. Mostra todas as regiões presentes. Concelhos vazios ou desconhecidos
-            ficam separados deste sinal, como geografia por resolver; regiões vazias aparecem como
-            «Região não identificada».
-          </p>
-          <p class="text-sm text-[var(--color-ink)]/75">
-            As percentagens regionais usam apenas os anúncios deste sinal como denominador. São
-            arredondadas a uma casa decimal e podem não somar exatamente 100%.
+            O gráfico regional conta anúncios distintos por NUTS II do registo oficial. Cada anúncio
+            conta uma vez; regiões em falta ou contraditórias aparecem como «Região por resolver».
+            Encontrar o número num registo de outro município é um sinal de divergência, não uma
+            prova de uso indevido nem uma confirmação da identidade do alojamento.
           </p>
         </section>
       </div>
@@ -346,12 +457,12 @@ title: Metodologia e proveniência
     >
       <h2 id="limits-title">Limitações</h2>
       <p>
-        Os agrupamentos são transitivos: ligamos anúncios separados por até 500 metros; os extremos
-        de uma cadeia podem estar mais longe. Coordenadas ausentes não permitem agrupar. O concelho
-        fora de Lisboa tem prioridade sobre os sinais de repetição. Números sem correspondência
-        nacional e geografia por resolver ficam separados na estimativa; identificadores de
-        anfitrião não são critérios de agrupamento. Estimativas por freguesia são calculadas
-        independentemente e não se somam necessariamente à estimativa municipal.
+        A precisão geográfica pode afetar a freguesia atribuída, sobretudo junto aos seus limites.
+        Cada potencial alojamento local é atribuído a uma freguesia ou a localização desconhecida;
+        esses totais somam Lisboa. Os totais originais de anúncios são independentes e usam a
+        freguesia declarada na fonte Airbnb; também somam Lisboa, incluindo localização
+        desconhecida. Números distintos podem aparecer em várias freguesias e não são
+        necessariamente aditivos.
       </p>
       <p>
         As fontes têm datas e finalidades diferentes. A presença de um anúncio no snapshot não
@@ -364,8 +475,9 @@ title: Metodologia e proveniência
         requerem validação junto das fontes oficiais antes de qualquer conclusão legal.
       </p>
       <p>
-        «Licença única em Lisboa» significa que o número aparece num único anúncio da cidade e
-        corresponde a um registo RNAL com concelho Lisboa. Não confirma atividade atual.
+        Encontrar um número no RNAL e avaliar a correspondência com o alojamento são resultados
+        diferentes. A evidência pode ser favorável, insuficiente ou contraditória. Nenhuma dessas
+        avaliações confirma atividade atual ou constitui uma conclusão legal.
       </p>
       <p
         id="o-que-se-diz"
@@ -385,15 +497,16 @@ title: Metodologia e proveniência
       <dl class="mt-6 space-y-4 text-sm">
         <div>
           <dt class="font-semibold">Análise selecionada</dt>
-          <dd class="mt-1 break-words">{{ d.run_id }}</dd>
+          <dd class="mt-1 break-words">{{ d.snapshot_name }}</dd>
         </div>
         <div>
           <dt class="font-semibold">Airbnb</dt>
           <dd class="mt-1">
-            Snapshot de {{ d.metadata.source_dates.airbnb_snapshot_date }} ·
+            Snapshot de {{ d.source_dates.airbnb_snapshot_date }} · descarregado em
+            {{ d.source_dates.airbnb_fetched_on | default: '???' }} ·
             <a
               class="text-[var(--color-blue)] underline underline-offset-4"
-              href="{{ d.metadata.source_urls.airbnb }}"
+              href="{{ d.metadata.source_urls.airbnb | escape }}"
             >
               Inside Airbnb ↗
             </a>
@@ -402,46 +515,35 @@ title: Metodologia e proveniência
         <div>
           <dt class="font-semibold">RNAL</dt>
           <dd class="mt-1">
-            Descarregado em {{ d.metadata.source_dates.official_register_download_date }} ·
+            Descarregado em
+            {{ d.source_dates.rnal_fetched_on | default: '???' }} ·
             <a
               class="text-[var(--color-blue)] underline underline-offset-4"
-              href="{{ d.metadata.source_urls.official }}"
+              href="{{ d.metadata.source_urls.official | escape }}"
             >
               Turismo de Portugal ↗
             </a>
           </dd>
         </div>
-        <div>
-          <dt class="font-semibold">Versões</dt>
-          <dd class="mt-1">
-            Metodologia {{ s.methodology_version }} · análise {{ d.metadata.analysis_version }}
-          </dd>
-        </div>
       </dl>
       <p>
-        Cada par de datas tem uma análise pública atual; o Git conserva as versões anteriores. As
-        comparações históricas só são feitas entre métricas com a mesma versão da metodologia. O
-        documento de dados regista URLs, datas, hashes SHA-256 das fontes, commit e versões da
-        análise, metodologia e esquema de saída.
+        O snapshot reúne o resumo RNAL, os totais originais de anúncios e os potenciais alojamentos
+        locais do Airbnb. Pode ser consultado nos links abaixo, juntamente com o relatório técnico.
       </p>
       <p>
-        Os ficheiros públicos contêm apenas dados agregados. Não incluem identificadores de anúncios
-        ou anfitriões, URLs de anúncios, nomes, endereços, coordenadas exatas ou valores originais
-        de licença.
+        Os ficheiros públicos contêm IDs de anúncio, números normalizados, geografia por freguesia e
+        sinais, declarações originais de licença e avaliações de pares. Os restantes campos excluem
+        anfitriões, nomes, endereços e coordenadas exatas dos anúncios.
       </p>
-      {% assign public_data_file = 'snapshot.json' %}
       <div class="mt-6 flex flex-wrap gap-x-6 gap-y-4 text-sm text-[var(--color-blue)] [&_a]:underline [&_a]:underline-offset-4">
-        <a href="{{ '/runs/' | append: d.run_id | append: '/' | append: public_data_file | relative_url }}">
-          Dados, metadados e hashes →
+        <a href="{{ site.data.site.summary_download | relative_url }}">Resumo JSON →</a>
+        <a href="{{ site.data.site.candidates_download | relative_url }}">
+          Potenciais AL JSON.gz →
         </a>
-        <a href="{{ '/runs/' | append: d.run_id | append: '/report.html' | relative_url }}">
-          Relatório técnico ↗
-        </a>
+        <a href="{{ '/report.html' | relative_url }}">Relatório técnico ↗</a>
         {% unless site.skip_report_pdfs %}
           ·
-          <a href="{{ '/runs/' | append: d.run_id | append: '/report.pdf' | relative_url }}">
-            PDF ↓
-          </a>
+          <a href="{{ '/report.pdf' | relative_url }}">PDF ↓</a>
         {% endunless %}
       </div>
     </section>

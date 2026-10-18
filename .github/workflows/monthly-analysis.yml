@@ -74,16 +74,22 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: analysis-sources
-          path: tmp/source-artifact/*.csv
+          path: tmp/source-artifact/*
           if-no-files-found: error
           retention-days: 90
       - name: Executar análise
-        run: bundle exec rake analysis
+        id: analysis
+        run: |
+          bundle exec rake analysis
+          bundle exec ruby -Ilib -ralojamento_local -e '
+            dates = AlojamentoLocal::Analysis::Data.local_paths!.map { |path| AlojamentoLocal::Analysis::Data.source_date(path).to_s }
+            puts "snapshot=#{File.join("data/snapshots", dates.join("__"))}"
+          ' >> "$GITHUB_OUTPUT"
       - name: Preparar e validar outputs públicos
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add data/snapshots data/history
+          git add -- "${{ steps.analysis.outputs.snapshot }}/summary.json" "${{ steps.analysis.outputs.snapshot }}/candidates.json.gz"
           bundle exec ruby scripts/audit_publication.rb
       - name: Construir site público
         env:
@@ -96,9 +102,7 @@ jobs:
         run: bundle exec ruby scripts/audit_publication.rb --artifact _site
       - name: Inspecionar PDFs gerados
         run: |
-          for pdf in _site/runs/*/report.pdf; do
-            pdfinfo "$pdf" > /dev/null
-          done
+          pdfinfo _site/report.pdf > /dev/null
       - name: Registar outputs públicos no histórico Git
         run: |
           git diff --cached --quiet || git commit -m "Atualiza análise mensal"

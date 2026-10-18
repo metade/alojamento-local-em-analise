@@ -1,106 +1,96 @@
 # Trabalho a retomar
 
-## Primeiro lançamento e arquivo de fontes
+## Pipeline de candidatos
 
-Prioridade: publicar uma primeira análise com o par de fontes atual. Guardar as
-fontes agora; adiar comparações e integração do arquivo. Manter a identificação
-da metodologia e a explicação do método atual, mesmo ao simplificar o sistema.
+A implementação v2 está concluída. Os itens abertos abaixo são investigação e
+calibração futura; não impedem a publicação do método atual documentado.
 
-Os artefactos `analysis-sources` do workflow mensal conservam apenas o último
-par para reutilização entre execuções, com retenção de 90 dias renovada em cada
-run. A recuperação de fontes históricas após expiração continua a depender do
-arquivo permanente e da integração descrita abaixo.
+- [x] Apresentar campos vazios, valores não reconhecidos e isenções declaradas
+  separadamente no cartão sem número AL declarado, contando anúncios originais.
+- [x] Substituir placeholders nas freguesias por sinais e declarações de candidatos
+  atribuídos, explicitando a sobreposição e a unidade de contagem.
 
-1. [x] Fazer backup no Google Drive das fontes datadas Airbnb e RNAL existentes.
-   Preservar os bytes originais em ficheiros comprimidos, nomes/datas e um
-   manifesto com SHA-256, tamanhos, contagens e URLs das fontes. Verificar os
-   hashes após restaurar o backup. Registar a localização no Drive e confirmar
-   o upload antes de considerar esta tarefa concluída; conservar fontes locais.
-   ZIPs preparados em `tmp/source-backup-2026-10-12/`: `q4-2025.zip` (Airbnb
-   setembro + RNAL novembro) e `q3-2026.zip` (Airbnb junho + três dumps RNAL
-   setembro), com manifestos e hashes de restauro verificados. Upload manual
-   confirmado pelo utilizador; os rótulos trimestrais não alteram datas das fontes.
-   Arquivo público reduzido aos pares `2025-09-21__2025-11-25` (Q4 2025) e
-   `2026-06-23__2026-09-26` (Q3 2026), reanalisados no schema consolidado 6.0.0
-   após verificação dos hashes do manifesto; restantes runs públicos removidos.
-2. [ ] Simplificar o sistema para o primeiro lançamento com dados atuais:
-   remover comparações históricas, seleção/fallback de metodologias antigas e
-   infraestrutura de histórico do pipeline, site, workflows e testes. Rever os
-   snapshots de desenvolvimento existentes antes de escolher o primeiro
-   baseline. Preservar `methodology_version`, datas, hashes e proveniência nos
-   resultados; manter a página de metodologia e os seus anchors. Atualizar
-   documentação e AGENTS.md para refletir o fluxo simplificado.
-3. [ ] Reintroduzir comparação histórica a partir de fontes arquivadas locais.
-   Escolher explicitamente os pares de fontes e executar ambos com a mesma
-   metodologia para medir mudanças no tempo. Para medir o efeito de uma mudança
-   metodológica, usar os mesmos bytes das fontes nas duas versões do método.
-   Guardar resultados distintos por fontes e versão, sem substituir a referência
-   anterior; mostrar datas Airbnb/RNAL separadamente e investigar diferenças de
-   cobertura do export RNAL antes de interpretar quedas como encerramentos.
-4. [ ] Acrescentar recuperação de fontes arquivadas do Google Drive ao fluxo
-   anterior, depois de validar a comparação local. Usar IDs/URLs explícitos,
-   autenticação adequada para ficheiros privados, secrets fora do repositório,
-   cache local e verificação SHA-256 antes da análise. O build normal do site
-   continua a consumir outputs sanitizados; só o fluxo explícito de reanálise
-   histórica deve precisar do arquivo e das credenciais.
+- [x] Tornar assessments revistos legíveis com distância, semelhanças/contagens de
+  termos, tipos, atributos e pontos por evidência. Separar `decision_reason` e
+  substituir `review_score`, sem alterar candidatos, decisões ou pontuações.
+- [ ] Calibrar pesos de proximidade e eventuais penalizações suaves com pares
+  revistos que devem fundir e que devem ficar separados. Manter bloqueios fortes,
+  tratar informação ausente como desconhecida e avaliar quarto/apartamento à parte.
 
-- [ ] Antes do primeiro lançamento, estabelecer o baseline de metodologia e
-  manter notas curtas por versão: o que mudou, porquê e efeito nos números
-  quando aplicado às mesmas fontes. Associar essas notas à versão registada no
-  run. A preservação de múltiplos resultados por versão fica para a etapa 3;
-  um rótulo no metadata, sozinho, não preserva resultados substituídos.
+- [x] Fazer uma primeira classificação descritiva dos 5 827 anfitriões do snapshot
+  de setembro por composição dos anúncios: apartamentos inteiros, quartos privados,
+  mistos ou outras categorias. Rever um portefólio misto em profundidade.
+- [ ] Usar perfis de anfitrião para orientar revisão de grupos anfitrião–AL–unidade,
+  sem exceção global de confiança. O exemplo revisto anuncia várias unidades sob
+  o mesmo AL, incluindo quartos de apartamentos com áreas e contagens semelhantes.
+  Avaliar referências explícitas e convenções de nomes por unidade antes de autorizar
+  novas fusões; tipo de portefólio e ausência de contradições não provam identidade.
 
-## Pipeline unificado
+- [x] Substituir o pipeline antigo no mesmo ponto de entrada, com snapshots em
+  pastas de pares datados, manifests locais, validação de cobertura e substituição segura.
+- [x] Extrair vários números explícitos, conservar declarações originais, resolver
+  conflitos RNAL e calcular resumos RNAL/listings independentemente.
+- [x] Comparar um único conjunto de anúncios, com procura espacial até 500 m,
+  referências de unidade, declarações distintas e complete-link pontuado.
+  Preservar declarações individuais, categorias mistas e medóide determinístico.
+- [x] Publicar downloads datados e relatórios na raiz, selecionar a pasta mais
+  recente por defeito e manter a fixture de apresentação apenas por seleção explícita.
+- [x] Remover comparações, readers, expectativas, relatórios e snapshots antigos
+  da árvore atual, preservando o histórico Git sem reescrita.
+- [x] Usar `undetermined` para relações sem evidência suficiente de duplicação;
+  distinguir a fusão de alojamentos da classificação dos anúncios como duplicados.
+- [x] Resolver como apartamentos separados os conflitos de números distintos com
+  declarações claras e registos RNAL de apartamentos localmente consistentes,
+  sem atribuir pontos de identidade nem afirmar que partilham um edifício.
+- [ ] Calibrar referências explícitas e relações de duplicados/quartos com amostra
+  verificada; ampliar vocabulário apenas com regressões. Rever ambiguidades,
+  anúncios de várias unidades e texto de anfitrião repetido, sem objetivo de redução
+  do número de candidatos. Partilhar `Exempt` nunca estabelece identidade.
+- [x] Substituir frases específicas por uma via de quartos privados e apartamento
+  inteiro com o mesmo anfitrião/AL, descrição forte e proximidade. Manter conflitos
+  de unidade, complete-link e contagens independentes das fontes.
+- [ ] Avaliar falsos positivos da via anfitrião/AL/descrição em portefólios com
+  texto-modelo e várias unidades; rever perdas de fusões apoiadas por frases.
+- [x] Resolver separações de anúncios inteiros com o mesmo AL e diferenças
+  simultâneas de quartos, camas e capacidade, sem referência explícita comum de
+  apartamento; também camas/capacidade diferentes na mesma direção com títulos e descrições claramente
+  distintos, mesmo com igual número de quartos. Diferenças isoladas mantêm revisão;
+  o sinal de número partilhado permanece.
+- [ ] Calibrar a separação apoiada em texto dissemelhante com traduções, alterações
+  de configuração e portefólios de grupos grandes; diferenças de camas/capacidade
+  em sentidos opostos continuam a requerer revisão nesta alternativa.
+- [ ] Investigar fiabilidade da geografia Airbnb não verificada, deslocação ou
+  imprecisão das coordenadas, proximidade dos limites CML e casos de fronteira.
+  Validar os polígonos completos, qualidade/época das fontes e regras para eventual
+  atribuição alternativa de freguesia; não substituir já a unanimidade Airbnb.
+- [ ] Investigar evidência de localização e fiabilidade RNAL, campos contraditórios,
+  distância aos limites e critérios para avaliações futuras de correspondência.
+  A existência nacional de um número não valida a identidade do alojamento.
+- [ ] Avaliar isenções declaradas com critérios e fontes adequadas; o pipeline
+  atual regista apenas a declaração, sem conclusão legal. Definir critérios e evidência
+  antes de separar isenções corretas/incorretas na barra; até lá, todas ficam por verificar.
+- [ ] Rever exemplos de quartos/apartamentos e calibrar regras com amostra
+  verificada; pontuações são evidência e não probabilidades. Preservar regressões
+  sintéticas equivalentes sem expor nomes, descrições ou anfitriões.
+- [ ] Avaliar capacidade autorizada e correspondência RNAL com critérios e evidência
+  próprios. Os atributos de capacidade servem apenas para contradizer fusões de
+  apartamentos inteiros; existência nacional não pontua identidade.
 
-- [x] Remover os modos local/público da análise. Gerar sempre um snapshot agregado
-  e diagnósticos privados separados. O Jekyll gera ambos os relatórios com o
-  template partilhado. Retirar modo e IDs de rerun
-  do schema 7.0.0; preservar metodologia e resultados em fontes idênticas.
-- [x] Usar o flag nativo `serving` do Jekyll para incluir relatórios privados e
-  links no build local, a partir dos CSVs disponíveis. Builds normais removem e
-  excluem esses outputs; a auditoria rejeita dados/links privados na publicação.
-  Sem servidor próprio, interceptação HTTP ou renderer ERB separado.
+- [x] Manter um único relatório HTML/PDF e retirar diagnósticos persistidos e
+  toda a geração de outputs privados.
 
-## Outras tarefas
+## Arquivo e futuro histórico
 
-- [x] Mover o helper de geometria dos diagramas de Venn para
-  `lib/alojamento_local/site_data/overlap.rb`, sob `SiteData::Overlap`.
-  Preservar a implementação e o componente Liquid existente; manter os testes
-  de proporções e casos limite em `test/site_data_overlap_test.rb`.
-
-- [x] Introduzir um loader partilhado de snapshots públicos para a regeneração
-  do relatório e a construção do site. Ler os ficheiros atuais e devolver uma
-  estrutura com interface estável para metadata, resumo, grupos de licenças,
-  anúncios por freguesia e classificação, totais por freguesia e métricas de
-  registo. Centralizar a validação de schema, proveniência e coerência dos
-  agregados; manter explícitas as unidades e usar nomes sem ambiguidades.
-  Migrar os consumidores para essa interface e testar a equivalência dos
-  relatórios e dados do site com a fixture sintética, sem alterar os outputs.
-
-- [x] Gerar os relatórios por snapshot através de uma página completa
-  do Jekyll, com `layout: null`, consumindo os dados validados pelo loader partilhado. Incorporar
-  estilos e os restantes recursos necessários para manter `report.html`
-  autónomo, utilizável offline e como fonte do PDF derivado. Gerar os relatórios
-  no build do site, incluindo a publicação no GitHub, e acrescentar uma tarefa
-  Rake que use a mesma fonte e o mesmo gerador Jekyll para publicar apenas o
-  relatório de um snapshot, sem construir as páginas editoriais.
-  Definir o destino do HTML e adaptar a análise, a regeneração, as verificações
-  de reutilização e a auditoria à nova etapa de geração; manter os builds do
-  site sem alterações aos snapshots versionados. Substituir a montagem HTML
-  de `Report` em Ruby e testar a equivalência entre os dois modos de build,
-  as secções e métricas preservadas e o funcionamento autónomo do relatório.
-
-- [x] Depois do loader partilhado, consolidar os dados do snapshot num ficheiro
-  estruturado e versionado que esse loader consuma. Manter a interface do
-  documento para o relatório e o site. Apenas schema 7.0.0: snapshots anteriores
-  exigem reanálise das fontes verificadas; sem leitores legados ou fallback.
-  Validar a estrutura com JSON Schema e a proveniência/contabilidade em Ruby.
-  Atualizar a escrita, o schema
-  público, a auditoria de publicação e a
-  documentação; rejeitar formatos antigos e verificar a equivalência dos resultados.
-
-- [x] Integrar a reanálise de um run público anterior em `analysis[run_id]` e
-  remover o wrapper separado. Selecionar fontes datadas pelo metadata, verificar
-  ambos os hashes SHA-256 e usar o pipeline existente com as versões atuais, sem
-  downloads. Preservar validação, substituição transacional, relatórios arquivados
-  e outros pares de datas; atualizar documentação e testes.
+- [x] Backup manual confirmado das fontes datadas no Google Drive. ZIPs preparados
+  em `tmp/source-backup-2026-10-12/` (`q4-2025.zip` e `q3-2026.zip`), com manifestos
+  SHA-256 e restauro verificado. Rótulos trimestrais e datas do backup não são datas
+  de download das fontes; manifestações novas conservam fetch desconhecido como null.
+- [ ] Definir arquivo permanente de CSVs e manifestos; artefactos CI atuais conservam
+  só o último par, com retenção renovada de 90 dias.
+- [ ] Reintroduzir comparações apenas mediante seleção explícita de fontes
+  arquivadas e aplicação do mesmo método aos mesmos bytes. Investigar cobertura
+  RNAL antes de interpretar quedas como encerramentos. Não restaurar leitores
+  antigos nem comparações automáticas durante esta etapa.
+- [ ] Integrar eventual recuperação autenticada do Google Drive com IDs explícitos,
+  secrets fora do Git e verificação SHA-256. Builds normais continuam a consumir
+  apenas snapshots locais já gerados.

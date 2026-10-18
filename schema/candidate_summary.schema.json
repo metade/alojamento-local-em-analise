@@ -1,0 +1,263 @@
+{
+  "type": "object",
+  "properties": {
+    "source_dates": {
+      "type": "object",
+      "properties": {
+        "rnal_fetched_on": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date"
+        },
+        "airbnb_fetched_on": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date"
+        },
+        "airbnb_snapshot_date": {
+          "type": "string",
+          "format": "date"
+        }
+      },
+      "required": [
+        "rnal_fetched_on",
+        "airbnb_fetched_on",
+        "airbnb_snapshot_date"
+      ],
+      "additionalProperties": false
+    },
+    "lisbon": {
+      "type": "object",
+      "properties": {
+        "official_count": {
+          "$ref": "#/$defs/count"
+        },
+        "listings_count": {
+          "$ref": "#/$defs/count"
+        },
+        "candidates_count": {
+          "$ref": "#/$defs/count"
+        },
+        "numbered_candidates_count": {
+          "$ref": "#/$defs/count"
+        },
+        "distinct_al_numbers_count": {
+          "$ref": "#/$defs/count"
+        },
+        "matched_al_numbers_count": {
+          "$ref": "#/$defs/count"
+        },
+        "exempt_candidates_count": {
+          "$ref": "#/$defs/count"
+        },
+        "empty_licence_candidates_count": {
+          "$ref": "#/$defs/count"
+        },
+        "unrecognised_licence_candidates_count": {
+          "$ref": "#/$defs/count"
+        },
+        "mixed_licence_candidates_count": {
+          "$ref": "#/$defs/count"
+        }
+      },
+      "required": [
+        "official_count",
+        "listings_count",
+        "candidates_count",
+        "numbered_candidates_count",
+        "distinct_al_numbers_count",
+        "matched_al_numbers_count",
+        "exempt_candidates_count",
+        "empty_licence_candidates_count",
+        "unrecognised_licence_candidates_count",
+        "mixed_licence_candidates_count"
+      ],
+      "additionalProperties": false
+    },
+    "parishes": {
+      "type": "array",
+      "minItems": 25,
+      "maxItems": 25,
+      "items": {
+        "type": "object",
+        "properties": {
+          "freguesia": {
+            "$ref": "#/$defs/parish"
+          },
+          "official_count": {
+            "$ref": "#/$defs/count"
+          },
+          "listings_count": {
+            "$ref": "#/$defs/count"
+          },
+          "candidates_count": {
+            "$ref": "#/$defs/count"
+          },
+          "numbered_candidates_count": {
+            "$ref": "#/$defs/count"
+          },
+          "distinct_al_numbers_count": {
+            "$ref": "#/$defs/count"
+          },
+          "matched_al_numbers_count": {
+            "$ref": "#/$defs/count"
+          },
+          "exempt_candidates_count": {
+            "$ref": "#/$defs/count"
+          },
+          "empty_licence_candidates_count": {
+            "$ref": "#/$defs/count"
+          },
+          "unrecognised_licence_candidates_count": {
+            "$ref": "#/$defs/count"
+          },
+          "mixed_licence_candidates_count": {
+            "$ref": "#/$defs/count"
+          }
+        },
+        "required": [
+          "freguesia",
+          "official_count",
+          "listings_count",
+          "candidates_count",
+          "numbered_candidates_count",
+          "distinct_al_numbers_count",
+          "matched_al_numbers_count",
+          "exempt_candidates_count",
+          "empty_licence_candidates_count",
+          "unrecognised_licence_candidates_count",
+          "mixed_licence_candidates_count"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "signals": {
+      "type": "object",
+      "properties": {
+        "empty_licence_listings": {
+          "$ref": "#/$defs/count"
+        },
+        "unrecognised_licence_listings": {
+          "$ref": "#/$defs/count"
+        },
+        "unidentified_licence_listings": {
+          "$ref": "#/$defs/count"
+        },
+        "repeated_listings": {
+          "$ref": "#/$defs/count"
+        },
+        "outside_listings": {
+          "$ref": "#/$defs/count"
+        }
+      },
+      "required": [
+        "empty_licence_listings",
+        "unrecognised_licence_listings",
+        "unidentified_licence_listings",
+        "repeated_listings",
+        "outside_listings"
+      ],
+      "additionalProperties": false
+    },
+    "repeated_number_distances": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 6,
+      "items": {
+        "type": "object",
+        "properties": {
+          "range": {
+            "enum": [
+              "up_to_500_m",
+              "500_m_1_km",
+              "1_2_km",
+              "2_5_km",
+              "over_5_km",
+              "unresolved"
+            ]
+          },
+          "count": {
+            "$ref": "#/$defs/count"
+          }
+        },
+        "required": [
+          "range",
+          "count"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "outside_regions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "district": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1
+          },
+          "count": {
+            "$ref": "#/$defs/count"
+          }
+        },
+        "required": [
+          "district",
+          "count"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "source_dates",
+    "lisbon",
+    "parishes",
+    "signals",
+    "repeated_number_distances",
+    "outside_regions"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "parish": {
+      "enum": [
+        "Ajuda",
+        "Alc\u00e2ntara",
+        "Alvalade",
+        "Areeiro",
+        "Arroios",
+        "Avenidas Novas",
+        "Beato",
+        "Bel\u00e9m",
+        "Benfica",
+        "Campo de Ourique",
+        "Campolide",
+        "Carnide",
+        "Estrela",
+        "Lumiar",
+        "Marvila",
+        "Miseric\u00f3rdia",
+        "Olivais",
+        "Parque das Na\u00e7\u00f5es",
+        "Penha de Fran\u00e7a",
+        "Santa Clara",
+        "Santa Maria Maior",
+        "Santo Ant\u00f3nio",
+        "S\u00e3o Domingos de Benfica",
+        "S\u00e3o Vicente",
+        null
+      ]
+    }
+  }
+}

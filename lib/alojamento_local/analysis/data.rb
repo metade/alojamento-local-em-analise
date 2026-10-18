@@ -31,22 +31,40 @@ module AlojamentoLocal
         [airbnb, official]
       end
 
-      # Resolve and verify local source bytes recorded by a validated snapshot.
-      def self.local_paths_for_snapshot!(snapshot, root: "data_sources")
-        metadata = snapshot.fetch("metadata")
-        run_id = metadata.fetch("run_id")
-        dates = metadata.fetch("source_dates")
-        paths = {
-          "airbnb" => File.join(root, "listings-#{dates.fetch('airbnb_snapshot_date')}.csv"),
-          "official" => File.join(root, "Estabelecimentos_de_Alojamento_Local-#{dates.fetch('official_register_download_date')}.csv")
-        }
-        paths.each do |source, path|
-          raise "Missing source for #{run_id}: #{path}" unless File.file?(path)
-          unless Digest::SHA256.file(path).hexdigest == metadata.fetch("source_files").fetch(source).fetch("sha256")
-            raise "Source bytes differ from selected run #{run_id}: #{source} (#{path})"
-          end
+      # Register cached bytes offline; a filename is not proof of a fetch date.
+      def self.register!(root: "data_sources")
+        paths = %w[listings Estabelecimentos_de_Alojamento_Local].flat_map do |prefix|
+          Dir.glob(File.join(root, "#{prefix}-????-??-??.csv")).sort
         end
-        paths.values_at("airbnb", "official")
+        raise "Missing dated local sources" if paths.empty?
+        paths.map { |path| manifest(path) }
+      end
+
+      def self.manifest(path, fetched_on: nil, url: nil)
+        filename = "#{path}.manifest.json"
+        hash = Digest::SHA256.file(path).hexdigest
+        if File.file?(filename) && fetched_on.nil?
+          record = JSON.parse(File.read(filename))
+          raise "Source manifest hash differs: #{path}" unless record.fetch("sha256") == hash
+          raise "Source manifest filename differs: #{path}" unless record.fetch("filename") == File.basename(path)
+          raise "Source manifest date differs: #{path}" unless record.fetch("source_file_date") == source_date(path).to_s
+          Date.iso8601(record["fetched_on"]) if record["fetched_on"]
+          expected_archive = File.basename(path).start_with?("listings-") ? source_date(path).to_s : nil
+          raise "Source manifest archive date differs: #{path}" unless record.fetch("archive_date") == expected_archive
+          return record
+        end
+        airbnb = File.basename(path).start_with?("listings-")
+        date = source_date(path).to_s
+        record = {"filename" => File.basename(path), "sha256" => hash,
+                  "url" => url || (airbnb ? airbnb_url(date) : OFFICIAL_URL),
+                  "source_file_date" => date, "archive_date" => airbnb ? date : nil,
+                  "fetched_on" => fetched_on}
+        Tempfile.create([".manifest-", ".json"], File.dirname(path)) do |file|
+          file.write(JSON.pretty_generate(record) + "\n")
+          file.flush
+          File.rename(file.path, filename)
+        end
+        record
       end
 
       def self.source_date(path)
@@ -58,6 +76,8 @@ module AlojamentoLocal
           .max_by { |path| source_date(path) }
       end
 
+      # Source URLs are HTTPS endpoints; open-uri performs the downloads.
+      # standard:disable Security/Open
       def self.prepare_alojamentos_locais!(airbnb_date:, root: "data_sources", force: false)
         existing = latest_local("Estabelecimentos_de_Alojamento_Local", root: root)
         return existing if !force && existing && source_date(existing) >= airbnb_date
@@ -75,6 +95,7 @@ module AlojamentoLocal
           URI.open(csv_url) { |remote_file| IO.copy_stream(remote_file, file) }
         end
 
+        manifest(path, fetched_on: Date.today.to_s, url: OFFICIAL_URL)
         path
       end
 
@@ -91,6 +112,7 @@ module AlojamentoLocal
           end
         end
 
+        manifest(path, fetched_on: Date.today.to_s, url: airbnb_data_url)
         path
       end
 
@@ -109,8 +131,13 @@ module AlojamentoLocal
         paths = local_paths!(root: root)
         FileUtils.mkdir_p(destination)
         # Only stage the selected pair, never historical or unrelated files.
-        Dir.glob(File.join(destination, "*.csv")).each { |path| FileUtils.rm_f(path) }
-        paths.each { |path| FileUtils.cp(path, destination) }
+        Dir.glob(File.join(destination, "*")).each { |path| FileUtils.rm_f(path) }
+        paths.each do |path|
+          record = manifest(path)
+          FileUtils.cp([path, "#{path}.manifest.json"], destination)
+          copied = File.join(destination, File.basename(path))
+          raise "Source changed during archive: #{path}" unless Digest::SHA256.file(copied).hexdigest == record.fetch("sha256")
+        end
         destination
       end
 
@@ -128,9 +155,10 @@ module AlojamentoLocal
         date = Date.parse(date_text.to_s)
 
         [date.to_s, link]
-      rescue ArgumentError, Date::Error
+      rescue ArgumentError
         raise "Could not parse the Lisbon snapshot date from the Inside Airbnb data page"
       end
+      # standard:enable Security/Open
     end
   end
 end

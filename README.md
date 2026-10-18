@@ -1,452 +1,525 @@
-# Alojamento Local em Lisboa — indicadores para verificação
+# AL em análise
 
-Análise investigativa de snapshots de anúncios Airbnb em Lisboa comparados com o registo oficial português de alojamento local. Os resultados são indicadores para verificação oficial, não conclusões jurídicas.
+Este projeto compara anúncios Airbnb em Lisboa com o Registo Nacional de
+Alojamento Local (RNAL). Os resultados são indicadores para verificação, não
+conclusões legais sobre a ilegalidade de anúncios ou estabelecimentos.
 
-## Execução
+## Executar
 
 ```bash
 bundle install
-bundle exec rake sources:update
-bundle exec rake analysis
-bundle exec jekyll serve
-```
-
-Há uma única análise, sem modos ou flags de diagnóstico. Cada execução recalcula
-as fontes datadas locais e produz dois conjuntos separados:
-
-| Destino | Conteúdo | Git / publicação |
-| --- | --- | --- |
-| `data/snapshots/<airbnb-date>__<rnal-download-date>/` | `snapshot.json` agregado e relatórios públicos arquivados, quando existentes | Versionado |
-| `data/private/<airbnb-date>__<rnal-download-date>/` | Dois CSVs de diagnóstico | Ignorado, nunca publicado |
-
-Os diagnósticos incluem nomes, licenças originais, identificadores, endereços
-e coordenadas. O snapshot nunca recebe esses campos. A análise escreve apenas
-dados. O Jekyll gera os relatórios público e privado a partir da mesma página
-`site/report.html`: o privado acrescenta as tabelas dos CSVs. Ambos têm HTML
-completo e PDF; os CSVs detalhados acompanham apenas o relatório privado.
-
-Atualizar fontes, analisar e construir o site são etapas independentes:
-
-```bash
-bundle exec rake sources:update   # verifica fontes remotas e descarrega se necessário
-bundle exec rake analysis         # snapshot agregado + diagnósticos privados, sem rede
-bundle exec rake site:build       # site e relatórios públicos HTML/PDF
-bundle exec jekyll serve          # build e observação + servidor local com links privados
-bundle exec rake refresh          # atualizar fontes → análise → site público
-bundle exec rake rebuild          # análise → site público; sem downloads
-```
-
-`sources:update` consulta o índice Inside Airbnb para Lisboa e descarrega um CSV
-em falta. Reutiliza o RNAL datado mais recente se a sua data de download for igual
-ou posterior à data do snapshot Airbnb; caso contrário, descarrega uma cópia com
-a data real de hoje. Nunca altera a data de uma cópia existente.
-
-A análise sem argumentos seleciona o par datado mais recente em `data_sources/`,
-sem rede. Para reproduzir um par anterior, use `bundle exec rake 'analysis[<run_id>]'`.
-A tarefa carrega e valida o snapshot existente, seleciona as fontes locais datadas
-pelo metadata e verifica ambos os hashes SHA-256 antes de recalcular com as versões
-atuais. IDs inválidos ou desconhecidos, fontes em falta e hashes diferentes são
-rejeitados antes da análise, sem substituir os resultados existentes.
-
-Cada par tem um identificador baseado apenas nas duas datas. Reanalisar substitui
-o snapshot, os diagnósticos e as linhas desse par no histórico após validação,
-com staging e rollback em conjunto. Os restantes pares ficam iguais; o Git
-conserva versões anteriores dos agregados. Não há IDs de rerun, histórico privado,
-reutilização de resultados ou modos local/público. Fontes com hashes diferentes
-para um par já publicado continuam a ser rejeitadas.
-
-`FORCE=1` aplica-se apenas a `sources:update`, incluindo a etapa de fontes de
-`refresh`. Volta a descarregar ambas as fontes. `analysis`, `rebuild` e
-`site:build` nunca descarregam fontes, mesmo com `FORCE=1`.
-
-### Snapshots e relatórios
-
-O documento autoritativo `snapshot.json` usa schema 7.0.0, sem campo `mode`.
-Os `report.html`/`report.pdf` já arquivados nas pastas dos snapshots são
-preservados por reanálises. São artefactos históricos; o site gera relatórios
-novos a partir do snapshot e não usa essas cópias. A análise continua a escrever
-apenas dados, sem gerar ou atualizar os relatórios arquivados.
-`PublicSnapshot.load` devolve um Hash com chaves string. JSON Schema verifica
-estrutura e tipos; Ruby verifica proveniência e contabilidade. Não há leitores
-legados ou fallback: formatos anteriores exigem reanálise de fontes verificadas.
-
-O documento contém `metadata`, `summary`, `licence_group_aggregates`,
-`announcements_by_parish_and_classification`, `parish_totals` e
-`registration_metrics`. Datas, URLs, hashes SHA-256, versões e proveniência Git
-ficam registados. Contagens de anúncios e entradas oficiais são distintas dos
-conjuntos de números normalizados; as estimativas municipais e os números
-distintos não são somas de freguesias.
-
-A análise 3.7.0 remove os modos e escreve sempre os diagnósticos separadamente.
-A metodologia então manteve-se em 2.1.0: a fixture sintética e os dois pares arquivados
-foram recalculados com os mesmos bytes verificados, sem alterações aos valores
-analíticos. O arquivo conserva os pares `2025-09-21__2025-11-25` (Q4 2025) e
-`2026-06-23__2026-09-26` (Q3 2026); os rótulos trimestrais não são datas de recolha.
-O histórico agregado em `data/history/` continua a manter uma linha de resumo
-e as contagens auxiliares atuais por par.
-
-Para construir apenas um relatório público, sem análise ou downloads:
-
-```bash
-bundle exec rake 'report:build[data/snapshots/<run_id>]'
-```
-
-O destino por omissão é `tmp/reports/<run_id>/`, substituível por `DESTINATION`.
-Deve ser separado do snapshot de entrada. O Jekyll usa a página completa
-`site/report.html`, com CSS incorporado e `layout: null`, tanto no site como no
-build autónomo. Após escrever HTML, `ReportPdf` gera `report.pdf` com o
-`wkhtmltopdf-binary` incluído no bundle. Em Ubuntu são necessárias `libxrender1`,
-`libfontconfig1`, `libxext6` e fontes. Não há conversor alternativo.
-Os builds não alteram snapshots ou históricos; uma falha pode deixar o destino
-incompleto e exige repetir o build. O site publica apenas os ficheiros permitidos
-em `_site/runs/<run_id>/`.
-
-### Organização da análise
-
-`Analysis.run` prepara fontes e destinos, calcula e publica o resultado. Devolve
-`{run_id:, path:, private_path:, summary:}`. As opções de destino são
-`output_root`, `history_path` e `private_root`; os destinos privados têm de ficar
-separados dos snapshots, histórico e diretórios do site.
-
-| Componente | Responsabilidade |
-| --- | --- |
-| `PreparedSources::Pair` | Preparação única das fontes, datas, URLs, hashes e verificação dos bytes |
-| `Classifier` | Linhas detalhadas e classificações |
-| `Aggregates`, `AnnouncementCounts`, `RegistrationMetrics` | Contagens, estimativas e conjuntos medidos |
-| `Result` | Resultado, metadata e snapshot agregado validado |
-| `OutputWriter` | Snapshot ou diagnósticos em destinos separados |
-| `History` | Comparações e CSVs históricos agregados |
-| `PublicPublisher` | Validação, instalação conjunta de snapshot/diagnósticos/histórico e rollback |
-| Gerador de relatórios Jekyll | Template partilhado para relatórios públicos e, ao servir localmente, privados |
-
-`official_register_date` é a maior data de registo entre as linhas oficiais
-correspondentes aos anúncios; `official_register_download_date` é a data da
-cópia RNAL utilizada. Scripts e testes usam diretamente o componente responsável.
-
-## Site público
-
-O site estático publicável é montado a partir dos snapshots e do histórico agregado já versionados:
-
-```bash
 npm ci
-bundle exec rake site:build
+bundle exec rake sources:register  # proveniência dos CSVs locais, sem rede
+bundle exec rake analysis          # recalcula o último par local, sem rede
+DESTINATION=tmp/candidate-site bundle exec rake site:build
 ```
 
-As tarefas do projeto são executadas pelo Rake; npm fornece as ferramentas
-frontend, incluindo a compilação de CSS. `bundle exec rake` continua a executar
-os testes por defeito. As tarefas carregam apenas o código necessário e chamam
-`Analysis.run` e `SiteChecker` em Ruby e `jekyll build` pela CLI. O build do site usa os snapshots
-públicos existentes; não executa a análise nem descarrega fontes.
+`analysis` escreve exatamente `summary.json` e `candidates.json.gz` em
+`data/snapshots/<data-arquivo-airbnb>__<data-ficheiro-rnal>/`
+como único output da análise. Não são gerados diagnósticos nem outputs privados.
+Reanalisar substitui esse snapshot. Outros pares permanecem intactos. Não existem comparações
+históricas, versões de output, leitores de formatos antigos ou fallback.
 
-Scripts e testes carregam `lib/alojamento_local.rb`; o Zeitwerk carrega as
-classes e módulos conforme os caminhos em `lib/alojamento_local/`. O teste
-de carregamento antecipado em `test/alojamento_local_test.rb` verifica essa
-correspondência.
-
-`site:build` prepara os dados do Jekyll, gera as páginas, compila o CSS,
-verifica a estrutura e executa a auditoria de publicação do artefacto. Para
-repetir apenas as etapas de CSS ou verificação:
+O build seleciona a pasta datada mais recente. Valida o documento selecionado e
+falha se estiver ausente ou inválido. `SNAPSHOT=/caminho/para/pasta` seleciona outro
+snapshot explicitamente. A fixture inventada de apresentação continua disponível:
 
 ```bash
-npm run site:css
-bundle exec rake site:check
-ruby scripts/audit_publication.rb --artifact _site
+SNAPSHOT=test/fixtures/pipeline/snapshots/candidate DESTINATION=tmp/fixture-site bundle exec rake site:build
+DESTINATION=tmp/candidate-report bundle exec rake 'report:build[data/snapshots/2026-06-23__2026-09-26]'
 ```
 
-Os templates HTML/Liquid em `site/` usam Prettier com o plugin Liquid,
-indentação de dois espaços e largura preferida de 100 caracteres. Para formatar
-ou verificar a formatação sem alterar ficheiros:
+O site publica `/snapshots/<pasta-selecionada>/summary.json` e
+`/snapshots/<pasta-selecionada>/candidates.json.gz`, `/report.html` e
+`/report.pdf`. Há um único relatório, comum ao site, ao servidor local e ao build autónomo,
+com o mesmo template e os mesmos cálculos. Não existe um relatório privado.
+Builds não executam análise nem alteram as fontes ou snapshots. O Jekyll remove
+outputs antigos de destinos reutilizados; builds normais não contêm relatórios
+privados nem rotas antigas `runs/`.
+
+A tabela detalhada dos relatórios omite candidatos sem sinais nem revisão de
+agrupamento, com número encontrado no RNAL em Lisboa, freguesias atribuída, por
+coordenadas e oficial concordantes e distância conhecida até 500 m. Casos por
+resolver permanecem visíveis. Totais, gráficos e downloads incluem todos os
+candidatos; a omissão não é uma certificação legal.
+
+## Fontes e proveniência
+
+- Airbnb: [Inside Airbnb](https://insideairbnb.com/get-the-data/), arquivo de Lisboa.
+- RNAL: [Turismo de Portugal / ArcGIS](https://hub.arcgis.com/api/download/v1/items/4e62eb1977564991bd01e61d7aa8266f/csv?redirect=false&layers=6).
+- Limites: [Câmara Municipal de Lisboa](https://gisapps.cm-lisboa.pt/arcgis/rest/services/SGPI_Open/LXSGPI_Temas/MapServer/4).
+
+`data_sources/` conserva CSVs datados e manifestos `*.csv.manifest.json`, ignorados
+pelo Git. Cada manifesto guarda URL, nome, SHA-256, data do ficheiro, data do
+arquivo Airbnb e data de download quando documentada. `sources:register` regista
+os CSVs datados existentes offline. Datas de download desconhecidas ficam `null`:
+nunca são inferidas de mtime, `last_scraped`, backups ou da data atual.
+
+`source_dates.airbnb_snapshot_date` é obrigatória e identifica o arquivo Airbnb.
+`airbnb_fetched_on` e `rnal_fetched_on` podem ser `null`. A data no nome do ficheiro
+RNAL identifica a fonte selecionada, sem estabelecer uma data de download.
 
 ```bash
-npm run site:format
-npm run site:lint
+bundle exec rake sources:update   # rede explícita: verificar arquivo e atualizar quando necessário
+bundle exec rake sources:archive  # apenas o par local selecionado e os seus manifestos
+bundle exec rake rebuild          # análise local + site
+bundle exec rake refresh          # atualização de fontes + análise + site
 ```
 
-A verificação corre em CI nos pushes, pull requests e builds de publicação.
-Formate os ficheiros fonte; os snapshots arquivados e `_site/` ficam fora deste
-comando. A largura é uma preferência: valores de atributos indivisíveis podem
-continuar numa linha mais longa.
+Downloads futuros bem-sucedidos registam a data real de download. A reutilização
+de cache e os artefactos CI preservam os manifestos. `FORCE=1` só afeta a atualização.
+Fontes históricas podem ser escolhidas em Ruby com ambos os caminhos explícitos:
 
-O CSS editável está em `site/assets/css/`: `input.css` importa os tokens e
-estilos existentes. Prefira classes Tailwind e os tokens do projeto nas alterações
-ao site. O CSS gerado fica em `_site/assets/story.css`; `_site/` não é fonte
-editável, e Jekyll não publica os ficheiros CSS de origem.
-
-O hook `site/_plugins/tailwind.rb` compila o CSS com Node/Tailwind depois de
-Jekyll escrever as páginas. Assim, `bundle exec jekyll build` e os rebuilds de
-`bundle exec jekyll serve` também geram o CSS no destino configurado. É necessário
-ter Node e as dependências de `npm ci` instalados; uma falha na compilação faz
-falhar o build. `npm run site:css` continua disponível para compilar apenas o CSS.
-
-`site:check` verifica os ficheiros gerados e links para relatórios e downloads.
-O Jekyll verifica a sintaxe Liquid. A auditoria de publicação valida os dados e
-a privacidade; os testes do relatório verificam cálculos, escaping, defaults
-históricos e renderização equivalente entre os modos de build.
-
-O resultado fica em `_site/` e inclui as páginas editoriais e de freguesias,
-`snapshot.json`, relatórios HTML e PDFs gerados, licença e avisos de atribuição.
-O build gera os relatórios em `_site/runs/<run_id>/`, primeiro o HTML e depois
-o PDF, sem alterar snapshots versionados. Datasets brutos,
-resultados locais e caches não são copiados. O diretório `_site/` pode ser usado
-como artefacto de um deployment estático. O workflow mensal constrói e
-valida esse diretório antes de o publicar no GitHub Pages.
-
-O site é mantido como um projeto Jekyll em `site/`: layouts e includes
-partilham a estrutura HTML, as páginas Liquid tratam a narrativa editorial e
-os plugins preparam os dados públicos e os relatórios através dos geradores e
-hooks normais do Jekyll. `bundle exec jekyll build` também gera os downloads,
-CSS e PDFs; `site:build` acrescenta as verificações e a auditoria de publicação.
-
-Para rever o site com os relatórios privados disponíveis:
-
-```bash
-bundle exec jekyll serve
+```ruby
+require_relative "lib/alojamento_local"
+AlojamentoLocal::Analysis.run(
+  airbnb_path: "data_sources/listings-2026-06-23.csv",
+  official_path: "data_sources/Estabelecimentos_de_Alojamento_Local-2026-09-26.csv"
+)
 ```
 
-Para desativar temporariamente os PDFs durante a revisão local:
+Não há argumento `analysis[run_id]`. `output_root` permite isolar os snapshots.
+Os manifestos de proveniência permanecem junto dos CSVs em `data_sources/`.
 
-```bash
-SKIP_PDF=1 bundle exec jekyll serve
-```
+## Contrato e unidades
 
-O HTML e os CSVs continuam disponíveis; os links para PDF ficam ocultos.
-Reinicie sem `SKIP_PDF=1` para voltar a gerar PDFs. Esta opção aplica-se apenas
-ao servidor local; os builds públicos e autónomos continuam a gerar PDFs.
+`schema/candidate_summary.schema.json` e `schema/candidate_details.schema.json`
+validam as duas estruturas estritas; `CandidateDataset` valida as relações entre elas.
 
-Abra `http://127.0.0.1:4000` (`--port` altera a porta). O Jekyll ativa
-`site.config["serving"]`: o gerador inclui os relatórios privados quando existem
-os dois CSVs do par de datas. O layout mostra o link «Relatório detalhado · uso
-local». O HTML/PDF, snapshot agregado e CSVs ficam em
-`_site/private-reports/<run_id>/`.
+- `summary.json` contém `source_dates`, `lisbon`, as 24 `parishes` e uma linha
+  desconhecida no fim. Usa JSON indentado para facilitar os diffs Git.
+  Cada âmbito tem `official_count`, `listings_count`,
+  `candidates_count`, `numbered_candidates_count`, `distinct_al_numbers_count` e
+  `matched_al_numbers_count` (números distintos comuns às duas fontes no mesmo âmbito).
+  `exempt_candidates_count`, `empty_licence_candidates_count` e
+  `unrecognised_licence_candidates_count` e `mixed_licence_candidates_count` completam a divisão exclusiva dos candidatos
+  juntamente com `numbered_candidates_count`.
+  As contagens RNAL e dos anúncios originais vêm independentemente das fontes.
+  Os totais de anúncios e candidatos são aditivos; números distintos podem sobrepor-se.
+- O resumo inclui as cinco contagens de sinais em `signals`,
+  `repeated_number_distances` (seis intervalos, incluindo por resolver) e
+  `outside_regions` (NUTS II, com `district: null` para regiões por resolver).
+  Guarda apenas contagens; etiquetas, percentagens e geometria pertencem à apresentação.
+- `candidates.json.gz` descodifica para `candidates` e `grouping_assessments`,
+  incluindo todos os candidatos e declarações originais, mesmo os omitidos da tabela.
+  Usa JSON UTF-8 compacto com newline final, Zlib nível 9, mtime zero, sem nome
+  original nem comentário. Entradas idênticas reproduzem bytes no runtime suportado.
 
-Na secção «Grupos de licenças», o relatório apresenta apenas casos para
-verificação: omite licenças únicas em Lisboa, prováveis estabelecimentos com
-anúncios múltiplos e repetições na mesma localização. Os CSVs descarregáveis
-mantêm todas as linhas. Os detalhes individuais dos anúncios estão disponíveis
-apenas no CSV, sem tabela no HTML ou PDF.
+`CandidateDataset` expõe `summary_document`, `details_document`, `candidates` e
+`grouping_assessments`; `summary` mantém os quatro valores Ruby de `Analysis.run`.
+Os agregados derivados de candidatos são partilhados pelo builder e pela validação
+através de `CandidateDataset.candidate_aggregates`.
 
-O build local contém dados privados e permanece ignorado pelo Git. Um
-`jekyll build` normal, incluindo `site:build` e os workflows GitHub Actions,
-exclui os relatórios privados e remove os ficheiros deixados por um build local
-no mesmo destino. A auditoria rejeita a publicação de um build com dados ou
-links privados. Não há flag específico para GitHub Actions, servidor adicional
-ou alteração das respostas HTTP.
+Os IDs distintos referenciados têm de cobrir exatamente a população original.
+Cada contribuição declarada anúncio–número aparece uma única vez. Candidatos sem número
+podem ter vários membros quando a evidência de unidade o permite. `raw_licences` mapeia os IDs contribuintes para o texto original
+ou `null`, sem normalizar o original. Esta publicação é uma exceção deliberada:
+os restantes campos excluem anfitriões, descrições, nomes, endereços e coordenadas
+exatas dos anúncios. Strings originais devem ser escapadas quando apresentadas.
 
-O Jekyll observa alterações nos templates e reconstrói o site. Atualize a página
-para ver o resultado, ou use `--livereload`. Depois de reanalisar fontes fora da
-pasta `site/`, reinicie o servidor para regenerar os relatórios.
+### Declarações
 
-Para rever a homepage em desktop, tablet e telemóvel:
+Retemos anúncios cujo município normaliza para Lisboa e exigimos IDs numéricos
+únicos. IDs inválidos/duplicados falham com os IDs indicados no erro. Campos obrigatórios
+ausentes também falham.
 
-```bash
-bundle exec rake site:screenshots
-```
+Reconhecemos números simples, variantes AL, zeros iniciais, formatos antigos com
+ano e whitespace Unicode/caracteres de formato nas extremidades. Em declarações
+múltiplas extraímos todos os tokens AL explícitos, deduplicados por anúncio.
+Fragmentos, números com separadores de milhares e outros regimes não são reparados.
+O texto original integral fica em `raw_licences` e extrações parciais recebem um sinal;
+não criam um candidato adicional sem número.
 
-O comando constrói o site e usa Playwright com o Chrome instalado para guardar
-capturas a 1440, 768 e 390 px em `tmp/screenshots/`. Defina `CHROME_BIN` se
-precisar de outro executável Chromium. O comando falha se houver deslocamento
-horizontal. Verifique também o foco por teclado, os links e as restantes páginas
-num browser local.
+Sem número extraído, a declaração individual é `absent`, `exempt` ou
+`unrecognised`. Isenção exige uma declaração explícita de valor completo, como
+`Exempt` ou `Isento`. Uma palavra incidental em prosa não basta. Isenções nunca
+são números AL nem evidência de identidade.
 
-Para capturar outras páginas, passe o caminho à tarefa (as aspas protegem os
-parênteses retos na shell):
+### Agrupamento
 
-```bash
-bundle exec rake 'site:screenshots[freguesias/arroios/index.html]'
-bundle exec rake 'site:screenshots[metodologia.html]'
-```
+Um único conjunto de anúncios alimenta o matcher. Descobrimos pares pela união
+de vizinhos até 500 m (grelha espacial), números AL não-placeholder partilhados e
+referências explícitas de apartamento/unidade partilhadas. Cada par é avaliado uma
+vez, independentemente do anfitrião ou declaração. 500 m é raio de procura, não
+prova de identidade; números e referências permitem avaliar pares mais distantes.
+RNAL não acrescenta pontos nem autoriza fusões; pode resolver a separação de
+apartamentos com registos distintos e localmente consistentes, como descrito abaixo.
 
-As capturas recebem o nome da página, por exemplo
-`tmp/screenshots/freguesias-arroios-390.png`.
+| Evidência | Pontos |
+| --- | ---: |
+| Coordenadas até 500 m | 1 |
+| Mesmo anfitrião não vazio | 1 |
+| Títulos semelhantes | 2 |
+| Descrições fortemente semelhantes | 3 |
+| Mesma referência explícita de apartamento/unidade | 3 |
+| Mesmo número AL declarado não-placeholder | 2 |
+| Compatibilidade de quartos/apartamento com o mesmo anfitrião, AL e descrição forte | 1 |
 
-Os diagramas de sobreposição e os números RNAL nas páginas de freguesia usam
-métricas agregadas e versionadas. Ver [métricas de registo](#métricas-de-registo)
-para as definições e limitações.
-O trabalho a retomar em futuras sessões está em [TODO.md](TODO.md).
+Textos são descodificados de HTML, normalizados por Unicode/case e comparados
+como conjuntos de tokens alfanuméricos, preservando números. Títulos exigem
+Jaccard ≥0,5 e três termos comuns. Descrições exigem Jaccard ≥0,8 e pelo menos
+30 termos distintos em cada texto. Evidência ausente vale zero. Extraímos
+`apartment`, `flat`, `apartamento`, `apt` e `unidade` seguidos de identificador
+numérico, alfanumérico ou letra única; múltiplas referências distintas são ambíguas.
+Referências de quarto/cama (`room`, `quarto`, `bed`, `cama`) ficam separadas.
+Sufixos plurais, possessivos, abreviaturas de prosa, artigos, contagens de quartos,
+intervalos de capacidade e tipologias T1/T2/T3 não identificam unidades.
 
-O workflow de GitHub Pages define automaticamente a base `/alojamento-local-em-analise`.
+Agrupar exige ≥8 pontos, coordenadas válidas até 500 m, ausência de contradição e:
+referência de apartamento partilhada mais semelhança de texto, ou número AL
+partilhado mais títulos e descrições semelhantes nos limiares acima, ou a via
+de quartos do mesmo anfitrião abaixo. Outras relações entre categorias diferentes
+continuam a exigir referência explícita comum.
+Referências de apartamento diferentes e atributos conhecidos contraditórios entre
+apartamentos inteiros (tipo de propriedade, quartos, camas, casas de banho e
+capacidade) impedem fusão automática. Diferenças entre quartos não estabelecem
+apartamentos distintos. Anfitriões diferentes não impedem automaticamente a fusão.
+Partilhar edifício, piso, anfitrião ou texto genérico não basta.
 
-## Testes
+A via `same_host_room_group` exige o mesmo anfitrião não vazio, um único AL comum
+integralmente declarado, coordenadas até 500 m e descrições com pelo menos 30
+termos distintos por texto e Jaccard ≥0,8. Pelo menos um anúncio tem de ser
+`Private room`; o outro pode ser outro quarto privado ou um apartamento inteiro
+com tipo de propriedade reconhecido como apartamento. Essa compatibilidade vale
+1 ponto, somado aos 7 de proximidade, anfitrião, AL e descrição forte, mantendo o
+mínimo de 8. Não exige títulos semelhantes nem frases ou medidas específicas.
+Referências explícitas de apartamentos diferentes, números AL contraditórios ou
+múltiplos impedem fusão. Quartos partilhados, hotéis e categorias desconhecidas
+não entram nesta via. Dois anúncios inteiros continuam sujeitos às regras de
+duplicados e aos conflitos de atributos; diferenças de quartos/capacidade entre
+um quarto e o apartamento inteiro são esperadas e não contradizem a fusão.
+
+Pares de quarto/apartamento ficam `apartment_and_rooms`; quartos privados ficam
+`separate_rooms`, salvo referência explícita ao mesmo quarto/cama, que permite
+`duplicate_adverts`. Todos os pares têm de qualificar, incluindo os pares de
+quartos entre si: quatro quartos e um apartamento exigem dez pares elegíveis.
+A contagem de quartos é apenas apoio de revisão, não uma condição que exige
+observar todos os quartos do apartamento. Texto-modelo pode dar falsos positivos;
+partilhar anfitrião/AL não estabelece identidade sem a restante evidência.
+
+Pares plausíveis sem cumprir todos os requisitos ficam separados, em revisão.
+Conflitos de números AL e anúncios com múltiplos números nunca autorizam fusão.
+Um par plausível até 500 m pode ficar resolvido como `separate_apartments`, com
+`outcome: separate` e `distinct_registered_apartments`, quando ambos são anúncios
+Airbnb de apartamentos inteiros e cada um tem uma declaração integral com um
+único número AL diferente. Os dois registos nacionais têm de resolver modalidade
+Apartamento, município Lisboa e coordenadas até 500 m do respetivo anúncio.
+Referências explícitas de apartamento partilhadas, extrações parciais, múltiplos
+números, quartos, propriedades desconhecidas e campos RNAL por resolver ou
+inconsistentes mantêm o caso para revisão. A evidência RNAL vale zero pontos e
+apenas resolve uma separação já impedida pelo conflito de números; não altera as
+fusões. Coordenadas próximas ou iguais não provam que seja o mesmo edifício.
+
+Dois anúncios de alojamentos inteiros com o mesmo número AL também ficam
+resolvidos como `separate_apartments` / `separate` quando diferem simultaneamente
+no número conhecido de quartos, camas e capacidade (`distinct_apartment_attributes`).
+Também podem resolver-se assim quando o número de quartos coincide, mas camas e
+capacidade diferem na mesma direção (mais camas e mais hóspedes) e os textos são
+claramente distintos (`different_apartment_text`):
+Jaccard ≤0,25 tanto nos títulos como nas descrições, com pelo menos 3 termos
+distintos por título e 30 por descrição. Este limiar inicial exige dissemelhança
+positiva; falhar o teste de semelhança forte não basta, e texto em falta não é
+evidência de separação. O motivo vale zero pontos e não altera fusões.
+Contagens de camas e capacidade que variam em sentidos opostos não encerram
+revisão por esta alternativa: podem refletir dados inconsistentes ou configurações
+de ocupação diferentes. O número AL continua assinalado como partilhado entre
+candidatos, mesmo depois de uma relação ficar resolvida como separação.
+Uma referência explícita de apartamento partilhada ou declarações com números
+conflituantes/múltiplos impedem esta regra. Valores ausentes ou malformados são
+desconhecidos; uma diferença isolada continua para revisão. Esta evidência não
+atribui pontos, não altera fusões e não determina qual anúncio corresponde ao RNAL.
+
+Pares próximos sem identidade plausível são avaliados e descartados; os restantes
+assessments publicados são únicos por par de IDs, com `outcome`, `score`,
+`relationship` (`duplicate_adverts`, `separate_rooms`, `apartment_and_rooms`,
+`undetermined`, `separate_apartments`) e
+códigos de evidência em `reasons`. A pontuação não é uma probabilidade.
+
+Cada assessment publica ainda `distance_m` (metros, arredondados à unidade,
+ou null), `title_comparison` e `description_comparison` (Jaccard com quatro
+casas decimais, contagens de termos distintos e termos comuns), `room_types`,
+`property_types` normalizados e `attributes` (quartos, camas, casas de banho e
+capacidade). Os pares de valores seguem exatamente a ordem de `listing_ids`.
+Textos ausentes têm semelhança null; atributos ausentes/malformados também são
+null. As decisões usam os valores não arredondados. Assim, uma distância publicada
+de 500 m pode ficar de qualquer lado do limiar; o motivo de distância mantém a
+comparação original. As coordenadas Airbnb continuam aproximadas.
+
+`evidence` detalha a categoria (`supporting`, `contradicting`, `unknown`) e os
+`points` de cada código em `reasons`; a soma reproduz `score`. Categorias e
+referências de quarto podem apoiar a interpretação da relação sem pontuar
+identidade. Contradições continuam com zero pontos e os bloqueios existentes;
+não se introduziram penalizações nem novos pesos por distância nesta revisão.
+`decision_reason` separa a decisão da evidência: `merge_threshold`,
+`insufficient_merge_evidence`, `insufficient_identity`, separação fundamentada ou
+`complete_link_conflict`. O último identifica um par elegível deixado de fora
+pela coerência do grupo. `insufficient_merge_evidence` substitui o nome ambíguo
+`review_score`: não utiliza avaliações Airbnb e não atribui pontos.
+Não publicamos textos, anfitriões ou coordenadas exatas nestes detalhes.
+
+`undetermined` é o valor por defeito: uma fusão de alojamento não prova que os
+anúncios sejam duplicados. `duplicate_adverts` exige um par elegível para fusão,
+com a mesma categoria conhecida e, para quartos/camas, a mesma referência
+explícita de quarto/cama (`same_room_reference`). Dois anúncios de apartamentos
+inteiros podem ser classificados assim pela evidência de identidade existente.
+Pares plausíveis com evidência insuficiente ou contraditória ficam `undetermined`,
+salvo quando as categorias/referências identificam uma relação de quartos ou
+uma regra de separação identifica apartamentos distintos.
+A classificação não altera pontuações nem grupos. A regra de apartamentos
+registados distintos pode resolver `review` como `separate`.
+
+
+O complete-link exige que **todos** os pares do grupo cumpram a regra. Escolhe-se
+a união com maior pontuação mínima entre grupos e desempata-se por IDs ordenados.
+Pares elegíveis impedidos por conflitos de grupo passam a revisão. IDs de candidatos
+são hashes do número associado e dos IDs ordenados dos membros.
+
+Grupos podem combinar declarações numeradas, ausentes, de isenção e não reconhecidas.
+`al_number` associa o candidato ao único número utilizável declarado pelo conjunto;
+não significa que todos os membros o tenham declarado. As declarações individuais
+permanecem integralmente em `raw_licences`. Sem número, conservamos a categoria
+comum ou `mixed` quando divergem. Anúncios com vários números mantêm contribuições
+separadas por número e apenas relações para revisão. Sinais de ausência/declaração
+não reconhecida contam IDs a partir das declarações individuais, mesmo em grupos
+numerados. Associações inferidas não acrescentam declarações às fontes.
+
+### Geografia e RNAL
+
+O medóide é o membro com menor soma de distâncias Haversine aos outros membros
+com coordenadas; empates usam o ID. Serve para freguesia por coordenadas e distância
+ao RNAL. A freguesia atribuída exige unanimidade dos membros numa freguesia Airbnb
+reconhecida. A geografia Airbnb não está verificada; coordenadas não substituem a
+atribuição. Freguesias Airbnb, por coordenadas e oficiais ficam separadas.
+
+`data/freguesia_boundaries.json` conserva apenas nomes e polígonos CML completos,
+com atribuição e hash SHA-256 do original. O original fornecido está em
+`data_sources/lisboa-freguesias.geojson`, também versionado. É a única exceção
+à exclusão de fontes locais pela auditoria; CSVs Airbnb/RNAL continuam excluídos. CI usa a derivação sem downloads.
+O mapa visual simplificado em `site/_data/freguesia_map.json` continua separado.
+
+Por número nacional RNAL, valores não vazios normalizados concordantes são
+conservados; conflitos ficam `null`. Coordenadas são resolvidas
+como pares. Conflitos de município deixam freguesia e localização por resolver.
+Não escolhemos a primeira linha nem a localização mais próxima. `found` significa
+que o número existe nacionalmente, mesmo com campos por resolver. `NUTSII` alimenta
+`official_match.district`. Resumos RNAL são calculados independentemente sobre as
+linhas que declaram Lisboa, antes da resolução nacional.
+
+## Métricas de registo
+
+As métricas usam as seguintes unidades:
+
+- A tabela de sinais por freguesia conta candidatos atribuídos à freguesia, uma vez
+  por sinal. As linhas podem sobrepor-se e não somam necessariamente o total.
+  Campos vazios, valores não reconhecidos e isenções são obtidos das declarações
+  originais dos membros, mesmo dentro de candidatos numerados. O total de anúncios
+  observados continua independente e usa a freguesia da fonte Airbnb.
+
+- O diagrama em forma de Venn dimensiona os círculos pelo total de registos RNAL e
+  pelo total de candidatos Airbnb. A sobreposição conta cada número comum uma vez,
+  mesmo quando vários candidatos o declaram (`matched_al_numbers_count`). As áreas
+  exclusivas são RNAL menos números comuns e candidatos menos números comuns.
+  «Restantes candidatos» pode incluir reutilizações de números existentes no RNAL.
+  É uma convenção de contagem; não escolhe qual candidato representa corretamente um registo.
+- A barra horizontal de 100% reparte os candidatos sem duplicações: uma ocorrência por
+  número comum, ocorrências adicionais de números reutilizados, uma ocorrência por número
+  fora do RNAL deste âmbito, declaração não reconhecida, declarações mistas sem número, isenção declarada por verificar
+  e ausência de declaração. Reutilização é candidatos com número menos números distintos.
+  Os números reconhecidos fora do RNAL do âmbito aparecem separados dos valores não
+  reconhecidos; podem existir noutra freguesia/município ou não ser encontrados nacionalmente.
+  Não se classificam isenções como corretas/incorretas sem critérios e evidência.
+- RNAL usa as linhas originais que declaram Lisboa e, nas freguesias, a mesma freguesia
+  oficial (incluindo desconhecida), antes da resolução nacional. Conflitos não apagam
+  essas pertenças. Números e reutilizações por freguesia podem sobrepor-se e não são
+  necessariamente aditivos. A construção verifica a contagem comum face às fontes;
+  a leitura verifica os limites dos conjuntos. Encontrar o número não confirma a
+  identidade nem a legalidade do alojamento. As categorias da barra usam candidatos,
+  não os sinais de anúncios distintos.
+- O sinal sem número identificável conta IDs distintos `absent`/`unrecognised`,
+  excluindo isenções declaradas.
+  O cartão inicial «anúncios sem número AL declarado» apresenta um conjunto mais
+  amplo: campos vazios, valores não reconhecidos e isenções declaradas por verificar.
+  Conta as declarações originais por ID, incluindo membros de candidatos numerados,
+  sem duplicar anúncios com vários números. Não altera o sinal nos downloads.
+- O sinal de reutilização conta IDs distintos em números associados a vários
+  candidatos. O gráfico conta cada número uma vez, usando a maior distância ao
+  RNAL entre os candidatos. Correspondências ou distâncias em falta ficam por resolver.
+  Intervalos: até 500 m, 500 m–1 km, 1–2 km, 2–5 km e mais de 5 km.
+- O sinal fora de Lisboa conta IDs distintos com município oficial conhecido
+  diferente de Lisboa. Regiões NUTS II em falta ou contraditórias ficam por resolver.
+
+## Arquitetura e substituição segura
+
+`Analysis.run` prepara fontes uma vez (`DataSource`), constrói um `CandidateDataset`
+validado com `DatasetBuilder` e publica-o com `ResultPublisher`. O dataset é o mesmo
+objeto de dados usado para snapshots gerados e carregados, incluindo o resumo.
+`Declaration`, `Grouping` e `Boundaries` são colaboradores focados; Zeitwerk mantém
+nomes/caminhos coerentes.
+
+O builder compara contribuições e resumos diretamente com as fontes preparadas.
+A publicação prepara os dois ficheiros numa pasta irmã temporária, fecha e sincroniza
+os ficheiros, valida e relê o par por `CandidateDataset` antes de obter o lock exclusivo.
+Verifica novamente os hashes das fontes e substitui a pasta datada com backup e rollback
+em caso de exceção ou interrupção. O lock está na pasta mãe estável; leitores e cópias
+para downloads usam locks partilhados. As cópias verificam os hashes dos ficheiros usados
+na renderização e falham se estes mudarem durante o build.
+Os manifestos das
+fontes e a atribuição/hash dos limites ficam junto dos respetivos inputs.
+Não há diagnósticos persistidos nem histórico analítico separado.
+
+### Impacto da substituição
+
+No mesmo par `2026-06-23__2026-09-26`, a reanálise local conserva os hashes das
+fontes, **17 064 anúncios**, **11 869 números RNAL**, **8 923 números AL declarados**
+e **7 320 números comuns** às fontes em Lisboa. A cobertura foi verificada
+independentemente por leitura dos CSVs: todos os IDs, cada declaração original,
+cada contribuição anúncio–número e os totais originais por freguesia concordam.
+
+| Categoria de candidatos | Método anterior | Matcher único |
+| --- | ---: | ---: |
+| Com número associado | 11853 | 11845 |
+| Isenção declarada | 3585 | 3585 |
+| Sem declaração | 633 | 633 |
+| Declaração não reconhecida | 139 | 139 |
+| Mistas sem número | 0 | 0 |
+| Total | 16210 | 16202 |
+
+Há **452 candidatos com vários anúncios**, com 893 contribuições a menos do que
+se cada contribuição individual permanecesse separada.
+Os pares internos aceites distribuem-se por `duplicate_adverts`: 592; `separate_rooms`: 323; `apartment_and_rooms`: 0; `undetermined`: 1163.
+Estas são contagens de pares, não de candidatos; todos os pares de cada grupo
+cumprem os critérios. O maior grupo tem 24 anúncios.
+
+Neste par, 0 candidatos associam membros sem número utilizável a um número
+declarado por outro membro. Os casos de associação inferida, grupos inteiramente
+sem número e categorias mistas são exercitados pelas regressões sintéticas.
+Os sinais individuais de ausência (633) e declaração
+não reconhecida (139) mantêm-se independentes da associação do candidato.
+
+A regra de apartamentos registados distintos resolve **6 358 pares** antes em
+revisão, sem alterar candidatos, pontuações ou fusões. O número de candidatos
+com o sinal `grouping_review` passa de **8 661 para 6 934**. O par revisto
+`1000837114643475255` / `1003445988121476426`, com números 84776 e 84783,
+fica `separate` / `separate_apartments`, com 7 pontos e motivo
+`distinct_registered_apartments`. Ambos os RNAL resolvem Apartamento em Lisboa
+com localização até 500 m do respetivo anúncio. Não se infere identidade de edifício.
+
+A revisão local incluiu estes pares de IDs:
+
+| Par | Avaliação |
+| --- | --- |
+| 1000672424786379990 / 1019708606943533804 | Aceite: `undetermined`, 9 pontos |
+| 1035272767626393810 / 1035274669525746246 | Aceite: `separate_rooms`, 9 pontos |
+| 1055110451722367068 / 1056413133220721741 | Separados: apartamentos com números distintos e registos RNAL localmente consistentes |
+| 1001799626325440617 / 1004495237965399867 | Revisão: atributos de apartamento contraditórios |
+| 1000672424786379990 / 48377666 | Revisão: números AL diferentes |
+| 1019708606943533804 / 48900551 | Revisão: conflito complete-link |
+
+Foram também revistos exemplos de apartamentos autónomos com texto
+repetido: sufixos plurais, abreviaturas, quebras entre campos/parágrafos, artigos,
+contagens e tipologias não fornecem referências de unidade. As regras são
+indicadores de investigação; a diferença no total resulta do método, não de
+uma variação temporal nem de um objetivo de redução.
+
+### Revisão do snapshot de setembro
+
+O par local `2026-09-19__2026-09-26` contém **17 153 anúncios**, **15 920 candidatos**,
+**8 784 números AL declarados**, **11 869 números RNAL** e **7 247 números comuns**
+em Lisboa. Todos os IDs e declarações originais foram novamente confrontados com
+os CSVs, independentemente da validação do builder. A fixture de apresentação
+conserva os seus totais.
+
+A substituição das frases específicas pela via anfitrião/AL/descrição reduz os
+candidatos de 16 288 para 15 920. Passam a aceites 1 053 pares `separate_rooms`,
+84 `apartment_and_rooms` e 4 `duplicate_adverts`; 15 pares anteriormente aceites
+ficam em revisão, dois pela remoção da via de frases e 13 por conflitos complete-link
+após a alteração da prioridade das uniões. Existem 24 candidatos que combinam
+anúncios de quartos e apartamento inteiro. São contagens de pares/candidatos,
+não confirmação de identidade. Texto-modelo continua a requerer revisão.
+
+No portefólio revisto, os anúncios `23051174`, `23072681`, `23072930` e `23073155`
+(quartos 201–204, com 35505/AL) formam um candidato. Os anúncios de apartamentos
+2E (`23482919`) e 3E (`15174813`) permanecem separados. O par
+`1001265559722983156` / `1001268286809894172` volta a revisão: a semelhança de
+74% das descrições fica abaixo dos 80% exigidos. Não se baixou o limiar para
+preservar um exemplo previamente aceite.
+
+Foi também revisto um grupo com o anúncio inteiro `1031336398040002282` e quartos
+como `1075984734133615455` e `1460291600840328268`, todos com 87507/AL:
+as descrições distinguem apartamento inteiro e quarto privado partilhando o
+restante texto. O par `1386202580695011904` / `1386204287560026943`, de anúncios
+inteiros, fica em revisão por conflito complete-link. Esta via não autoriza
+fundir dois anúncios inteiros sem a evidência exigida pelas regras anteriores.
+
+Uma revisão posterior das separações resolve **76 pares** com camas e capacidade
+diferentes na mesma direção e textos claramente distintos, sem exigir diferença
+no número de quartos. O par `10020044` / `9634390` fica `separate` /
+`separate_apartments`, com `distinct_apartment_attributes` e 4 pontos. Ambos mantêm
+o sinal `shared_number` para 4037/AL; relações com outros anúncios desse número
+continuam por resolver. Candidatos com revisão passam de 6 031 a 5 997, sem mudar
+grupos, pontuações, totais ou cobertura. O par `1036096431487851829` / `37649719`
+permanece em revisão: os números de camas e hóspedes variam em sentidos opostos.
+
+### Primeira classificação de portefólios de anfitriões
+
+Uma leitura local do snapshot de setembro distingue **5 827 anfitriões**, cobrindo
+os mesmos 17 153 anúncios, sem IDs de anfitrião ausentes. Estas classes descrevem
+apenas os anúncios observados, não conformidade ou confiança:
+
+| Categorias observadas no portefólio | Anfitriões | Anúncios |
+| --- | ---: | ---: |
+| Apenas alojamentos inteiros (`Entire home/apt`) | 4 805 | 11 295 |
+| Apenas quartos privados (`Private room`) | 735 | 2 080 |
+| Mistura dessas duas categorias | 236 | 3 319 |
+| Outras combinações ou categorias desconhecidas | 51 | 459 |
+
+Entre grupos de um mesmo anfitrião com um único AL integralmente declarado por
+anúncio, 481 grupos de 321 anfitriões têm pelo menos dois quartos privados.
+Destes, 30 grupos de 26 anfitriões também têm vários anúncios de alojamentos
+inteiros; 19 grupos de 12 anfitriões têm quartos separados por mais de 500 m.
+São indicadores sobrepostos para revisão, não decisões de fusão/separação.
+
+O portefólio revisto de 51 anúncios tem 40 quartos privados e 11 alojamentos
+inteiros. Sob 35505/AL aparecem os anúncios `15174813` e `23482919`, relativos a
+unidades designadas 3E e 2E, além de quartos e lofts; sob 115214/AL aparecem
+`1711102860867040462` e `49121344`, descrevendo apartamentos com seis e cinco
+suites. Áreas e contagens semelhantes também se repetem entre unidades anunciadas.
+Assim, não se introduziu uma exceção que funda automaticamente quartos apenas
+por partilharem anfitrião e AL. Os perfis podem orientar a revisão, mas ainda é
+necessária evidência da unidade dentro de cada portefólio. A classificação descritiva não fornece exceções de confiança nem altera por si
+só os grupos; a via de fusão anfitrião/AL/descrição acima é uma regra por par.
+
+## Verificar
 
 ```bash
 bundle exec rake test
-```
-
-O comando descobre todos os ficheiros `test/**/*_test.rb`, incluindo a regressão
-completa do pipeline com fontes sintéticas e outputs esperados em Git.
-Também verifica a preparação única das fontes, a separação das tarefas,
-os guards de hashes, o preview privado e o rollback da publicação após falha
-ou interrupção. Os testes de PDF usam conversores simulados para verificar
-o HTML de origem, falhas de conversão e o destino do ficheiro derivado.
-`bundle exec rake` executa a mesma tarefa por omissão. Para executar só a regressão:
-
-```bash
-bundle exec rake test TEST=test/pipeline_regression_test.rb
-```
-
-Ver [casos e atualização dos outputs esperados](test/fixtures/pipeline/README.md).
-
-Antes de publicar ou rever alterações aos outputs, execute a auditoria de publicação:
-
-```bash
+npm run site:lint
+DESTINATION=tmp/candidate-site bundle exec rake site:build site:check
 ruby scripts/audit_publication.rb
-ruby scripts/audit_publication.rb --history
+ruby scripts/audit_publication.rb --artifact tmp/candidate-site
 ```
 
-O primeiro comando verifica os ficheiros publicáveis na árvore atual; o segundo verifica todos os commits e refs alcançáveis.
+Testes incluem parsing, isenções repetidas, limiares, cadeias, desempates, medóide,
+polígonos completos, conflitos RNAL, contabilidade, proveniência e preservação do snapshot em falhas.
+`test/fixtures/pipeline/sources/` contém um caso sintético com 11 anúncios retidos,
+12 contribuições e 11 candidatos, com outputs revistos em `expected/`.
+A fixture de apresentação é inventada e conserva 13 anúncios, 12 candidatos e
+17 números RNAL; não é output dessa fonte sintética.
 
-## GitHub Actions
+HTML/Liquid: `npm run site:format` e `npm run site:lint`. PDF usa o
+`wkhtmltopdf-binary` incluído no bundle, sem fallback. O utilizador trata de
+screenshots nesta etapa. Não descarregar fontes, capturar screenshots ou publicar
+para validar mudanças locais.
 
-`.github/workflows/monthly-analysis.yml` executa no dia 1 de cada mês, às 07:00 UTC, ou manualmente. Depois dos testes, restaura o artefacto `analysis-sources` da última execução bem-sucedida com fontes ainda disponíveis no ramo principal. Executa `sources:update`, guarda apenas o par datado selecionado num novo artefacto e chama `analysis`. Regista os outputs públicos versionados no repositório e constrói o site com `site:build` antes de o publicar.
+## CI
 
-O artefacto das fontes tem retenção de 90 dias e é novamente carregado em cada execução mensal, mesmo quando o par não muda. Se não existir um artefacto disponível, o workflow descarrega as fontes atuais. Não é um arquivo permanente: uma pausa superior à retenção pode perder as fontes de um run antigo. Para preparar manualmente apenas o par local para este artefacto, use `bundle exec rake sources:archive` (`tmp/source-artifact/`).
+O workflow mensal testa, restaura fontes, atualiza explicitamente quando necessário,
+arquiva só o par selecionado e manifestos, executa análise, audita e faz staging
+apenas de `summary.json` e `candidates.json.gz` da pasta datada gerada. Constrói o site e inspeciona `_site/report.pdf`.
+O workflow de site constrói sem análise. Ambos usam a auditoria do contrato de
+candidatos. CSVs brutos e manifestos locais ficam fora do Git.
+`ruby scripts/audit_publication.rb --history` audita segurança do histórico sem
+adicionar leitores legados. Reescrever histórico exige backup recuperável e aprovação
+coordenada; esta substituição não o reescreve.
 
-Para reutilizar localmente as fontes de uma execução Actions, descarregue o
-artefacto sem alterar nomes ou datas (com GitHub CLI autenticado):
-
-```bash
-gh run download <run-id-actions> --name analysis-sources --dir data_sources
-bundle exec rake rebuild
-```
-
-`.github/workflows/publication-audit.yml` executa automaticamente a verificação de segurança dos outputs em pushes e pull requests.
-
-O repositório pode permanecer privado enquanto um deployment separado publica o
-conteúdo sanitizado de `_site/`.
-
-O workflow mensal faz commit apenas dos outputs públicos sanitizados em `data/snapshots/` e `data/history/`; o site é publicado como artefacto separado através do GitHub Pages, depois de executar testes, construir o site e passar os gates de publicação. Os snapshots commitados e o histórico são a fonte permanente do projeto. Datasets brutos em `data_sources/`, resultados detalhados em `data/private/` e caches em `tmp/` continuam fora do Git por defeito. Os documentos dos snapshots são agregados e não contêm identificadores de anúncios, anfitriões, nomes, endereços, coordenadas ou valores de licença individuais.
-
-O workflow `.github/workflows/site-publish.yml` reconstrói e publica o site em pushes humanos para `main` e através de `workflow_dispatch`. Está protegido contra o commit `Atualiza análise mensal` produzido pelo workflow mensal, que já constrói e publica o site na própria execução.
-
-## Dados e método
-
-As fontes são o arquivo público [Inside Airbnb](https://insideairbnb.com/get-the-data/) e o registo oficial disponibilizado pelo Turismo de Portugal. Na etapa `sources:update`, o downloader descobre na página do Inside Airbnb o snapshot mais recente disponível para Lisboa; `last_scraped` é uma data ao nível do anúncio e pode abranger vários dias.
-
-As licenças são normalizadas de forma conservadora. O analisador distingue, entre outras categorias:
-
-- licença/listagem única;
-- provável estabelecimento com múltiplos quartos ou unidades;
-- licença repetida na mesma localização;
-- mesma licença em várias localizações;
-- licença oficial fora de Lisboa;
-- campo de licença vazio;
-- valor de licença não identificável como AL.
-
-`host_id` pode ser usado apenas nos diagnósticos privados da análise como metadado, nunca como critério de agrupamento; não é escrito nos outputs públicos. A estimativa de estabelecimentos colapsa apenas categorias de menor risco e mantém casos de possível reutilização separados para verificação.
-
-A categoria “licença única em Lisboa” exige um único anúncio
-e uma correspondência no RNAL com concelho Lisboa; não confirma validade ou atividade do registo.
-
-### Métricas de registo
-
-`registration_metrics` em `snapshot.json` (métricas 1.0.0, schema público 7.0.0)
-contém Lisboa,
-as 24 freguesias e um agregado de geografia não identificada. As definições
-completas também acompanham cada ficheiro no campo `definitions`.
-
-| Campos | O que contam |
-| --- | --- |
-| `rnal`, `airbnb` | Números AL normalizados distintos no conjunto local de cada fonte |
-| `intersection`, `rnal_only`, `airbnb_only` | Interseção e diferenças dos conjuntos locais |
-| `another_lisbon_parish`, `another_municipality`, `no_national_match`, `unresolved_official_geography` | Partição de `airbnb_only`: outra freguesia de Lisboa, outro município, ausência no RNAL nacional ou geografia oficial por resolver |
-| `announcements` | Anúncios observados cujo município normaliza para Lisboa |
-| `empty_licence`, `unrecognised_licence`, `identifiable_number` | Partição dos anúncios: campo vazio, preenchido não reconhecido ou número AL identificável |
-| `confirmed_rnal_match` | Anúncios com número encontrado no RNAL nacional datado; subconjunto de `identifiable_number` |
-| `official_entries` | Linhas oficiais de Lisboa, incluindo duplicados |
-
-O RNAL usa concelho/freguesia oficiais; o Airbnb usa a geografia observada.
-Normalizam-se espaços, maiúsculas e acentos, com aliases explícitos para as
-grafias Airbnb de freguesias que perderam letras acentuadas. Freguesias
-desconhecidas entram no total municipal e num agregado próprio, cuja interseção
-é zero. O total de números distintos de Lisboa é calculado diretamente; nunca
-se obtém somando freguesias.
-
-“Só RNAL” significa ausência no Airbnb da mesma geografia; “só Airbnb” não
-significa ausência no RNAL nacional. Registos oficiais com geografia ausente ou
-conflituante ficam por resolver. Uma correspondência não confirma validade,
-atividade ou localização real. As áreas dos círculos e a interseção usam os
-conjuntos medidos; a bolha de anúncios sem número identificável usa uma escala
-separada. Diagramas diferentes não têm uma escala comum.
-
-Os agrupamentos espaciais são componentes conexas de ligações até 500 m:
-extremos ligados por uma cadeia podem estar mais afastados. Coordenadas ausentes
-permanecem em grupos individuais. A estimativa colapsa apenas grupos na mesma
-localização com correspondência oficial Lisboa, classificados como provável
-estabelecimento múltiplo ou repetição na mesma localização. Mantém os restantes
-anúncios separados e calcula cada geografia independentemente; estimativas de
-freguesias também não devem ser somadas para obter Lisboa.
-
-Para recalcular um par de fontes já guardado, verificando os hashes originais:
-
-```bash
-bundle exec rake 'analysis[2026-06-23__2026-09-26]'
-```
-
-### Versão da metodologia
-
-**2.3.0 (análise 3.9.0):** aceita texto envolvente quando existe um único token
-explícito `número/AL`, com limites que impedem extrair fragmentos de palavras ou
-de outros formatos. Por exemplo, `Local Accomodation N.º 23405/AL` produz `23405`.
-A extração exige uma única sequência numérica no valor: números adicionais,
-listas, números com separadores de milhares e outros esquemas continuam por
-resolver, sem escolher arbitrariamente um número. Os formatos completos já
-suportados mantêm-se e os valores originais não são modificados.
-Comparada com 2.2.0 nos mesmos bytes verificados, recupera mais 22 anúncios em
-`2025-09-21__2025-11-25` (21 com correspondência RNAL) e mais 20 em
-`2026-06-23__2026-09-26` (18 com correspondência RNAL). As estimativas passam de
-14 850 para 14 848 e de 14 587 para 14 585, respetivamente. Os números Airbnb
-distintos passam de 8 950 para 8 970 e de 8 888 para 8 906; as interseções RNAL
-passam de 7 882 para 7 901 e de 7 287 para 7 303. A fixture sintética mantém
-os valores analíticos. Os snapshots publicados não são substituídos.
-
-**2.2.0 (análise 3.8.0):** o parser remove espaços Unicode e caracteres de
-formatação invisíveis apenas nas extremidades do valor. Assim, um número AL
-precedido de U+200B ou seguido de U+2028 passa a ser reconhecido. Não junta
-algarismos separados por caracteres invisíveis nem aceita listas de números;
-os valores originais ficam intactos nos diagnósticos privados.
-Com os mesmos bytes verificados, cada um dos dois pares arquivados recupera
-13 anúncios com correspondência no RNAL. Em `2025-09-21__2025-11-25`, os anúncios
-com número identificável passam de 12 922 para 12 935 e a estimativa de 14 863
-para 14 850. Em `2026-06-23__2026-09-26`, passam de 12 727 para 12 740 e de
-14 600 para 14 587, respetivamente. Os conjuntos municipais de números distintos
-e a sua interseção mantêm-se iguais. A fixture sintética conserva os valores
-analíticos; apenas as versões e a referência histórica comparável são atualizadas.
-Os snapshots publicados não foram substituídos por esta alteração e conservam
-a metodologia original; continuam legíveis no schema 7.0.0 sem serem relabelados.
-
-Cada run regista `methodology_version`, versões de análise/schema, datas e hashes
-das fontes e proveniência Git. O relatório identifica a metodologia. O sistema
-atual compara apenas runs com metodologia idêntica; a simplificação para o
-primeiro lançamento e o arquivo de fontes estão planeados em [TODO.md](TODO.md).
-
-**2.1.0 (análise 3.2.0):** um único filtro normalizado de município Airbnb
-alimenta classificação, métricas e reutilização. Antes, variantes como ` Lisboa `
-e `lisboa` contavam para reutilização mas eram excluídas dos resultados. Na
-fixture sintética, os anúncios passam de 32 para 34 e a estimativa mantém-se em
-28. Com as mesmas fontes de `2026-06-23__2026-09-26`, grupos e métricas completos
-mantêm-se iguais: 17 064 anúncios e estimativa de 14 600. Outros arquivos podem
-ter impacto diferente. Os dois pares do arquivo público foram posteriormente
-reanalisados com esta metodologia; as versões e fontes estão no metadata.
-
-**Análise 3.3.0 / schema público 5.0.0:** consolida os agregados em
-`snapshot.json`, mantendo metodologia 2.1.0 e métricas 1.0.0. Os leitores dos
-formatos anterior e atual produzem os mesmos dados do site e relatórios para
-os mesmos agregados, exceto a identificação das versões. Na fixture sintética,
-conservam-se 34 anúncios, 18 grupos de números, 19 entradas oficiais de Lisboa
-e estimativa de 28 estabelecimentos. A reanálise das mesmas fontes de Q3 2026
-mantém os resultados completos, verificados contra o snapshot anterior.
-
-**Análise 3.4.0 / schema público 7.0.0:** elimina as exportações CSV/JSON dos
-runs públicos. Cada run guarda apenas o documento de dados e o relatório HTML,
-com PDF opcional. Links e referências apontam para `snapshot.json`; a estrutura
-dos agregados, a metodologia e as métricas permanecem iguais. A fixture
-sintética conserva todos os resultados, e os dois runs arquivados foram
-regenerados com as mesmas fontes verificadas, sem mudanças nos agregados.
-
-### Exemplos de sinais
-
-O relatório inclui uma secção de exemplos ilustrativos, baseada em padrões sintéticos dos testes, para explicar a leitura das classificações sem expor casos individuais. Abrange ausência de licença identificável, possíveis anúncios múltiplos do mesmo estabelecimento, repetição de licença em localizações distintas, registo oficial fora de Lisboa e possível divergência de localização.
-
-Estes exemplos não contêm números reais de licença, nomes, IDs, URLs, endereços, coordenadas ou distâncias exatas. Os resultados publicados são agregados ao nível de freguesia/classificação e devem ser tratados como indicadores para verificação, nunca como conclusões legais.
-
-Para instruções de manutenção e interpretação, consulte [`AGENTS.md`](AGENTS.md).
+Trabalho futuro está em [TODO.md](TODO.md).
